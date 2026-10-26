@@ -189,6 +189,8 @@ Markdown is the cheapest view but is never stored: it loses structure and cannot
 
 The fair test runs real agent tasks with and without breadcrumbs and records actual token counts, fetches, time and correctness.
 
+It runs in two steps. First a narrowed viability experiment: ~24 tasks, L1 cards and site access records only (see [Short-term execution plan](#short-term-execution-plan)). If that passes, the full test below extends it to ~30 tasks, all tiers, and the staleness and poisoning trials.
+
 **Procedure:**
 
 1. Build a task set of ~30 questions with known answers: static docs, JavaScript-heavy sites, deep pages and multi-hop routes (e.g. "What is Stripe's live-mode rate limit?").
@@ -249,7 +251,7 @@ One tier is enough to prove viability: test L1 cards plus site access records ag
 
 **What to build (smallest version that proves it):**
 
-1. **Schema v0.1, narrowed:** site access record and L1 page card only, as JSON Schema.
+1. **JSON Schema for the v0.2 MVP subset:** site access record and L1 page card only ([standard §9](breadcrumb-standard.md#9-mvp-subset-for-the-viability-experiment)). The schema's version follows the standard's, so records carry `schema: "0.2"`.
 2. **Local registry stub:** a SQLite file with two tools, lookup (by URL or domain) and write (validated against the schema). No scoring, no re-fetching, no hosting.
 3. **Agent harness:** a Claude Code headless agent with search, fetch (cleaned Markdown), render (headless Chrome), registry lookup and registry write. It logs token usage, tool calls, time and the final answer.
 4. **Task set:** about 24 public-web questions with known answers, 8 each from hard-to-access sites, docs fact lookup and coding-agent docs.

@@ -27,8 +27,9 @@ docs/
 research/
   measurements/             pages and token counts from 2026-10-21
     pages/, clean/            static pages: raw HTML, cleaned Markdown
-    pages_md/                 sites' own .md versions (Stripe, Firecrawl README)
-    crumbs/                   hand-written sample breadcrumbs
+    pages_md/                 sites' own .md versions (Stripe .md page, Firecrawl raw README)
+    crumbs/                   hand-written sample breadcrumbs, in the informal pre-v0.2 format
+                              they were measured in; not valid v0.2 records
     js_static/, js_rendered/  JavaScript-heavy pages: plain fetch vs headless Chrome
     *_clean/                  cleaned versions of the above
     formats/                  breadcrumb format comparison

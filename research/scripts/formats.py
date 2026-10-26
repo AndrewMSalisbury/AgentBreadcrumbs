@@ -1,4 +1,4 @@
-import json, tiktoken
+import json, pathlib, tiktoken
 enc = tiktoken.get_encoding("o200k_base"); t = lambda s: len(enc.encode(s))
 card = {"url":"https://docs.stripe.com/rate-limits","tier":"L2",
  "answers":"Stripe API rate and concurrency limits, 429 handling, increase requests",
@@ -32,5 +32,7 @@ Facts:
 - Global limit, live mode: 100 requests/second (#rate-limits, "Live mode ... 100 requests per second")
 - Global limit, sandbox: 25 requests/second (#rate-limits, "Sandbox ... 25 requests per second")
 """
-for name, s in [("JSON pretty", json.dumps(card, indent=2)), ("JSON minified", json.dumps(card, separators=(",",":"))), ("YAML", yaml), ("Markdown", md)]:
+out = pathlib.Path(__file__).parent.parent / "measurements" / "formats"; out.mkdir(exist_ok=True)
+for name, fn, s in [("JSON pretty", "card_pretty.json", json.dumps(card, indent=2)), ("JSON minified", "card_min.json", json.dumps(card, separators=(",",":"))), ("YAML", "card.yaml", yaml), ("Markdown", "card.md", md)]:
+    (out / fn).write_text(s, encoding="utf-8")
     print(f"{name:14}{t(s):>5}")
