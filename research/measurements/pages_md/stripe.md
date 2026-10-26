@@ -1,0 +1,130 @@
+# Rate limits
+
+Learn about API rate limits and how to work with them.
+
+Stripe uses rate limiting to maximize API stability and prevent abuse, so treat limits as maximums and avoid unnecessary load.
+
+If you exceed the limits, you get `429 Too Many Requests` HTTP status responses. For advice on handling `429` errors, see [Handling limiting gracefully](https://docs.stripe.com/rate-limits.md#handling-limiting-gracefully).
+
+## Rate limits
+
+In general, rate limits are measured in API requests per second, per Stripe account. The global rate limit applies to total API usage per account, while some endpoints have additional limits of their own.
+
+Stripe considers each named API operation a separate endpoint (for example, `POST /v1/payment_intents` and `GET /v1/payment_intents/{id}` are separate endpoints). Requests to `GET /v1/payment_intents/{id}` for different PaymentIntent IDs count toward the same endpoint limit.
+
+| Resource | Limits |
+| --- | --- |
+| **Global API rate limit** | - *Live mode* (Use this mode when you’re ready to launch your app. Card networks or payment providers process payments): 100 requests per second
+- *Sandbox* (A sandbox is an isolated test environment that allows you to test Stripe functionality in your account without affecting your live integration. Use sandboxes to safely experiment with new features and changes): 25 requests per second |
+| Individual API endpoints (unless otherwise noted) | 25 requests per second |
+| [Payment Intents API](https://docs.stripe.com/api/payment_intents.md) | 1000 update requests per PaymentIntent object, per hour |
+| [Subscriptions API](https://docs.stripe.com/api/subscriptions.md) | - 10 new invoices per subscription, per minute
+- 20 new invoices per subscription, per day
+- 200 quantity updates per subscription, per hour |
+| [Files API](https://docs.stripe.com/api/files.md) | - 20 read requests per second
+- 20 write requests per second |
+| [Payouts API](https://docs.stripe.com/api/payouts.md) | - 15 [create](https://docs.stripe.com/api/payouts/create.md) requests per second
+- 30 [concurrent requests](https://docs.stripe.com/rate-limits.md#concurrency-limits) per business |
+| *Connect* (Connect is Stripe's solution for multi-party businesses, such as marketplace or software platforms, to route payments between sellers, customers, and other recipients) accounts, including both:
+- [Accounts v2](https://docs.stripe.com/api/v2/core/accounts.md)
+- [Accounts v1](https://docs.stripe.com/api/accounts.md) | - *Live mode* (Use this mode when you’re ready to launch your app. Card networks or payment providers process payments): Create 30 accounts per second
+- *Sandbox* (A sandbox is an isolated test environment that allows you to test Stripe functionality in your account without affecting your live integration. Use sandboxes to safely experiment with new features and changes): Create 5 accounts per second |
+| [Search API](https://docs.stripe.com/search.md#rate-limits)1 | 20 read requests per second |
+| [Issuing](https://docs.stripe.com/issuing.md) | Card creation limits depend on the issuing account’s country and industry. |
+
+1. Consider [Sigma](https://docs.stripe.com/data/sigma.md) or [Data Pipeline](https://docs.stripe.com/data/data-pipeline.md) for more efficient options for data-intensive analytics tasks.
+
+## Concurrency limits
+
+Concurrency limits restrict the number of simultaneously active requests, separate from rate limits. Unlike rate limits, which in general reset after one second, the concurrency limit counts how many requests are in progress at any given moment. Hitting concurrency limits is less common than rate limit errors, and typically indicate long-lived or resource-intensive API requests such as list requests or those that include [expansions](https://docs.stripe.com/expand.md).
+
+Concurrency limits apply across the Stripe API, not only to rate-limited endpoints. The default global concurrency limit for standard API traffic in *live mode* (Use this mode when you’re ready to launch your app. Card networks or payment providers process payments) is 50 in-progress requests. Limits might differ for specific endpoints and for specific accounts. For example, [Meter Events](https://docs.stripe.com/billing/subscriptions/usage-based/recording-usage-api.md#rate-limits) allow one concurrent call per customer per meter.
+
+If you receive a `global-concurrency` or `endpoint-concurrency` rate-limit response, reduce simultaneous requests and [retry with exponential backoff and jitter](https://docs.stripe.com/rate-limits.md#handling-limiting-gracefully). [Contact support](https://support.stripe.com/) to confirm your effective limit for a high-volume integration.
+
+## Rate-limited responses
+
+Requests that get rate-limited return a `429 Too Many Requests` HTTP status code, and include a `Stripe-Rate-Limited-Reason` header that explains why the request was rate-limited. Possible values for this header are:
+
+| Header value | Meaning |
+| --- | --- |
+| `global-rate` | You exceeded the global rate limit. You can prevent this by sending requests at a lower rate. |
+| `endpoint-rate` | You exceeded the rate limit for requests to this specific API endpoint. You can prevent this by sending requests to this endpoint at a lower rate. |
+| `global-concurrency` | You exceeded the global concurrency limit. You can prevent this by sending fewer simultaneous requests. |
+| `endpoint-concurrency` | You exceeded the concurrency limit for requests to this specific API endpoint. You can prevent this by sending fewer simultaneous requests to this specific endpoint. |
+| `resource-specific` | You exceeded the rate limit related to requests to any endpoints within this resource, for example the update and create endpoints of subscriptions. You can prevent this by sending requests to endpoints across that resource at a lower rate. |
+
+If a request returns a `429` status code without these headers, it wasn’t the result of a rate limit. It might be a [lock timeout](https://docs.stripe.com/rate-limits.md#object-lock-timeouts).
+
+## Common causes and mitigations 
+
+Rate limiting can occur under a variety of conditions, but it’s most common in these scenarios:
+
+- Running **a large volume of closely-spaced requests** can lead to rate limiting. Often this is part of an analytical or migration operation. When engaging in these activities, you should try to control the request rate on the client side (see [Handling limiting gracefully](https://docs.stripe.com/rate-limits.md#handling-limiting-gracefully)).
+
+- A sudden increase in charge volume, such as a **flash sale**, might result in rate limiting. We try to set our rates high enough that legitimate payment traffic never exceeds the limits, but if you suspect that an upcoming event might push you over the limits listed above, [contact Stripe Support](https://support.stripe.com/).
+
+- Issuing many long-lived requests can trigger concurrency limiting. Requests vary in the amount of Stripe server resources they use, and more resource-intensive requests can take longer and run the risk of causing the concurrency limiter to shed new requests. Resource requirements vary widely, but list requests and requests that include [expansions](https://docs.stripe.com/expand.md) generally use more resources and take longer to run. We suggest profiling the duration of Stripe API requests and watching for timeouts to identify unexpectedly slow ones.
+
+## Handle limiting 
+
+Watch for `429` status codes and implement a retry mechanism to handle rate limiting. Follow an exponential backoff schedule to reduce request volume when necessary, and add randomness to the backoff schedule to avoid a [thundering herd effect](https://en.wikipedia.org/wiki/Thundering_herd_problem).
+
+A more sophisticated approach is to control traffic to Stripe at a global level, and throttle it back if you detect substantial rate limiting. A common technique for controlling API usage is to implement a client-side [token bucket rate-limiting algorithm](https://en.wikipedia.org/wiki/Token_bucket). Token bucket implementations or libraries are available for most programming languages.
+
+## Object lock timeouts 
+
+Integrations might encounter errors with HTTP status `429`, code `lock_timeout`, and this message:
+
+> This object cannot be accessed right now because another API request or Stripe process is currently accessing it. If you see this error intermittently, retry the request. If you see this error frequently and are making multiple concurrent requests to a single object, make your requests serially or at a lower rate.
+
+The Stripe API locks objects on some operations so that concurrent workloads don’t interfere and produce an inconsistent result. The error above is caused by a request trying to acquire a lock that’s already held elsewhere, and timing out after it couldn’t be acquired in time. Stripe doesn’t process these failed requests, which means they’re not assigned a [request ID](https://docs.stripe.com/api/request_ids.md).
+
+Lock timeouts have a different cause than rate limiting, but their mitigations are similar. As with rate limiting errors, we recommend retrying on an exponential backoff schedule (see [Handling limiting gracefully](https://docs.stripe.com/rate-limits.md#handling-limiting-gracefully)). But unlike rate limiting errors, the automatic retry mechanisms built into the Stripe [SDKs](https://docs.stripe.com/sdks.md) retry `429`s caused by lock timeouts:
+
+#### Ruby
+
+```ruby
+Stripe.max_network_retries = 2
+```
+
+Lock contention is caused by concurrent access on related objects. Integrations can vastly reduce this by making sure that mutations on the same object are queued up and run sequentially instead. Concurrent operations against the API are still okay, but try to make sure simultaneous operations operate only on unique objects. It’s also possible to see lock contention caused by a conflict with an internal Stripe background process. This should be rare, but because it’s beyond user control, we recommend that all integrations are able to retry requests.
+
+## Load testing 
+
+It’s common for users to prepare for a major sales event by load testing their systems, with the Stripe API running in a sandbox as part of it. We generally discourage this practice because API limits are lower in a sandbox, so the load test is likely to hit limits that it wouldn’t hit in production. A sandbox is also not a perfect stand-in for live API calls, and that can be somewhat misleading. For example, creating a charge in live mode sends a request to a payment gateway and that request is mocked in a sandbox, resulting in significantly different latency profiles.
+
+As an alternative, we recommend building integrations so that they have a configurable system for mocking out requests to the Stripe API, which you can enable for load tests. For realistic results, they should simulate latency by sleeping for a time that you determine by sampling the durations of real live mode Stripe API calls, as seen from the perspective of the integration.
+
+## API read request allocations 
+
+Stripe provides access to its read (GET) API requests to facilitate reasonable lookup activity related to payment integrations. To maximize quality of service for all users, Stripe provides the following allocations for read requests based on transaction count:
+
+- Your account’s read API requests must not exceed an average of 500 per transaction. For example, if you process 100 transactions in 30 days, you must not exceed 50,000 read API requests during that period.
+
+- When using Connect, a platform and its connected accounts have distinct read API allowances:
+
+  - Each connected account has their own allocation for requests they initiate (500 requests per transaction).
+  - Connect platforms use a separate allocation to make read requests on behalf of their connected accounts using either their secret API key or OAuth access tokens. This allocation is also 500 requests per transaction based on the aggregate transaction count across its connected accounts.
+
+- Ratios are calculated over a rolling 30-day period (the most recent 30 days).
+
+- Every account, regardless of transaction count, has a minimum allocation of 10,000 read requests per month.
+
+- Write API requests have no allocation limit.
+
+Calls to the following API endpoints are excluded from the above allocation limits:
+
+- [Data products](https://docs.stripe.com/data.md)
+- [Reporting products](https://docs.stripe.com/stripe-reports.md)
+- [Tax products](https://docs.stripe.com/tax.md)
+
+To reduce your API request volume, consider using [Data Pipeline](https://docs.stripe.com/data/data-pipeline.md) for a complete export of API data to your local database or provider.
+
+> #### Filter requests to limit paginated calls
+> 
+> Some list endpoints return [multiple pages](https://docs.stripe.com/api/pagination.md) of results and might require multiple requests to return the full set of API objects for a list operation. Apply filters when possible to narrow your list results.
+
+## Request a limit increase
+
+Request a limit increase for high-traffic applications through [Stripe Support](https://support.stripe.com/contact). If you request a large increase, contact Stripe Support at least 6 weeks in advance.
