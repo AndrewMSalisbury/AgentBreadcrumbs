@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentbreadcrumbs.dev/schema/0.2/page-l1.schema.json",
+  "title": "Page card, L1 (v0.2 MVP subset)",
+  "description": "One per normalized URL: what the page answers, where on the page, and how to get it. Pointers, not a copy of the page.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "url", "tier", "answers", "sections", "observed_at", "provenance"],
+  "properties": {
+    "schema": {"const": "0.2"},
+    "id": {
+      "description": "page:<normalized host + path>. Set by the registry from url; any value sent is replaced.",
+      "type": "string",
+      "maxLength": 600
+    },
+    "url": {"type": "string", "format": "uri", "pattern": "^https?://", "maxLength": 500},
+    "tier": {"const": "L1"},
+    "answers": {
+      "description": "One line: the questions this page answers",
+      "type": "string",
+      "maxLength": 300
+    },
+    "sections": {
+      "description": "Section anchor (e.g. '#rate-limits') or heading text -> what that section covers",
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 12,
+      "propertyNames": {"maxLength": 100},
+      "additionalProperties": {"type": "string", "maxLength": 120}
+    },
+    "access": {
+      "description": "Access notes for this page only",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "js_required": {"type": "boolean"},
+        "md_version": {"description": "URL of a Markdown version of this page", "type": "string", "maxLength": 500},
+        "api": {"description": "API URL returning this page's data", "type": "string", "maxLength": 500},
+        "notes": {"type": "string", "maxLength": 200}
+      }
+    },
+    "links": {
+      "description": "Links worth following from this page",
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["url", "for"],
+        "properties": {
+          "url": {"type": "string", "maxLength": 500},
+          "for": {"description": "What the linked page has", "type": "string", "maxLength": 100}
+        }
+      }
+    },
+    "size_tokens": {
+      "description": "Approximate size of the cleaned page in tokens. Set by the registry when it can fetch the page.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "content_hash": {
+      "description": "Set by the registry; any value sent is replaced.",
+      "type": "string",
+      "maxLength": 80
+    },
+    "observed_at": {"description": "ISO date the page was checked", "type": "string", "format": "date"},
+    "provenance": {"$ref": "site.schema.json#/$defs/provenance"}
+  }
+}

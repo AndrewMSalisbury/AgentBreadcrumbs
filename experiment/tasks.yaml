@@ -1,0 +1,257 @@
+# Viability task set: 8 each of hard_access, docs and coding. Answers checked 2026-10-26.
+#
+# question/expect:  expect is a list of regexes that must all match the agent's
+#                   ANSWER line (case-insensitive).
+# related:          a different question on the same site, for warm-related runs.
+# check:            where the answer lives and a regex that proves it there, so
+#                   `python run.py verify` can re-check answers before a run.
+#                   `select` reduces a JSON response to dotted paths, as in fetch.
+#
+# hard_access pages need JavaScript or block plain fetches, but each site has an
+# API that works. Versions drift: run verify first and update stale answers.
+
+# --- hard_access ------------------------------------------------------------
+
+- id: crates-serde-version
+  use_case: hard_access
+  question: What is the latest stable version of the serde crate on crates.io?
+  expect: ['1\.0\.229']
+  check: {url: 'https://crates.io/api/v1/crates/serde', select: [crate.max_stable_version], pattern: '"1\.0\.229"'}
+  related:
+    question: What is the latest stable version of the tokio crate on crates.io?
+    expect: ['1\.54\.1']
+    check: {url: 'https://crates.io/api/v1/crates/tokio', select: [crate.max_stable_version], pattern: '"1\.54\.1"'}
+
+- id: npm-zod-version
+  use_case: hard_access
+  question: What is the latest version of the zod package on npmjs.com?
+  expect: ['4\.6\.7']
+  check: {url: 'https://registry.npmjs.org/zod/latest', select: [version], pattern: '"4\.6\.7"'}
+  related:
+    question: What is the latest version of the vite package on npmjs.com?
+    expect: ['8\.3\.5']
+    check: {url: 'https://registry.npmjs.org/vite/latest', select: [version], pattern: '"8\.3\.5"'}
+
+- id: bundlephobia-zod-gzip
+  use_case: hard_access
+  question: According to bundlephobia.com, what is the minified + gzipped size of the latest zod, in bytes?
+  expect: ['88,?906']
+  check: {url: 'https://bundlephobia.com/api/size?package=zod', select: [gzip], pattern: '88906'}
+  related:
+    question: According to bundlephobia.com, what is the minified + gzipped size of the latest dayjs, in bytes?
+    expect: ['3,?062']
+    check: {url: 'https://bundlephobia.com/api/size?package=dayjs', select: [gzip], pattern: '3062'}
+
+- id: openvsx-rust-analyzer
+  use_case: hard_access
+  question: What is the latest version of the rust-analyzer extension (rust-lang.rust-analyzer) on open-vsx.org?
+  expect: ['0\.4\.3098']
+  check: {url: 'https://open-vsx.org/api/rust-lang/rust-analyzer', select: [version], pattern: '"0\.4\.3098"'}
+  related:
+    question: What is the latest version of the Prettier extension (esbenp.prettier-vscode) on open-vsx.org?
+    expect: ['12\.4\.0']
+    check: {url: 'https://open-vsx.org/api/esbenp/prettier-vscode', select: [version], pattern: '"12\.4\.0"'}
+
+- id: amo-ublock-version
+  use_case: hard_access
+  question: What is the current version of the uBlock Origin add-on on addons.mozilla.org?
+  expect: ['1\.75\.0']
+  check: {url: 'https://addons.mozilla.org/api/v5/addons/addon/ublock-origin/', select: [current_version.version], pattern: '"1\.75\.0"'}
+  related:
+    question: What is the current version of the Dark Reader add-on on addons.mozilla.org?
+    expect: ['4\.9\.133']
+    check: {url: 'https://addons.mozilla.org/api/v5/addons/addon/darkreader/', select: [current_version.version], pattern: '"4\.9\.133"'}
+
+- id: flathub-gimp-release
+  use_case: hard_access
+  question: What is the latest GIMP release listed on its Flathub page (org.gimp.GIMP)?
+  expect: ['3\.2\.6']
+  check: {url: 'https://flathub.org/api/v2/appstream/org.gimp.GIMP', select: [releases.0.version], pattern: '"3\.2\.6"'}
+  related:
+    question: What is the latest Inkscape release listed on its Flathub page (org.inkscape.Inkscape)?
+    expect: ['1\.4\.4']
+    check: {url: 'https://flathub.org/api/v2/appstream/org.inkscape.Inkscape', select: [releases.0.version], pattern: '"1\.4\.4"'}
+
+- id: depsdev-express-scorecard
+  use_case: hard_access
+  question: On deps.dev, what is the OpenSSF Scorecard overall score of the expressjs/express GitHub project?
+  expect: ['8\.5']
+  check: {url: 'https://api.deps.dev/v3/projects/github.com%2Fexpressjs%2Fexpress', select: [scorecard.overallScore], pattern: ': 8\.5\b'}
+  related:
+    question: On deps.dev, what is the OpenSSF Scorecard overall score of the colinhacks/zod GitHub project?
+    expect: ['5\.1']
+    check: {url: 'https://api.deps.dev/v3/projects/github.com%2Fcolinhacks%2Fzod', select: [scorecard.overallScore], pattern: ': 5\.1\b'}
+
+- id: jsdelivr-alpinejs-version
+  use_case: hard_access
+  question: What version does jsDelivr list as the latest for the alpinejs npm package?
+  expect: ['3\.17\.5']
+  check: {url: 'https://data.jsdelivr.com/v1/packages/npm/alpinejs', select: [tags.latest], pattern: '"3\.17\.5"'}
+  related:
+    question: What version does jsDelivr list as the latest (the latest tag, not next) for the htmx.org npm package?
+    expect: ['2\.0\.11']
+    check: {url: 'https://data.jsdelivr.com/v1/packages/npm/htmx.org', select: [tags.latest], pattern: '"2\.0\.11"'}
+
+# --- docs: picking the right page and section --------------------------------
+
+- id: stripe-live-rate-limit
+  use_case: docs
+  question: What is Stripe's global API rate limit in live mode?
+  expect: ['\b100\b']
+  check: {url: 'https://docs.stripe.com/rate-limits', pattern: 'Live mode: 100 requests per second'}
+  related:
+    question: How many payout create requests per second does Stripe's Payouts API allow?
+    expect: ['\b15\b']
+    check: {url: 'https://docs.stripe.com/rate-limits', pattern: '15 \[create\]\([^)]*\) requests per second'}
+
+- id: github-unauth-rate-limit
+  use_case: docs
+  question: What is the GitHub REST API primary rate limit for unauthenticated requests?
+  expect: ['\b60\b']
+  check: {url: 'https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api', pattern: 'unauthenticated requests is 60 requests per hour'}
+  related:
+    question: What is the GitHub REST API rate limit for GITHUB_TOKEN in GitHub Actions (non-Enterprise)?
+    expect: ['1,?000']
+    check: {url: 'https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api', pattern: 'GITHUB_TOKEN` is 1,000 requests per hour per repository'}
+
+- id: cloudflare-workers-cpu
+  use_case: docs
+  question: What is the CPU time limit per request for Cloudflare Workers on the Free plan?
+  expect: ['\b10 ?ms|10 millisecond']
+  check: {url: 'https://developers.cloudflare.com/workers/platform/limits/', pattern: 'CPU time\]\(#cpu-time\) \| 10 ms'}
+  related:
+    question: How many subrequests per request can a Cloudflare Worker make on the Free plan?
+    expect: ['\b50\b']
+    check: {url: 'https://developers.cloudflare.com/workers/platform/limits/', pattern: 'Subrequests\]\(#subrequests\) \| 50/request'}
+
+- id: letsencrypt-registered-domain
+  use_case: docs
+  question: How many certificates can Let's Encrypt issue per registered domain, and over what period?
+  expect: ['\b50\b', '7 days|week|168 hours']
+  check: {url: 'https://letsencrypt.org/docs/rate-limits/', pattern: 'Up to 50 certificates can be issued per registered domain'}
+  related:
+    question: How many certificates can Let's Encrypt issue for the exact same set of identifiers, and over what period?
+    expect: ['\b5\b', '7 days|week|168 hours']
+    check: {url: 'https://letsencrypt.org/docs/rate-limits/', pattern: 'Up to 5 certificates can be issued per exact same set of identifiers every 7 day'}
+
+- id: slack-tier3-limit
+  use_case: docs
+  question: What is the rate limit for Slack Web API Tier 3 methods?
+  expect: ['\b50\b']
+  check: {url: 'https://docs.slack.dev/apis/web-api/rate-limits', pattern: 'Tier 3\s+50\+ per minute'}
+  related:
+    question: How often can a Slack app post messages to a single channel, per the Web API rate limit docs?
+    expect: ['\b(1|one)\b']
+    check: {url: 'https://docs.slack.dev/apis/web-api/rate-limits', pattern: 'no more than one message per second per channel'}
+
+- id: vercel-function-body
+  use_case: docs
+  question: What is the maximum request or response body size for a Vercel Function?
+  expect: ['4\.5 ?MB']
+  check: {url: 'https://vercel.com/docs/functions/limitations', pattern: 'response body of a Vercel Function is 4\.5 MB'}
+  related:
+    question: What is the maximum duration of a Vercel Function on the Pro plan (not the extended beta maximum)?
+    expect: ['\b800']
+    check: {url: 'https://vercel.com/docs/functions/limitations', pattern: 'Pro and Enterprise: 300s default, 800s maximum'}
+
+- id: discord-global-rate-limit
+  use_case: docs
+  question: What is the Discord API global rate limit for bots?
+  expect: ['\b50\b']
+  check: {url: 'https://docs.discord.com/developers/topics/rate-limits', pattern: 'All bots can make up to 50 requests per second'}
+  related:
+    question: What is Discord's invalid request limit before an IP is temporarily banned?
+    expect: ['10,?000', '10 minutes']
+    check: {url: 'https://docs.discord.com/developers/topics/rate-limits', pattern: '10,000 per 10 minutes'}
+
+- id: dockerhub-unauth-pulls
+  use_case: docs
+  question: What is the Docker Hub pull rate limit for unauthenticated users?
+  expect: ['\b100\b', '6 hours']
+  check: {url: 'https://docs.docker.com/docker-hub/usage/', pattern: 'Unauthenticated users \| 100 per IPv4 address'}
+  related:
+    question: What is the Docker Hub pull rate limit for Personal (authenticated) users?
+    expect: ['\b200\b', '6 hours']
+    check: {url: 'https://docs.docker.com/docker-hub/usage/', pattern: 'Personal \(authenticated\) \| 200'}
+
+# --- coding: large or noisy reference pages ----------------------------------
+
+- id: pathlib-expanduser
+  use_case: coding
+  question: In the Python 3 docs, which pathlib method corresponds to os.path.expanduser?
+  expect: ['expanduser']
+  check: {url: 'https://docs.python.org/3/library/pathlib.html', pattern: 'os\.path\.expanduser\(\)`\]\([^)]*\) \| \[`Path\.expanduser\(\)'}
+  related:
+    question: In the Python 3 docs, which pathlib method corresponds to os.path.samefile?
+    expect: ['samefile']
+    check: {url: 'https://docs.python.org/3/library/pathlib.html', pattern: 'os\.path\.samefile\(\)`\]\([^)]*\) \| \[`Path\.samefile\(\)'}
+
+- id: python-json-bytes
+  use_case: coding
+  question: In the Python 3 docs, since which version does json.loads accept bytes or bytearray input?
+  expect: ['3\.6']
+  check: {url: 'https://docs.python.org/3/library/json.html', pattern: 'Changed in version 3\.6:[^.]*can now be of (type )?\[?`?bytes'}
+  related:
+    question: In the Python 3 docs, in which version was json.JSONDecodeError added?
+    expect: ['3\.5']
+    check: {url: 'https://docs.python.org/3/library/json.html', pattern: 'colno\[¶\]\(#json\.JSONDecodeError\.colno\)[\s\S]{0,120}Added in version 3\.5'}
+
+- id: node-readstream-highwatermark
+  use_case: coding
+  question: In the Node.js fs docs, what is the default highWaterMark for fs.createReadStream?
+  expect: ['64 ?\* ?1024|64 ?KiB|64 ?KB|65,?536']
+  check: {url: 'https://nodejs.org/api/fs.html', pattern: 'highWaterMark` \[`<integer>`\]\([^)]*\) \*\*Default:\*\* `64 \* 1024`'}
+  related:
+    question: In the Node.js fs docs, what is the default mode for fs.mkdir?
+    expect: ['0o?777']
+    check: {url: 'https://nodejs.org/api/fs.html', pattern: 'for more details\. \*\*Default:\*\* `0o777`'}
+
+- id: django-data-upload-max
+  use_case: coding
+  question: In the Django settings reference, what is the default value of DATA_UPLOAD_MAX_MEMORY_SIZE?
+  expect: ['2621440|2\.5 ?MB']
+  check: {url: 'https://docs.djangoproject.com/en/stable/ref/settings/', pattern: 'DATA_UPLOAD_MAX_MEMORY_SIZE`\[¶\]\([^)]*\)\s+Default: `2621440`'}
+  related:
+    question: In the Django settings reference, what is the default value of SESSION_COOKIE_AGE?
+    expect: ['1209600|2 weeks|two weeks|14 days']
+    check: {url: 'https://docs.djangoproject.com/en/stable/ref/settings/', pattern: 'SESSION_COOKIE_AGE`\[¶\]\([^)]*\)\s+Default: `1209600`'}
+
+- id: go-maxidleconnsperhost
+  use_case: coding
+  question: In Go's net/http package docs, what is the value of DefaultMaxIdleConnsPerHost?
+  expect: ['\b2\b']
+  check: {url: 'https://pkg.go.dev/net/http', pattern: 'const DefaultMaxIdleConnsPerHost = 2'}
+  related:
+    question: In Go's net/http package docs, what is the value of DefaultMaxHeaderBytes?
+    expect: ['1 ?<< ?20|1 ?MB|1,?048,?576|1 MiB']
+    check: {url: 'https://pkg.go.dev/net/http', pattern: 'const DefaultMaxHeaderBytes = 1 << 20'}
+
+- id: k8s-termination-grace
+  use_case: coding
+  question: In the Kubernetes docs, what is the default termination grace period for a Pod?
+  expect: ['\b30\b']
+  check: {url: 'https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/', pattern: 'which defaults to 30 seconds'}
+  related:
+    question: In the Kubernetes docs, if you omit imagePullPolicy and the image tag is :latest, what is imagePullPolicy set to?
+    expect: ['Always']
+    check: {url: 'https://kubernetes.io/docs/concepts/containers/images/', pattern: '`:latest`, `imagePullPolicy` is automatically set to `Always`'}
+
+- id: tailwind-lg-breakpoint
+  use_case: coding
+  question: In the Tailwind CSS docs, what is the default min-width of the lg breakpoint?
+  expect: ['64 ?rem|1024 ?px']
+  check: {url: 'https://tailwindcss.com/docs/responsive-design', pattern: '`lg` \| 64rem'}
+  related:
+    question: In the Tailwind CSS docs, what is the default min-width of the xl breakpoint?
+    expect: ['80 ?rem|1280 ?px']
+    check: {url: 'https://tailwindcss.com/docs/responsive-design', pattern: '`xl` \| 80rem'}
+
+- id: claude-vision-dimensions
+  use_case: coding
+  question: In the Claude API vision docs, what are the maximum dimensions for each image?
+  expect: ['8,?000 ?(x|×|by) ?8,?000']
+  check: {url: 'https://platform.claude.com/docs/en/build-with-claude/vision', pattern: 'maximum dimensions for each image are 8000x8000 px'}
+  related:
+    question: In the Claude API docs, what is the request size limit for standard API endpoints?
+    expect: ['32 ?MB']
+    check: {url: 'https://platform.claude.com/docs/en/build-with-claude/vision', pattern: '32 MB for standard endpoints'}

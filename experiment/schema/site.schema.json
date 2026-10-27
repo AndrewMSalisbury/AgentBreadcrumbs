@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentbreadcrumbs.dev/schema/0.2/site.schema.json",
+  "title": "Site record (v0.2 MVP subset)",
+  "description": "Knowledge that applies to every page on one domain. MVP fields only: site, schema, access, provenance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["site", "schema", "access", "provenance"],
+  "properties": {
+    "site": {
+      "description": "Normalized host, lowercase, no scheme or path, e.g. docs.stripe.com",
+      "type": "string",
+      "pattern": "^[a-z0-9.-]+$",
+      "maxLength": 253
+    },
+    "schema": {"const": "0.2"},
+    "access": {"$ref": "#/$defs/access"},
+    "provenance": {"$ref": "#/$defs/provenance"}
+  },
+  "$defs": {
+    "access": {
+      "description": "How to get content from this site. Omit fields you did not observe.",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "js_required": {
+          "description": "true if a plain fetch returns an empty shell and the page must be rendered",
+          "type": "boolean"
+        },
+        "blocks_headless": {
+          "description": "true if headless browsers are blocked or served a challenge page",
+          "type": "boolean"
+        },
+        "md_versions": {
+          "description": "How to get Markdown versions of pages, e.g. 'append .md to any docs URL'",
+          "type": "string",
+          "maxLength": 200
+        },
+        "api": {
+          "description": "Public API endpoint pattern that returns the same data, e.g. 'GET https://crates.io/api/v1/crates/{name}'",
+          "type": "string",
+          "maxLength": 200
+        },
+        "api_notes": {
+          "description": "Which fields of the API response matter and how large it is",
+          "type": "string",
+          "maxLength": 300
+        },
+        "extraction_issues": {
+          "description": "Known problems turning pages into text, and the workaround",
+          "type": "string",
+          "maxLength": 300
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["writer", "observed_at"],
+      "properties": {
+        "writer": {"description": "Agent or model ID", "type": "string", "maxLength": 80},
+        "observed_at": {"description": "ISO date the site was checked", "type": "string", "format": "date"}
+      }
+    }
+  }
+}
