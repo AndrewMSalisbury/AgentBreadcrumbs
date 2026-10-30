@@ -16,17 +16,31 @@
     "url": {"type": "string", "format": "uri", "pattern": "^https?://", "maxLength": 500},
     "tier": {"const": "L1"},
     "answers": {
-      "description": "One line: the questions this page answers",
+      "description": "One line: the topics the whole page covers. Not the question that led here, and no values",
       "type": "string",
       "maxLength": 300
     },
     "sections": {
-      "description": "Section anchor (e.g. '#rate-limits') or heading text -> what that section covers",
+      "description": "The page's main sections: anchor (e.g. '#rate-limits') or heading text -> the settings, limits or items it covers, not their values",
       "type": "object",
       "minProperties": 1,
       "maxProperties": 12,
       "propertyNames": {"maxLength": 100},
       "additionalProperties": {"type": "string", "maxLength": 120}
+    },
+    "route": {
+      "description": "The cheapest way to get this page's content: the smallest source that has it and the fetch arguments that worked",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url"],
+      "properties": {
+        "url": {"description": "Raw source file, API endpoint, Markdown version, or the page itself if nothing smaller exists", "type": "string", "maxLength": 500},
+        "select": {"description": "JSON paths for fetch's select", "type": "array", "maxItems": 10, "items": {"type": "string", "maxLength": 100}},
+        "section": {"description": "A section= value that works on the route url", "type": "string", "maxLength": 100},
+        "start": {"description": "A start offset that reaches the relevant part", "type": "integer", "minimum": 0},
+        "tokens": {"description": "Approximate size of what the route returns", "type": "integer", "minimum": 0},
+        "notes": {"description": "What did not work and why, e.g. section= fails because entries are not headings", "type": "string", "maxLength": 200}
+      }
     },
     "access": {
       "description": "Access notes for this page only",

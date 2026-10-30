@@ -1,4 +1,6 @@
-# Viability task set: 8 each of hard_access, docs and coding. Answers checked 2026-10-26.
+# Viability task set, answers checked 2026-10-26: 24 easy tasks (8 each of hard_access,
+# docs and coding), then 18 hard ones (`set: hard`, 6 per use case). No `set` means easy;
+# `python run.py <condition> --set easy|hard` runs one set.
 #
 # question/expect:  expect is a list of regexes that must all match the agent's
 #                   ANSWER line (case-insensitive).
@@ -45,8 +47,8 @@
 - id: openvsx-rust-analyzer
   use_case: hard_access
   question: What is the latest version of the rust-analyzer extension (rust-lang.rust-analyzer) on open-vsx.org?
-  expect: ['0\.4\.3098']
-  check: {url: 'https://open-vsx.org/api/rust-lang/rust-analyzer', select: [version], pattern: '"0\.4\.3098"'}
+  expect: ['0\.4\.3101']
+  check: {url: 'https://open-vsx.org/api/rust-lang/rust-analyzer', select: [version], pattern: '"0\.4\.3101"'}
   related:
     question: What is the latest version of the Prettier extension (esbenp.prettier-vscode) on open-vsx.org?
     expect: ['12\.4\.0']
@@ -59,8 +61,8 @@
   check: {url: 'https://addons.mozilla.org/api/v5/addons/addon/ublock-origin/', select: [current_version.version], pattern: '"1\.75\.0"'}
   related:
     question: What is the current version of the Dark Reader add-on on addons.mozilla.org?
-    expect: ['4\.9\.133']
-    check: {url: 'https://addons.mozilla.org/api/v5/addons/addon/darkreader/', select: [current_version.version], pattern: '"4\.9\.133"'}
+    expect: ['4\.9\.134']
+    check: {url: 'https://addons.mozilla.org/api/v5/addons/addon/darkreader/', select: [current_version.version], pattern: '"4\.9\.134"'}
 
 - id: flathub-gimp-release
   use_case: hard_access
@@ -252,6 +254,220 @@
   expect: ['8,?000 ?(x|×|by) ?8,?000']
   check: {url: 'https://platform.claude.com/docs/en/build-with-claude/vision', pattern: 'maximum dimensions for each image are 8000x8000 px'}
   related:
-    question: In the Claude API docs, what is the request size limit for standard API endpoints?
-    expect: ['32 ?MB']
-    check: {url: 'https://platform.claude.com/docs/en/build-with-claude/vision', pattern: '32 MB for standard endpoints'}
+    question: In the Claude API docs, what is the request size limit for Messages requests on the first-party Claude API?
+    expect: ['128 ?MB']
+    check: {url: 'https://platform.claude.com/docs/en/build-with-claude/vision', pattern: 'limit is 128\s?MB on the first-party Claude API'}
+
+# === hard set ================================================================
+# Added after rep 1 (2026-10-26), where cold agents never searched or rendered:
+# they knew every easy task's API or page URL from memory. Hard tasks use sites
+# whose pages need JavaScript (some fail even when rendered) and whose APIs are
+# less known or very large, docs answers on pages the question does not name, and
+# 5k-110k-token reference pages where the answer is one line.
+
+# --- hard_access --------------------------------------------------------------
+# Plain fetch returns an empty shell. Terraform's page times out in headless
+# Chrome and Galaxy renders without the version; the APIs work, but Terraform and
+# Puppet Forge return 100k+ tokens unless reduced with select.
+
+- id: terraform-aws-provider
+  set: hard
+  use_case: hard_access
+  question: What is the latest version of the hashicorp/aws provider on the Terraform Registry?
+  expect: ['6\.71\.0']
+  check: {url: 'https://registry.terraform.io/v1/providers/hashicorp/aws', select: [version], pattern: '"6\.71\.0"'}
+  related:
+    question: What is the latest version of the hashicorp/google provider on the Terraform Registry?
+    expect: ['8\.9\.0']
+    check: {url: 'https://registry.terraform.io/v1/providers/hashicorp/google', select: [version], pattern: '"8\.9\.0"'}
+
+- id: galaxy-community-general
+  set: hard
+  use_case: hard_access
+  question: What is the latest version of the community.general collection on Ansible Galaxy?
+  expect: ['13\.5\.0']
+  check: {url: 'https://galaxy.ansible.com/api/v3/plugin/ansible/content/published/collections/index/community/general/', select: [highest_version.version], pattern: '"13\.5\.0"'}
+  related:
+    question: What is the latest version of the ansible.posix collection on Ansible Galaxy?
+    expect: ['2\.2\.2']
+    check: {url: 'https://galaxy.ansible.com/api/v3/plugin/ansible/content/published/collections/index/ansible/posix/', select: [highest_version.version], pattern: '"2\.2\.2"'}
+
+- id: artifacthub-cert-manager
+  set: hard
+  use_case: hard_access
+  question: What is the latest version of the cert-manager Helm chart (from the cert-manager repository) on Artifact Hub?
+  expect: ['1\.21\.3']
+  check: {url: 'https://artifacthub.io/api/v1/packages/helm/cert-manager/cert-manager', select: [version], pattern: '"1\.21\.3"'}
+  related:
+    question: What is the latest chart version of the ingress-nginx Helm chart (from the ingress-nginx repository) on Artifact Hub?
+    expect: ['4\.15\.1']
+    check: {url: 'https://artifacthub.io/api/v1/packages/helm/ingress-nginx/ingress-nginx', select: [version], pattern: '"4\.15\.1"'}
+
+- id: puppet-stdlib
+  set: hard
+  use_case: hard_access
+  question: What is the latest version of the puppetlabs/stdlib module on Puppet Forge?
+  expect: ['10\.1\.1']
+  check: {url: 'https://forgeapi.puppet.com/v3/modules/puppetlabs-stdlib', select: [current_release.version], pattern: '"10\.1\.1"'}
+  related:
+    question: What is the latest version of the puppetlabs/apache module on Puppet Forge?
+    expect: ['13\.5\.0']
+    check: {url: 'https://forgeapi.puppet.com/v3/modules/puppetlabs-apache', select: [current_release.version], pattern: '"13\.5\.0"'}
+
+- id: sonatype-guava
+  set: hard
+  use_case: hard_access
+  question: On Maven Central (central.sonatype.com), what is the latest version of com.google.guava:guava?
+  expect: ['33\.7\.2']
+  check: {url: 'https://central.sonatype.com/api/internal/browse/component/versions?sortField=normalizedVersion&sortDirection=desc&page=0&size=1&filter=namespace%3Acom.google.guava%2Cname%3Aguava', select: [components.0.version], pattern: '"33\.7\.2-jre"'}
+  related:
+    question: On Maven Central (central.sonatype.com), what is the latest version of org.apache.commons:commons-lang3?
+    expect: ['3\.21\.0']
+    check: {url: 'https://central.sonatype.com/api/internal/browse/component/versions?sortField=normalizedVersion&sortDirection=desc&page=0&size=1&filter=namespace%3Aorg.apache.commons%2Cname%3Acommons-lang3', select: [components.0.version], pattern: '"3\.21\.0"'}
+
+- id: jetbrains-rainbow-brackets
+  set: hard
+  use_case: hard_access
+  question: What is the latest version of the Rainbow Brackets plugin on the JetBrains Marketplace?
+  expect: ['2026\.2\.1']
+  check: {url: 'https://plugins.jetbrains.com/api/plugins/10080/updates?size=1', select: [0.version], pattern: '"2026\.2\.1"'}
+  related:
+    question: What is the latest version of the Key Promoter X plugin on the JetBrains Marketplace?
+    expect: ['2026\.1\.2']
+    check: {url: 'https://plugins.jetbrains.com/api/plugins/9792/updates?size=1', select: [0.version], pattern: '"2026\.1\.2"'}
+
+# --- docs: answers on pages the question does not name ---------------------------
+
+- id: render-free-spindown
+  set: hard
+  use_case: docs
+  question: After how many minutes without inbound traffic does Render spin down a Free web service?
+  expect: ['\b15\b']
+  check: {url: 'https://render.com/docs/free', pattern: 'spins down\*\* a Free web service that goes 15 minutes'}
+  related:
+    question: How many days after creation does a Free Render Postgres database expire?
+    expect: ['\b30\b']
+    check: {url: 'https://render.com/docs/free', pattern: 'expire 30 days after creation'}
+
+- id: pypi-file-size-limit
+  set: hard
+  use_case: docs
+  question: What is PyPI's default upload size limit for a single file?
+  expect: ['100 ?MB']
+  check: {url: 'https://docs.pypi.org/project-management/storage-limits/', pattern: 'Limit for project .sampleproject. is 100 MB'}
+  related:
+    question: What is PyPI's default limit on the total size of a project?
+    expect: ['10(\.0)? ?GB']
+    check: {url: 'https://docs.pypi.org/project-management/storage-limits/', pattern: 'total size is 10 GB'}
+
+- id: github-large-file-block
+  set: hard
+  use_case: docs
+  question: Above what file size does GitHub block files pushed to a repository?
+  expect: ['100 ?MiB|100 ?MB']
+  check: {url: 'https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github', pattern: 'GitHub blocks files larger than 100 MiB'}
+  related:
+    question: What is the largest file you can add to a GitHub repository through the browser?
+    expect: ['25 ?MiB|25 ?MB']
+    check: {url: 'https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github', pattern: 'via a browser, the file can be no larger than 25 MiB'}
+
+- id: heroku-daily-restart
+  set: hard
+  use_case: docs
+  question: How often does Heroku's dyno manager automatically restart dynos, and up to how many random extra minutes are added?
+  expect: ['24 hours|once (a|per|every) day|daily', '\b216\b']
+  check: {url: 'https://devcenter.heroku.com/articles/dyno-restarts', pattern: 'once every 24 hours \(plus up to 216 random minutes'}
+  related:
+    question: When Heroku stops a dyno with SIGTERM, how long do its processes have to shut down before they are killed?
+    expect: ['\b30\b']
+    check: {url: 'https://devcenter.heroku.com/articles/dyno-shutdown-behavior', pattern: 'processes have 30 seconds to shut down cleanly'}
+
+- id: gha-matrix-max-jobs
+  set: hard
+  use_case: docs
+  question: What is the maximum number of jobs a GitHub Actions matrix can generate per workflow run?
+  expect: ['\b256\b']
+  check: {url: 'https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax', pattern: 'A matrix will generate a maximum of 256 jobs per workflow run'}
+  related:
+    question: In GitHub Actions, how many background steps can run concurrently in a single job?
+    expect: ['\b10\b|\bten\b']
+    check: {url: 'https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax', pattern: 'A maximum of 10 background steps can run concurrently in a single job'}
+
+- id: r2-single-part-upload
+  set: hard
+  use_case: docs
+  question: What is the maximum single-part upload size for Cloudflare R2?
+  expect: ['5 ?GiB|5 ?GB']
+  check: {url: 'https://developers.cloudflare.com/r2/platform/limits/', pattern: '5 GiB \(single-part\)'}
+  related:
+    question: What is the maximum object key length in Cloudflare R2?
+    expect: ['1,?024']
+    check: {url: 'https://developers.cloudflare.com/r2/platform/limits/', pattern: 'Object key length \| 1,024 bytes'}
+
+# --- coding: one line in a 5k-110k-token reference page ---------------------------
+
+- id: git-gc-auto
+  set: hard
+  use_case: coding
+  question: In the git-config documentation, what is the default value of gc.auto?
+  expect: ['6,?700']
+  check: {url: 'https://git-scm.com/docs/git-config', pattern: 'garbage collection from time to time\. The default value is 6700'}
+  related:
+    question: In the git-config documentation, what is the default value of gc.aggressiveWindow?
+    expect: ['\b250\b']
+    check: {url: 'https://git-scm.com/docs/git-config', pattern: 'git gc --aggressive\*\. This defaults to 250'}
+
+- id: nginx-keepalive-requests
+  set: hard
+  use_case: coding
+  question: In the nginx ngx_http_core_module docs, what is the default value of keepalive_requests?
+  expect: ['1,?000']
+  check: {url: 'https://nginx.org/en/docs/http/ngx_http_core_module.html', pattern: 'Default: \| keepalive\\_requests 1000;'}
+  related:
+    question: In the nginx ngx_http_core_module docs, what is the default value of client_body_buffer_size?
+    expect: ['8k', '16k']
+    check: {url: 'https://nginx.org/en/docs/http/ngx_http_core_module.html', pattern: 'Default: \| client\\_body\\_buffer\\_size 8k\\\|16k;'}
+
+- id: rust-vec-extract-if
+  set: hard
+  use_case: coding
+  question: In the Rust standard library docs, since which Rust version has Vec::extract_if been stable?
+  expect: ['1\.87']
+  check: {url: 'https://doc.rust-lang.org/std/vec/struct.Vec.html', pattern: '1\.87\.0 · \[Source\]\([^)]*\) #### pub fn \[extract\\_if\]'}
+  related:
+    question: In the Rust standard library docs, since which Rust version has Vec::pop_if been stable?
+    expect: ['1\.86']
+    check: {url: 'https://doc.rust-lang.org/std/vec/struct.Vec.html', pattern: '1\.86\.0 · \[Source\]\([^)]*\) #### pub fn \[pop\\_if\]'}
+
+- id: mdn-fetch-credentials
+  set: hard
+  use_case: coding
+  question: According to MDN, what is the default value of the credentials option passed to fetch()?
+  expect: ['same-origin']
+  check: {url: 'https://developer.mozilla.org/en-US/docs/Web/API/RequestInit', pattern: 'for more details\. Defaults to `same-origin`'}
+  related:
+    question: According to MDN, what is the default value of the redirect option passed to fetch()?
+    expect: ['follow']
+    check: {url: 'https://developer.mozilla.org/en-US/docs/Web/API/RequestInit', pattern: 'replay it\. Defaults to `follow`'}
+
+- id: compose-stop-grace-period
+  set: hard
+  use_case: coding
+  question: In the Docker Compose file reference, what is the default stop_grace_period for a service?
+  expect: ['10 ?s|10 seconds']
+  check: {url: 'https://docs.docker.com/reference/compose-file/services/', pattern: 'Default value is 10 seconds for the container to exit before sending SIGKILL'}
+  related:
+    question: In the Docker Compose file reference, what is the default restart policy for a service?
+    expect: ['\bno\b']
+    check: {url: 'https://docs.docker.com/reference/compose-file/services/', pattern: '`no`: The default restart policy'}
+
+- id: bash-histsize
+  set: hard
+  use_case: coding
+  question: According to the GNU Bash manual, what default value does the shell set for HISTSIZE?
+  expect: ['\b500\b']
+  check: {url: 'https://www.gnu.org/software/bash/manual/bash.html', pattern: 'The shell sets the default value to 500 after reading any startup files'}
+  related:
+    question: According to the GNU Bash manual, what is the default value of HISTFILE?
+    expect: ['\.bash_history']
+    check: {url: 'https://www.gnu.org/software/bash/manual/bash.html', pattern: 'HISTFILE` The name of the file to which the command history is saved\. Bash assigns a default value of `~/\.bash_history`'}

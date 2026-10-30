@@ -38,14 +38,20 @@ def normalize_url(url: str) -> str:
     return urlunsplit(("https", host, path, query, ""))
 
 
+def _fold_www(host: str) -> str:
+    """Registry keys treat www.example.com and example.com as one site."""
+    return host[4:] if host.startswith("www.") else host
+
+
 def host_of(url_or_domain: str) -> str:
     s = url_or_domain.strip().lower()
-    return urlsplit(s if "://" in s else "https://" + s).hostname or s
+    return _fold_www(urlsplit(s if "://" in s else "https://" + s).hostname or s)
 
 
 def page_id(url: str) -> str:
     p = urlsplit(normalize_url(url))
-    return "page:" + p.netloc + (p.path if p.path != "/" else "") + (f"?{p.query}" if p.query else "")
+    return ("page:" + _fold_www(p.netloc) + (p.path if p.path != "/" else "")
+            + (f"?{p.query}" if p.query else ""))
 
 
 def clean_html(html: str, url: str | None = None) -> str:
@@ -126,3 +132,72 @@ def cap(text: str, max_tokens: int) -> tuple[str, bool]:
     if len(ids) <= max_tokens:
         return text, False
     return ENC.decode(ids[:max_tokens]), True
+
+
+# Harness-enforced write policy (--write enforced). The web server and a WebSearch
+# hook append one line per call to BC_CALL_LOG; the registry reads it at write time.
+CALL_LOG = os.environ.get("BC_CALL_LOG")
+PATTERN_URL = re.compile(r"https?://[^\s\"'<>()]*\{[^}]+\}[^\s\"'<>()]*")
+
+
+def log_call(kind: str, detail: str, path: str | None = CALL_LOG) -> None:
+    if path:
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(f"{kind}\t{detail}\n")
+
+
+def call_counts(path: str | None = CALL_LOG) -> dict:
+    counts = {"fetch": 0, "search": 0}
+    try:
+        lines = open(path, encoding="utf-8").read().splitlines() if path else []
+    except FileNotFoundError:
+        lines = []
+    for line in lines:
+        kind = line.split("\t", 1)[0]
+        counts["search" if kind == "search" else "fetch"] += kind in ("fetch", "render", "search")
+    return counts
+
+
+def _bare(url: str) -> str:
+    """Scheme, www. and trailing slash dropped, so URLs and patterns compare as text."""
+    s = re.sub(r"^https?://(www\.)?", "", url.strip().lower())
+    return s.split("#")[0].rstrip("/")
+
+
+def url_patterns(site_record: dict) -> list[str]:
+    """URL patterns with {placeholders} anywhere in a site record's access notes."""
+    return [m.rstrip(".,;:") for s in site_record.get("access", {}).values() if isinstance(s, str)
+            for m in PATTERN_URL.findall(s)]
+
+
+def pattern_covers(pattern: str, url: str) -> bool:
+    """{name} fills one path segment; a placeholder that says it is a path
+    (e.g. {group path with slashes}) may span several."""
+    rx, pos, pat = "", 0, _bare(pattern)
+    for m in re.finditer(r"\{([^}]*)\}", pat):
+        rx += re.escape(pat[pos:m.start()]) + ("[^?#]+?" if re.search("path|slash", m[1]) else "[^/?#]+")
+        pos = m.end()
+    return bool(re.fullmatch(rx + re.escape(pat[pos:]), _bare(url).split("?")[0]))
+
+
+def card_block(urls: list[str], site_records: list[dict], counts: dict) -> str | None:
+    """Why a page card from this run would not be stored, or None if it would."""
+    if counts["fetch"] <= 1 and not counts["search"]:
+        return (f"this run took {counts['fetch']} fetch{'es' if counts['fetch'] != 1 else ''} and no search, "
+                "so a later agent gets the page as cheaply without a card")
+    for rec in site_records:
+        for p in url_patterns(rec):
+            if any(u and pattern_covers(p, u) for u in urls):
+                return f"the site record for {rec['site']} already has the URL pattern {p}"
+    return None
+
+
+def stored_site_records(db_path: str | None) -> list[dict]:
+    import sqlite3
+    if not db_path or not os.path.exists(db_path):
+        return []
+    with sqlite3.connect(db_path) as db:
+        try:
+            return [json.loads(r) for (r,) in db.execute("SELECT record FROM sites")]
+        except sqlite3.OperationalError:  # registry not created yet
+            return []
