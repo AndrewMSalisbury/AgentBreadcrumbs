@@ -441,3 +441,33 @@ Two fixes on top of miss-0.4, both from the miss-0.4 runs:
 Expected effect is small: about 5 points on multi-fetch related (render +46% → about +1%), and 1-2 points from filing (git-gc r2 only).
 
 Smoke (`out_miss-0.5_smoke/`, rep 1): git-gc cold pulled 2,251 tokens over two fetches, was nudged, and filed its card as `page:git-scm.com/docs/git-config` on the first try. Render cold fetched once and wrote nothing, as before. Render warm-related on that empty registry fetched `/docs/free` twice (413 tokens), got no nudge, wrote nothing and took 16.0k (+10% vs no-write, against +46% under miss-0.4).
+
+### Full run (`out_miss-0.5/`, multi-fetch tasks, reps 1-6)
+
+The 9 multi-fetch tasks, reps 1-6, all four registry arms: 324 new runs, plus the no-write baselines for reps 1-3 copied from miss-0.4. Driver: `out_miss-0.5/drive.py`, two runs at a time. Phase 2 hit the weekly usage limit at 03:45. The driver retried every 15 minutes until the 15:00 reset, then finished. No run was lost, and limit-hit rows are kept out of `results.jsonl`. 324/324 correct.
+
+| Mean per-task change vs no-write, multi-fetch tasks (9) | miss-0.3, r1-3 | miss-0.4, r1-3 | miss-0.5, r1-3 | miss-0.5, r1-6 |
+|---|---|---|---|---|
+| Write cost | +24.7k | same runs | | **+15.8k** |
+| Warm same | -11% | -32% | -42% | **-44%** |
+| Warm related | -21% | -27% | -37% | **-32%** |
+| Read-only same | | | -42% | -44% |
+| Read-only related | -30% | same runs | -30% | -26% |
+| Warm runs that wrote | 13/54 | 9/54 | | **0/216** |
+| Write repaid within 2 reuses (median) | | | | 6/9 (1.14) |
+
+- **The cold side is now deterministic.** 8 of 9 tasks have a page card in all 6 reps. Render has none in any rep: one fetch of 2.5k tokens, so the registry has nothing to save, as intended. 48 of 54 cold runs were nudged and all 48 stored a card.
+- **Filing fired exactly where predicted.** The refusal fired twice, both on git-gc's raw `gc.adoc` card (r2, r4), and both agents re-filed it under `git-scm.com/docs/git-config`. git-gc warm same went from -18% (miss-0.4, r2 misfiled) to -57%.
+- **The pull threshold removed the cheap writes.** Render related went from +46% to +12%: no nudge, no write. Across all four warm arms, no warm agent wrote anything (0/216). Warm agents now behave read-only on their own.
+- **Viability bar** (report.py): warm related -32% on the 9 tasks, so it **passes** (bar -30%). Same question -44%, fetches 3.3 → 1.1 (same) and 3.8 → 2.2 (related), accuracy unchanged, write repaid within 1.14 reuses (median). Read-only related is -26%, so that row fails. Since no warm agent wrote, warm related and read-only related differ only in step 3 of the prompt. The 6-point gap between them is rep noise, which puts the true related cut at about -26% to -32%, right at the bar.
+- **Noise.** Per-rep means of warm same are -41% to -46% (sd 2 points) and of warm related -23% to -38% (sd 6). Baselines move too: git-gc and rust no-write runs in reps 4-6 differ from reps 1-3 by +86% / -64% and +83% / -70%. Six reps is about the least that separates policies a few points apart on related questions.
+- report.py's `hard/multi-fetch` group now has 7 tasks: with 6 reps of baselines, sonatype and render average under 2 fetches. Its numbers are -56% same / -36% related, passing both on warm related and on payback, with read-only related at -28%. The 9-task row is the one comparable with earlier runs.
+- miss-0.4 and miss-0.5 are not paired, since miss-0.5 ran new cold registries. Compared on reps 1-3 with the same baselines, miss-0.5 is 10 points better on both questions (-42% / -37% vs -32% / -27%).
+
+Verdict: miss-0.5 is the first policy to pass the viability bar on warm related questions, on the tasks where breadcrumbs can pay. Same-question savings (-44%) are large and stable. Related savings sit at about 30%, inside rep noise of the bar. It writes on the cold side only, where a card saves something, and no warm agent wrote.
+
+## Next
+
+- **miss-0.5 on the one-fetch tasks.** The 9 hard-set tasks left out here are where the registry can only add cost (lookup and the miss note). Their overhead is what a deployment pays on most pages. They need cold and the warm arms, reps 1-3 (about 160 runs with baselines copied).
+- **Related questions are the weak side.** Read-only related is -26%: warm agents find the card but the related answer is on another page (gha limits vs workflow-syntax, rust `pop_if`). A card's `answers` and links decide whether a related question can use it.
+- **Budget.** The 324-run batch used the rest of the weekly limit. Check what's left before the next batch.
