@@ -134,9 +134,11 @@ def cap(text: str, max_tokens: int) -> tuple[str, bool]:
     return ENC.decode(ids[:max_tokens]), True
 
 
-# Harness-enforced write policy (--write enforced). The web server and a WebSearch
+# Harness-enforced write policy (enforced-*, miss-0.2+). The web server and a WebSearch
 # hook append one line per call to BC_CALL_LOG; the registry reads it at write time.
 CALL_LOG = os.environ.get("BC_CALL_LOG")
+# miss-0.5: page cards need the run's fetches to have returned this many tokens in all.
+MIN_PULL = int(os.environ.get("BC_MIN_PULL") or 0)
 PATTERN_URL = re.compile(r"https?://[^\s\"'<>()]*\{[^}]+\}[^\s\"'<>()]*")
 
 
@@ -147,14 +149,16 @@ def log_call(kind: str, detail: str, path: str | None = CALL_LOG) -> None:
 
 
 def call_counts(path: str | None = CALL_LOG) -> dict:
-    counts = {"fetch": 0, "search": 0}
+    counts = {"fetch": 0, "search": 0, "tokens": 0}
     try:
         lines = open(path, encoding="utf-8").read().splitlines() if path else []
     except FileNotFoundError:
         lines = []
     for line in lines:
-        kind = line.split("\t", 1)[0]
+        kind, *rest = line.split("\t")
         counts["search" if kind == "search" else "fetch"] += kind in ("fetch", "render", "search")
+        if kind in ("fetch", "render") and len(rest) > 1 and rest[1].isdigit():
+            counts["tokens"] += int(rest[1])
     return counts
 
 
@@ -180,10 +184,17 @@ def pattern_covers(pattern: str, url: str) -> bool:
     return bool(re.fullmatch(rx + re.escape(pat[pos:]), _bare(url).split("?")[0]))
 
 
-def card_block(urls: list[str], site_records: list[dict], counts: dict) -> str | None:
-    """Why a page card from this run would not be stored, or None if it would."""
-    if counts["fetch"] <= 1 and not counts["search"]:
+def card_block(urls: list[str], site_records: list[dict], counts: dict, searches: bool = True) -> str | None:
+    """Why a page card from this run would not be stored, or None if it would.
+    searches=False (miss-0.2): only fetches and renders make a run eligible."""
+    if counts["fetch"] <= 1 and not (searches and counts["search"]):
+        if not searches:
+            return (f"this run took {counts['fetch']} fetch{'es' if counts['fetch'] != 1 else ''} or render, "
+                    "so a later agent gets the page as cheaply without a card")
         return (f"this run took {counts['fetch']} fetch{'es' if counts['fetch'] != 1 else ''} and no search, "
+                "so a later agent gets the page as cheaply without a card")
+    if counts["tokens"] < MIN_PULL:
+        return (f"this run's fetches returned {counts['tokens']} tokens in all, "
                 "so a later agent gets the page as cheaply without a card")
     for rec in site_records:
         for p in url_patterns(rec):

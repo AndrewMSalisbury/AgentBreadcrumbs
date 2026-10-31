@@ -13,18 +13,36 @@ and logs tokens, tool calls, time and the final answer to out/results.jsonl.
   python run.py warm-related-nowrite [--task ID]  # related question, cold run's registry, no writing
   python run.py warm-same-nowrite [--task ID]     # same question, cold run's registry, no writing
 
---cards route swaps the section-map page card for a route card (the cheapest way
-to get the page's content); use it with its own --out. --write lean (route cards
-only) tells agents not to write a page card on one-fetch pages or when a site
-record's URL pattern already covers the page; --write lean2 also says a page
-card is expected whenever the answer took more than one fetch or a search.
---write enforced keeps the route rule and moves the skip into the harness: the
-web server and a WebSearch hook log each call to the run's calls.log, the registry
-refuses page cards from runs with at most one fetch and no search or for URLs a
-stored site pattern covers, and each fetch result says whether a card would be stored.
---write miss puts no write rule in the prompt: the first lookup in a run that finds
-no card for its target carries the lean rule, and the registry refuses page cards
-for pages that already have one.
+--iteration picks the card style and write policy, named <approach>-0.<n> in the
+order they were tried (LOG.md); use each with its own --out. narrow-0.1 (cards
+holding only the answer's sections) used an earlier prompt and can't be rerun.
+  map-0.1       section-map page cards (the default)
+  route-0.1     route cards: the cheapest way to get the page's content
+  lean-0.1      route cards; no page card on one-fetch pages or when a site
+                record's URL pattern already covers the page
+  lean-0.2      lean-0.1, also saying a card is expected after multi-fetch pages
+  enforced-0.1  route rule, skip moved into the harness: the web server and a
+                WebSearch hook log each call to the run's calls.log, the registry
+                refuses page cards from runs with at most one fetch and no search or
+                for URLs a stored site pattern covers, and each fetch result says
+                whether a card would be stored
+  enforced-0.2  enforced-0.1 with `answers` lists accepted (now true in every
+                iteration, so the two run the same)
+  miss-0.1      no write rule in the prompt: the first lookup in a run that finds no
+                card for its target carries the lean rule, and the registry refuses
+                page cards for pages that already have one
+  miss-0.2      the route rule's "write a page card" in the note; the registry
+                refuses page cards from runs with at most one fetch or render
+                (searches don't count), and the fetch that makes a run eligible
+                says once that a card would now be stored
+  miss-0.3      adds a Stop hook: a run told a card would be stored that stored
+                nothing is sent back once to write
+  miss-0.4      the note (and so the nudge and hook) only for runs whose lookups
+                have found nothing at all
+  miss-0.5      the nudge and page cards need the run's fetches to have returned
+                2,000+ tokens in all, and a page card must be filed under a site
+                the run looked up
+coldonly-0.1 is lean-0.1's cold registries scored with the nowrite warm arms.
 
 Each run gets its own directory under out/runs/<condition>/<task>/r<rep>/ with
 the raw stream, the MCP config and its registry copy. Warm runs for rep N start
@@ -99,11 +117,22 @@ LEAN2_ROUTE_WRITE_RULE = """3. Before answering, leave breadcrumbs when your way
 # Route rule, with the skip enforced by the registry and announced in fetch results.
 ENFORCED_ROUTE_WRITE_RULE = ROUTE_WRITE_RULE.replace("   If lookup had everything", """   - write stores page cards only when they save a later agent a fetch: it refuses them from runs that took one fetch or render and no search, and for pages a stored site record's URL pattern covers. The last line of each fetch or render result says whether a page card from this run would be stored; if the latest one says it would not, send no page card.
    If lookup had everything""")
-# --write miss: the rule itself arrives with a lookup that misses (see bc/registry_server.py).
+# miss-0.5: tokens a run's fetches must return in all before a page card is worth storing.
+# Every cold card that later saved tokens came from a run that pulled 2,286+; the cards that saved
+# nothing (render, a sonatype related run) came from runs that pulled ~450-550.
+MIN_PULL = 2000
+# miss-*: the rule itself arrives with a lookup that misses (see bc/registry_server.py).
 MISS_RULE = "3. Call write only if a lookup result asks for breadcrumbs, and then as it says."
 NOWRITE_RULE = "3. Do not call write in this session."
-CARDS = "map"  # set from --cards
-WRITE = "all"  # set from --write
+MISS = ("miss-0.1", "miss-0.2", "miss-0.3", "miss-0.4", "miss-0.5")
+ENFORCED = ("enforced-0.1", "enforced-0.2")
+# Iteration name: (page-card style, step 3 of the prompt).
+ITERATIONS = {"map-0.1": ("map", WRITE_RULE), "route-0.1": ("route", ROUTE_WRITE_RULE),
+              "lean-0.1": ("route", LEAN_ROUTE_WRITE_RULE), "lean-0.2": ("route", LEAN2_ROUTE_WRITE_RULE),
+              **{i: ("route", ENFORCED_ROUTE_WRITE_RULE) for i in ENFORCED},
+              **{i: ("route", MISS_RULE) for i in MISS}}
+ITERATION = "map-0.1"  # set from --iteration
+CARDS = "map"
 
 
 def load_tasks(task_id: str | None, task_set: str = "all") -> list[dict]:
@@ -137,9 +166,10 @@ def verify(tasks: list[dict]) -> bool:
 
 
 def mcp_config(registry: pathlib.Path, call_log: pathlib.Path | None = None, miss: dict | None = None) -> dict:
-    """call_log set: --write enforced, both servers share the run's call log. miss: --write miss env."""
+    """call_log set: both servers share the run's call log (enforced-*, miss-0.2+). miss: BC_MISS env."""
     bc = ROOT / "bc"
-    enforce = {"BC_ENFORCE": "1", "BC_CALL_LOG": str(call_log), "BC_REGISTRY": str(registry)} if call_log else {}
+    enforce = {"BC_CALL_LOG": str(call_log), "BC_REGISTRY": str(registry), **(miss or {"BC_ENFORCE": "1"})} \
+        if call_log else {}
     return {"mcpServers": {
         "web": {"command": PY, "args": [str(bc / "web_server.py")], **({"env": enforce} if enforce else {})},
         "registry": {"command": PY, "args": [str(bc / "registry_server.py")],
@@ -147,16 +177,24 @@ def mcp_config(registry: pathlib.Path, call_log: pathlib.Path | None = None, mis
     }}
 
 
+def _hook(script: str, call_log: pathlib.Path) -> dict:
+    cmd = f'"{pathlib.Path(PY).as_posix()}" "{(ROOT / "bc" / script).as_posix()}" "{call_log.as_posix()}"'
+    return {"type": "command", "command": cmd}
+
+
 def search_hook(call_log: pathlib.Path) -> str:
     """--settings JSON: log each WebSearch to the call log (MCP servers can't see it)."""
-    cmd = f'"{pathlib.Path(PY).as_posix()}" "{(ROOT / "bc" / "log_search.py").as_posix()}" "{call_log.as_posix()}"'
-    return json.dumps({"hooks": {"PreToolUse": [{"matcher": "WebSearch",
-                                                 "hooks": [{"type": "command", "command": cmd}]}]}})
+    return json.dumps({"hooks": {"PreToolUse": [{"matcher": "WebSearch", "hooks": [_hook("log_search.py", call_log)]}]}})
+
+
+def stop_hook(call_log: pathlib.Path) -> str:
+    """--settings JSON (miss-0.3+): send a nudged run that stored nothing back once to write."""
+    return json.dumps({"hooks": {"Stop": [{"hooks": [_hook("stop_nudge.py", call_log)]}]}})
 
 
 def parse_stream(lines: list[str]) -> dict:
     """Totals from the result event; tool calls and tool output sizes from the messages."""
-    calls, result_tokens, write_tokens, result, names = {}, {}, 0, {}, {}
+    calls, result_tokens, write_tokens, result, names, said = {}, {}, 0, {}, {}, []
     writes = {"stored": 0, "rejected": 0, "not_stored": 0, "failed": 0}
     for line in lines:
         try:
@@ -165,6 +203,8 @@ def parse_stream(lines: list[str]) -> dict:
             continue
         if ev.get("type") == "assistant":
             for b in ev["message"].get("content", []):
+                if b.get("type") == "text":
+                    said.append(b.get("text", ""))
                 if b.get("type") == "tool_use":
                     names[b["id"]] = b["name"]
                     calls[b["name"]] = calls.get(b["name"], 0) + 1
@@ -192,7 +232,8 @@ def parse_stream(lines: list[str]) -> dict:
         usage["output"] += m.get("outputTokens", 0)
     usage["total"] = sum(usage.values())
     text = result.get("result") or ""
-    m = re.findall(r"ANSWER:\s*(.+)", text)
+    # A Stop hook (miss-0.3+) can send the agent back after its answer; keep the last one it gave.
+    m = re.findall(r"ANSWER:\s*(.+)", text) or re.findall(r"ANSWER:\s*(.+)", "\n".join(said))
     return {"usage": usage, "tool_calls": calls, "tool_result_tokens": result_tokens,
             "write_input_tokens": write_tokens, "write_results": writes, "turns": result.get("num_turns"),
             "duration_ms": result.get("duration_ms"), "cost_usd": result.get("total_cost_usd"),
@@ -225,14 +266,16 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
         question, expect = task["question"], task["expect"]
 
     writes = "nowrite" not in cond and cond != "baseline"
-    call_log = run_dir / "calls.log" if WRITE == "enforced" and writes else None
+    it = ITERATION
+    call_log = run_dir / "calls.log" if (it in ENFORCED or it in MISS[1:]) and writes else None
     cfg = run_dir / "mcp.json"
-    miss = {"BC_MISS": "1", "BC_WRITER": model} if WRITE == "miss" and writes else None
+    miss = {"BC_MISS": "1" if it == "miss-0.1" else "x", "BC_WRITER": model,
+            **({"BC_MISS_SITE": "1"} if it in MISS[3:] else {}),
+            **({"BC_MIN_PULL": str(MIN_PULL), "BC_FILE_LOOKUP": "1"} if it == "miss-0.5" else {})} \
+        if it in MISS and writes else None
     cfg.write_text(json.dumps(mcp_config(registry, call_log, miss), indent=2), encoding="utf-8")
     today = datetime.date.today().isoformat()
-    write_rule = (WRITE_RULE if CARDS == "map" else
-                  {"lean": LEAN_ROUTE_WRITE_RULE, "lean2": LEAN2_ROUTE_WRITE_RULE,
-                   "enforced": ENFORCED_ROUTE_WRITE_RULE, "miss": MISS_RULE}.get(WRITE, ROUTE_WRITE_RULE))
+    write_rule = ITERATIONS[it][1]
     rule = NOWRITE_RULE if "nowrite" in cond else write_rule.format(today=today, model=model)
     system = SYSTEM.format(today=today, write_rule=rule)
     cmd = ["claude", "-p", question, "--model", model, "--system-prompt", system,
@@ -241,8 +284,10 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
            "--permission-mode", "dontAsk"]
     cmd += ["--tools", "", "--allowedTools", ""] if cond == "baseline" else \
            ["--tools", "WebSearch", "--allowedTools", ",".join(TOOLS)]
-    if call_log:
+    if it in ENFORCED and call_log:
         cmd += ["--settings", search_hook(call_log)]
+    elif it in MISS[2:] and call_log:
+        cmd += ["--settings", stop_hook(call_log)]
 
     t0 = time.time()
     try:  # run in the empty run dir so no CLAUDE.md or repo files leak into context
@@ -255,7 +300,7 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
     (run_dir / "stream.jsonl").write_text(stdout, encoding="utf-8")
     (run_dir / "stderr.txt").write_text(stderr, encoding="utf-8")
 
-    row = {"condition": cond, "task": tid, "cards": CARDS, "write": WRITE, "use_case": task["use_case"] if task else None,
+    row = {"condition": cond, "task": tid, "iteration": ITERATION, "cards": CARDS, "use_case": task["use_case"] if task else None,
            "set": task.get("set", "easy") if task else None,
            "rep": rep, "model": model, "question": question,
            "started_at": datetime.datetime.fromtimestamp(t0).isoformat(timespec="seconds"),
@@ -276,14 +321,11 @@ def main():
     ap.add_argument("--rep", type=int, default=1, help="repeat number (default 1)")
     ap.add_argument("--model", default="sonnet")
     ap.add_argument("--out", help="results and runs directory (default out/); warm runs read its cold registries")
-    ap.add_argument("--cards", default="map", choices=("map", "route"), help="page-card style (default map)")
-    ap.add_argument("--write", default="all", choices=("all", "lean", "lean2", "enforced", "miss"),
-                    help="write policy for route cards: lean skips page cards on one-fetch pages and pages a site pattern covers; lean2 also says a card is expected after multi-fetch pages; enforced has the registry refuse those cards; miss sends the lean rule only with lookups that find no card")
+    ap.add_argument("--iteration", default="map-0.1", choices=tuple(ITERATIONS),
+                    help="card style and write policy (default map-0.1); see the list above")
     a = ap.parse_args()
-    global OUT, CARDS, WRITE
-    CARDS, WRITE = a.cards, a.write
-    if WRITE != "all" and CARDS != "route":
-        sys.exit(f"--write {WRITE} needs --cards route")
+    global OUT, CARDS, ITERATION
+    ITERATION, CARDS = a.iteration, ITERATIONS[a.iteration][0]
     if a.out:
         OUT = pathlib.Path(a.out).resolve()
     if a.condition == "verify":

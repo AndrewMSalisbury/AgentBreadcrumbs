@@ -1,19 +1,24 @@
 """MCP server `web`: fetch and render, identical for both experiment arms.
 
-With BC_ENFORCE=1 (--write enforced) each call is logged to BC_CALL_LOG and every
+With BC_ENFORCE=1 (enforced-*) each call is logged to BC_CALL_LOG and every
 result ends with a note saying whether write would store a page card from this run.
+With BC_MISS=x (miss-0.2) calls are logged too, and only the first fetch or
+render that makes a page card storable, in a run whose lookup sent the miss note,
+says so. Each logged call records the tokens its reply returned (BC_MIN_PULL reads them).
 """
 import sys, pathlib, re, os
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 
 from mcp.server.mcpserver import MCPServer
-from bc.common import ENC, fetch_clean, render_clean, log_call, call_counts, card_block, stored_site_records
+from bc.common import ENC, tokens, fetch_clean, render_clean, log_call, call_counts, card_block, stored_site_records
 
 # Claude Code moves any tool result over ~50 KB into a file the agent cannot read,
 # so each reply stays under both limits and says where to continue.
 MAX_TOKENS = 10000
 MAX_CHARS = 36000
 ENFORCE = os.environ.get("BC_ENFORCE") == "1"
+MISSX = os.environ.get("BC_MISS") == "x"
+LOGGED = ENFORCE or MISSX
 HEADING = re.compile(r"^(#{1,6})\s+(.+)$")
 mcp = MCPServer("web")
 
@@ -72,12 +77,33 @@ def _respond(text: str, head: str, section: str | None, start: int) -> str:
     return _reply(text, head, start)
 
 
+_nudged = False
+
+
 def _card_note(url: str, reply: str) -> str:
+    global _nudged
+    if MISSX:
+        if _nudged or "note\tmiss" not in _call_lines():
+            return reply
+        counts = call_counts()
+        if card_block([url], stored_site_records(os.environ.get("BC_REGISTRY")), counts, searches=False):
+            return reply
+        _nudged = True
+        log_call("nudge", url)  # read by the miss-0.3+ Stop hook
+        return reply + (f"\n[breadcrumbs: this run has now taken {counts['fetch']} fetches, so write would store "
+                        "a page card from it: write one for the page that holds the answer before answering.]")
     if not ENFORCE:
         return reply
     why = card_block([url], stored_site_records(os.environ.get("BC_REGISTRY")), call_counts())
     return reply + (f"\n[breadcrumbs: write would not store a page card from this run: {why}]"
                     if why else "\n[breadcrumbs: write would store a page card from this run]")
+
+
+def _call_lines() -> list[str]:
+    try:
+        return open(os.environ["BC_CALL_LOG"], encoding="utf-8").read().splitlines()
+    except (KeyError, FileNotFoundError):
+        return []
 
 
 @mcp.tool(structured_output=False)
@@ -90,9 +116,10 @@ def fetch(url: str, select: list[str] | None = None, section: str | None = None,
     pass for the next part and list the page's headings."""
     if not section and "#" in url:
         url, section = url.split("#", 1)
-    if ENFORCE:
-        log_call("fetch", url)
-    return _card_note(url, _fetch(url, select, section, start))
+    reply = _fetch(url, select, section, start)
+    if LOGGED:
+        log_call("fetch", f"{url}\t{tokens(reply)}")
+    return _card_note(url, reply)
 
 
 def _fetch(url, select, section, start) -> str:
@@ -113,9 +140,10 @@ def render(url: str, section: str | None = None, start: int = 0) -> str:
     work as in fetch; output is at most 10,000 tokens per call."""
     if not section and "#" in url:
         url, section = url.split("#", 1)
-    if ENFORCE:
-        log_call("render", url)
-    return _card_note(url, _render(url, section, start))
+    reply = _render(url, section, start)
+    if LOGGED:
+        log_call("render", f"{url}\t{tokens(reply)}")
+    return _card_note(url, reply)
 
 
 def _render(url, section, start) -> str:

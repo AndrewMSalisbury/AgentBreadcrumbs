@@ -1,4 +1,4 @@
-"""PreToolUse hook for WebSearch under --write enforced: appends the search to the
+"""PreToolUse hook for WebSearch under enforced-*: appends the search to the
 run's call log (argv[1], same format as bc.common.log_call) so the registry can
 count it. Never blocks the call; kept free of bc.common's heavy imports."""
 import sys, json

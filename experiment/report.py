@@ -20,6 +20,8 @@ READ_ONLY = "warm-related-nowrite"
 # Optional: same question read-only; with READ_ONLY it scores a policy where only cold agents write.
 READ_ONLY_SAME = "warm-same-nowrite"
 USE_CASES = ("hard_access", "docs", "coding")
+# Tasks whose no-write related run takes this many fetches and searches: where breadcrumbs can save one.
+MULTI_FETCH = 2.0
 
 
 def load(path: pathlib.Path) -> dict:
@@ -113,6 +115,10 @@ def report(data: dict) -> str:
     sets = sorted({k[0] for k in keys})
     for st in sets:
         groups[f"{st}/all"] = group([t for t in tasks if cold[t]["set"] == st])
+    for st in sets:
+        multi = [t for t in tasks if cold[t]["set"] == st and nwr[t]["fetches"] >= MULTI_FETCH]
+        if multi:
+            groups[f"{st}/multi-fetch"] = group(multi)
     if len(sets) > 1:
         groups["all"] = group(tasks)
     rows = [[name, g["n"], f"{g['write']:+,.0f}",
@@ -138,10 +144,11 @@ def report(data: dict) -> str:
         cost = max(cold[t]["total"] - nw[t]["total"], 0)
         paybacks[t] = cost / saving if saving > 0 else float("inf")
 
-    out.append("\n## Viability bar\n")
-    for name in [k for k in groups if k.endswith("/all")] + (["all"] if "all" in groups else []):
+    out.append(f"\n## Viability bar\n\nMulti-fetch: tasks whose no-write related run averages {MULTI_FETCH:g}+ "
+               "fetches and searches, the ones a breadcrumb can make cheaper.\n")
+    for name in [k for k in groups if k.endswith(("/all", "/multi-fetch"))] + (["all"] if "all" in groups else []):
         g = groups[name]
-        pb = [p for t, p in paybacks.items() if name == "all" or cold[t]["set"] == name.split("/")[0]]
+        pb = [paybacks[t] for t in g["tasks"]]
         fewer = g["warm-related", "fetches"] < g["cold-nowrite-related", "fetches"] \
             and g["warm-same", "fetches"] < g["cold-nowrite", "fetches"]
         acc = g["warm-same", "correct"] >= g["cold-nowrite", "correct"] \

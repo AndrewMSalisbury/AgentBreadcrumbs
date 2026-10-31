@@ -5,13 +5,23 @@ the v0.2 MVP schemas and rejected before storage if invalid. The database path
 comes from BC_REGISTRY, so the harness can give each run its own copy.
 BC_CARDS picks the page-card style: "map" (sections of the whole page, the
 default) or "route" (the cheapest way to get the page's content).
-BC_ENFORCE=1 (--write enforced) refuses page cards that would save a later agent
+BC_ENFORCE=1 (enforced-*) refuses page cards that would save a later agent
 nothing: from runs with at most one fetch and no search (counted in BC_CALL_LOG),
 or for a URL a stored site record's {pattern} already covers.
-BC_MISS=1 (--write miss) puts no write rule in the prompt: the first lookup in a run
+BC_MISS=1 (miss-0.1) puts no write rule in the prompt: the first lookup in a run
 that finds no card for its target (and no site URL pattern) ends with the write
 instructions, and page cards
 are refused for pages that already have one. BC_WRITER fills in their provenance.
+BC_MISS=x (miss-0.2) is miss mode with the route rule's "write a page card" in
+the note, and the enforced refusal counting fetches and renders only (BC_CALL_LOG):
+the web server says once, on the fetch that makes the run eligible, that a card
+would now be stored.
+BC_MISS_SITE=1 (miss-0.4) sends that note only to runs whose lookups have found
+nothing at all, so warm agents on a carded site are not asked for a second card.
+miss-0.5 adds BC_MIN_PULL (no nudge and no page card unless the run's fetches
+returned that many tokens; see bc.common.card_block) and BC_FILE_LOOKUP=1: a page
+card must be filed under a site this run looked up, since later agents look up the
+page they start from, not the raw source or API that route.url points to.
 """
 import sys, pathlib, json, re, hashlib, os, sqlite3, datetime
 from urllib.parse import urlsplit
@@ -21,14 +31,18 @@ import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
 from mcp.server.mcpserver import MCPServer
-from bc.common import normalize_url, host_of, page_id, fetch_clean, tokens, card_block, call_counts
+from bc.common import normalize_url, host_of, page_id, fetch_clean, tokens, card_block, call_counts, log_call
 
 ROOT = pathlib.Path(__file__).parent.parent
 DB_PATH = os.environ.get("BC_REGISTRY", str(ROOT / "out" / "registry.sqlite"))
 HASH_ON_WRITE = os.environ.get("BC_HASH", "1") != "0"
 CARDS = os.environ.get("BC_CARDS", "map")
 ENFORCE = os.environ.get("BC_ENFORCE") == "1"
-MISS = os.environ.get("BC_MISS") == "1"
+MISS = os.environ.get("BC_MISS") in ("1", "x")
+MISSX = os.environ.get("BC_MISS") == "x"
+MISS_SITE = os.environ.get("BC_MISS_SITE") == "1"
+FILE_LOOKUP = os.environ.get("BC_FILE_LOOKUP") == "1"
+_looked_up: list[str] = []  # sites this run's lookups asked for, in order
 WRITER = os.environ.get("BC_WRITER", "unknown")
 MAX_OTHER = 20
 # Page-card limits from page-l1.schema.json, applied again after a merge.
@@ -125,12 +139,17 @@ def write_page(record: dict) -> str:
         with connect() as db:
             if db.execute("SELECT 1 FROM pages WHERE id = ?", (page_id(record.get("url") or ""),)).fetchone():
                 return "not stored: this page already has a card. Site records are still stored."
-    if ENFORCE:  # checked before the schema, so a refused card is not retried
+    if ENFORCE or MISSX:  # checked before the schema, so a refused card is not retried
         route = record.get("route") if isinstance(record.get("route"), dict) else {}
         with connect() as db:
             sites = [json.loads(r) for (r,) in db.execute("SELECT record FROM sites")]
-        if why := card_block([record.get("url"), route.get("url")], sites, call_counts()):
+        if why := card_block([record.get("url"), route.get("url")], sites, call_counts(), searches=not MISSX):
             return f"not stored: {why}. Site records are still stored."
+    if FILE_LOOKUP and _looked_up and isinstance(record.get("url"), str) \
+            and host_of(record["url"]) not in _looked_up:
+        return (f"not stored: this run looked up {', '.join(_looked_up)}, not {host_of(record['url'])}. "
+                "Later agents look up the page they start from, so a card is filed under that page's URL "
+                f"on {_looked_up[0]}, with {record['url']} as route.url if that is the cheapest source.")
     if errs := _errors(PAGE, record):
         return "rejected:\n- " + "\n- ".join(errs)
     record = {"id": page_id(record["url"]), **record}
@@ -171,6 +190,8 @@ def write_page(record: dict) -> str:
 
 def lookup_target(target: str, fmt: str = "yaml") -> str:
     site = host_of(target)
+    if site not in _looked_up:
+        _looked_up.append(site)
     pid = page_id(target)
     parts = urlsplit(normalize_url(target))
     if parts.path == "/" and not parts.query:  # bare domain: site-wide lookup
@@ -192,12 +213,15 @@ def lookup_target(target: str, fmt: str = "yaml") -> str:
         out["other_pages"] = [{"url": r["url"], "answers": r["answers"],
                                **({"route": r["route"]} if CARDS == "route" and "route" in r else {})}
                               for r in map(lambda o: json.loads(o[0]), others)]
+    if MISS_SITE:  # a run that has seen breadcrumbs is never sent the note, even for another site
+        global _told
+        _told = True
     # A site URL pattern already gives pages' sources, so the lean rule would write nothing more.
     patterned = srow and "{" in json.dumps(out["site"].get("access", {}))
-    return _dump(out, fmt) + ("" if prow or patterned else _miss_note())
+    return _dump(out, fmt) + ("" if prow or patterned or MISS_SITE else _miss_note())
 
 
-# --write miss: the lean rule, sent once per run with the first lookup that has no card for its target.
+# miss-0.1: the lean rule, sent once per run with the first lookup that has no card for its target.
 MISS_NOTE = """
 
 [breadcrumbs: the registry has no card for this. If you answer from a page lookup did not cover, write before answering, only what would save a later agent a search or a fetch:
@@ -210,6 +234,17 @@ MISS_NOTE = """
   - answers: the topics the whole page covers, not your question. No values anywhere in the card.
 - Site record: only if you learned how to get content from any page on the site (an API or raw-source URL pattern with {{name}} in it, Markdown versions, JavaScript needed) and lookup did not already say so. Prefer it to a page card when the pattern covers the page.
 Use schema "0.2" and provenance {{"writer": "{writer}", "observed_at": "{today}"}}.]"""
+# miss-0.2: the route rule's unconditional page card, with the one-fetch skip left to the registry.
+MISSX_NOTE = """
+
+[breadcrumbs: the registry has no card for this. If you answer from a page lookup did not cover, write before answering:
+- Page card (L1) for the page that held the answer, whenever getting it took more than one fetch or render. write refuses page cards from runs with one fetch or render (searches do not count), and for pages a stored site record's URL pattern covers; a fetch result will say when this run has passed that bar. A card records the cheapest way to get the page's content, not your answer:
+  - route.url: the smallest source you found with the page's content: a raw source file, an API endpoint, a Markdown version, or the page itself if nothing smaller exists.
+  - route.select, route.section, route.start: fetch arguments that worked on route.url, if you used any; route.tokens: roughly how large the result was.
+  - route.notes: what did not work and why (e.g. section= fails because entries are not headings).
+  - answers: the topics the whole page covers, not your question. No values anywhere in the card.
+- Site record: only if you learned how to get content from any page on the site (an API or raw-source URL pattern with {{name}} in it, Markdown versions, JavaScript needed) and lookup did not already say so. It is stored after any number of fetches.
+Use schema "0.2" and provenance {{"writer": "{writer}", "observed_at": "{today}"}}.]"""
 _told = False
 
 
@@ -218,7 +253,13 @@ def _miss_note() -> str:
     if not MISS or _told:
         return ""
     _told = True
-    return MISS_NOTE.format(writer=WRITER, today=datetime.date.today().isoformat())
+    today = datetime.date.today().isoformat()
+    if not MISSX:
+        return MISS_NOTE.format(writer=WRITER, today=today)
+    log_call("note", "miss")  # the web server says once when a card from this run would be stored
+    n = call_counts()["fetch"]
+    return MISSX_NOTE.format(writer=WRITER, today=today) + (
+        f"\n[breadcrumbs: this run has taken {n} fetches, so write would store a page card from it.]" if n > 1 else "")
 
 
 LOOKUP_DOC = {
@@ -275,7 +316,10 @@ def write(record: dict) -> str:
     try:
         if not isinstance(record, dict):
             return "rejected: record must be a JSON object"
-        return write_site(record) if "site" in record else write_page(record)
+        result = write_site(record) if "site" in record else write_page(record)
+        if result.startswith("stored"):  # read by the miss-0.3+ Stop hook
+            log_call("stored", "site" if "site" in record else "page")
+        return result
     except Exception as e:
         return f"[write failed: {type(e).__name__}: {e}]"
 
