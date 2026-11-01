@@ -1,0 +1,58 @@
+# Knowledge-gap probe libraries (research/knowledge-gap-probe.md). Hand-written list;
+# research/scripts/libmeta.py fetches versions, release dates and downloads into
+# libmeta.yaml. ecosystem: npm, pypi or cargo.
+#
+# terraform's aws provider was swapped for @aws-sdk/client-s3, since deps.dev
+# (where release dates come from) doesn't cover the Terraform registry.
+# The niche group comes from research/scripts/pickniche.py (niche_candidates.yaml):
+# 2k-50k weekly downloads, first release 2024-06 to 2026-06 (2 years up to Sonnet 5.5's
+# Jun 2026 reliable knowledge cutoff), seed 1. The first 2 per ecosystem, in shortlist
+# order, that are importable libraries with docs and a changelog or releases. Rejected
+# before them: npm @bitfinex/bfx-facs-http, @vijayee/wavedb (no changelog or releases);
+# pypi githubkit-schemas-2022-11-28 (schema data for another library), ruff-format,
+# pyspeex-noise (READMEs of 1.1k and 443 characters, no other docs); cargo
+# trouble-host-macros, difficient-macros (macro crates for another crate), ldap3_lber
+# (re-publish of the 2017 lber crate).
+
+fast-frontend:
+  - {name: next, ecosystem: npm}
+  - {name: react-router, ecosystem: npm}
+  - {name: tailwindcss, ecosystem: npm}
+  - {name: vite, ecosystem: npm}
+  - {name: svelte, ecosystem: npm}
+  - {name: astro, ecosystem: npm}
+ai-sdk:
+  - {name: anthropic, ecosystem: pypi}
+  - {name: openai, ecosystem: pypi}
+  - {name: langchain, ecosystem: pypi}
+  - {name: ai, ecosystem: npm}
+  - {name: llama-index, ecosystem: pypi}
+  - {name: mcp, ecosystem: pypi}
+stable:
+  - {name: requests, ecosystem: pypi}
+  - {name: express, ecosystem: npm}
+  - {name: lodash, ecosystem: npm}
+  - {name: numpy, ecosystem: pypi}
+  - {name: flask, ecosystem: pypi}
+  - {name: serde, ecosystem: cargo}
+python-data-web:
+  - {name: pandas, ecosystem: pypi}
+  - {name: pydantic, ecosystem: pypi}
+  - {name: fastapi, ecosystem: pypi}
+  - {name: sqlalchemy, ecosystem: pypi}
+  - {name: polars, ecosystem: pypi}
+  - {name: httpx, ecosystem: pypi}
+infra-cloud:
+  - {name: boto3, ecosystem: pypi}
+  - {name: stripe, ecosystem: npm}
+  - {name: '@aws-sdk/client-s3', ecosystem: npm}
+  - {name: kubernetes, ecosystem: pypi}
+  - {name: google-cloud-storage, ecosystem: pypi}
+  - {name: twilio, ecosystem: npm}
+niche:
+  - {name: '@embrace-io/web-sdk', ecosystem: npm}
+  - {name: '@frontmcp/auth', ecosystem: npm}
+  - {name: mjlab, ecosystem: pypi}
+  - {name: cachekit, ecosystem: pypi}
+  - {name: mlt-core, ecosystem: cargo}
+  - {name: dma-api, ecosystem: cargo}

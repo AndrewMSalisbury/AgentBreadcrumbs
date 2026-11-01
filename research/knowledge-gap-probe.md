@@ -18,7 +18,7 @@ About 36, stratified so each group can be read on its own. Six per group:
 | AI / LLM SDKs | Change monthly, often after the cutoff | anthropic (py), openai (py), langchain, ai (Vercel), llama-index, mcp (py) |
 | Stable, widely used | Control: model memory should be good | requests, express, lodash, numpy, flask, serde |
 | Python data / web | Mid cadence, deprecation-heavy | pandas, pydantic, fastapi, sqlalchemy, polars, httpx |
-| Infra and cloud SDKs | Large surface, integration-heavy | boto3, stripe (node), terraform aws provider, kubernetes (py), google-cloud-storage, twilio |
+| Infra and cloud SDKs | Large surface, integration-heavy | boto3, stripe (node), @aws-sdk/client-s3, kubernetes (py), google-cloud-storage, twilio |
 | Niche / new | Little training data | picked from registry search: under ~50k weekly downloads, first release within 2 years of the cutoff, 6 across npm, PyPI and crates |
 
 Per library, the script records from the registry API: current version, release date of each version asked about, releases in the last 12 months, and weekly downloads. Nothing is filled in by hand.
@@ -78,7 +78,9 @@ Memory runs replace the system prompt and load no tools or MCP servers. A smoke 
 ## Build steps
 
 1. Done: `--tasks` option in `run.py`, and a `memory` condition (no tools or MCP servers, its own prompt allowing `UNSURE` and asking for confidence). Rows get `confidence`, `library`, `sample` and `outcome`. `related` is optional in a task file. `baseline` stays the empty overhead run.
-2. `research/scripts/libmeta.py`: registry metadata per library (versions, release dates, cadence, downloads) into `research/probe/libraries.yaml`.
+2. Done: `research/scripts/libmeta.py` reads the hand-written list in `research/probe/libraries.yaml` and writes `research/probe/libmeta.yaml`. Per library it records the latest stable version, first and latest release, stable releases in the last 12 months, the first release of each major (each minor below 1.0), and weekly downloads. Release dates come from deps.dev; downloads from npm, pypistats and crates.io. Terraform's aws provider became `@aws-sdk/client-s3`, because deps.dev doesn't cover the Terraform registry. The niche group comes from `research/scripts/pickniche.py`. It keeps packages with 2k-50k weekly downloads whose first release falls in 2024-06 to 2026-06, and drops families of 4+ packages that share a name prefix. The picks are the first 2 per ecosystem in seeded order that pass the hand check; `libraries.yaml` lists the rejects and why.
+
+The cutoff is Sonnet 5.5's reliable knowledge cutoff and training data cutoff, both Jun 2026 (Anthropic's models overview, checked 2026-11-01). The probe runs `--model sonnet`, which ran `claude-sonnet-5-5` in the smoke run.
 3. `research/probe/questions.yaml`: 6 questions per library in `tasks.yaml` format, verified with `run.py verify`.
 4. A smoke run on 2 libraries per group (72 questions) before the rest, to check grading and the prompt.
 5. Report script: the tables above.

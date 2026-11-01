@@ -1,0 +1,184 @@
+cutoff: 2026-06
+first_release_window:
+- '2024-06-01'
+- '2026-06-30'
+weekly_downloads:
+- 2000
+- 50000
+seed: 1
+fetched: '2026-11-01'
+npm:
+- name: '@bitfinex/bfx-facs-http'
+  weekly_downloads: 2407
+  description: Bitfinex HTTP Facility
+  first_released: '2025-12-10'
+- name: '@vijayee/wavedb'
+  weekly_downloads: 2470
+  description: Node.js bindings for WaveDB - Hierarchical B+Trie Database
+  first_released: '2026-03-31'
+- name: '@embrace-io/web-sdk'
+  weekly_downloads: 12397
+  description: Embrace Web SDK
+  first_released: '2025-04-03'
+- name: '@frontmcp/auth'
+  weekly_downloads: 2413
+  description: 'Authentication and authorization for FrontMCP servers: auth modes,
+    OAuth 2.1 (local and remote), JWT and session checks, authorities and the credential
+    vault'
+  first_released: '2026-01-26'
+- name: '@scalar/void-server'
+  weekly_downloads: 38640
+  description: Mirror for HTTP requests
+  first_released: '2024-06-21'
+- name: '@forgecart/sdk'
+  weekly_downloads: 11652
+  description: ForgeCart Client SDK
+  first_released: '2025-12-12'
+- name: '@adaline/open-router'
+  weekly_downloads: 43430
+  description: Adaline Open Router
+  first_released: '2024-10-05'
+- name: '@flowcore/sdk'
+  weekly_downloads: 10450
+  description: Flowcore SDK
+  first_released: '2024-12-09'
+- name: '@workflow/world-testing'
+  weekly_downloads: 11838
+  description: Testing utilities and World implementation for Workflow SDK
+  first_released: '2025-10-22'
+- name: '@askdialog/dialog-sdk'
+  weekly_downloads: 10529
+  description: Dialog SDK
+  first_released: '2025-04-18'
+- name: '@mui/internal-netlify-cache'
+  weekly_downloads: 24352
+  description: Netlify plugin to cache Next.js output cache for MUI repos.
+  first_released: '2025-10-13'
+- name: '@stwd/sdk'
+  weekly_downloads: 47180
+  description: TypeScript SDK for Steward, agent wallet infrastructure with policy
+    enforcement
+  first_released: '2026-03-14'
+- name: '@smithers-orchestrator/scheduler'
+  weekly_downloads: 49833
+  description: 'Pure decision engine: session, scheduler, and task state management
+    for Smithers workflows'
+  first_released: '2026-04-18'
+- name: '@aftership/tracking-sdk'
+  weekly_downloads: 24229
+  description: Tracking NodeJS SDK
+  first_released: '2024-06-20'
+- name: '@broberg/ai-sdk'
+  weekly_downloads: 5831
+  description: Unified AI/LLM SDK — one facade, all providers, all capabilities, first-class
+    cost control on every call.
+  first_released: '2026-06-02'
+pypi:
+- name: mjlab
+  weekly_downloads: 27812
+  first_released: '2025-09-26'
+- name: githubkit-schemas-2022-11-28
+  weekly_downloads: 21057
+  first_released: '2026-06-07'
+- name: ruff-format
+  weekly_downloads: 27945
+  first_released: '2025-10-09'
+- name: pyspeex-noise
+  weekly_downloads: 19294
+  first_released: '2024-08-25'
+- name: cachekit
+  weekly_downloads: 15765
+  first_released: '2025-10-29'
+- name: data-platform-helpers
+  weekly_downloads: 31675
+  first_released: '2024-06-24'
+- name: asyncstdlib-fw
+  weekly_downloads: 35989
+  first_released: '2025-05-19'
+- name: ten-vad
+  weekly_downloads: 17727
+  first_released: '2025-06-30'
+- name: oidc-provider-mock
+  weekly_downloads: 22237
+  first_released: '2025-01-13'
+- name: godot-ai
+  weekly_downloads: 20910
+  first_released: '2026-04-16'
+- name: pylakekeeper
+  weekly_downloads: 28528
+  first_released: '2026-06-25'
+- name: gohighlevel-api-client
+  weekly_downloads: 39909
+  first_released: '2025-11-19'
+- name: betterproto2-compiler
+  weekly_downloads: 26474
+  first_released: '2024-12-20'
+- name: parakeet-mlx
+  weekly_downloads: 18369
+  first_released: '2025-05-04'
+- name: altex
+  weekly_downloads: 16560
+  first_released: '2025-06-30'
+cargo:
+- name: trouble-host-macros
+  weekly_downloads: 11140
+  first_released: '2024-11-14'
+  description: An async Rust BLE host - Derive macros crate
+- name: difficient-macros
+  weekly_downloads: 6484
+  first_released: '2025-07-24'
+  description: macros for the difficient crate
+- name: mlt-core
+  weekly_downloads: 5660
+  first_released: '2026-02-20'
+  description: MapLibre Tile library code
+- name: ldap3_lber
+  weekly_downloads: 2355
+  first_released: '2026-06-23'
+  description: An ASN.1/BER parser/encoder based on nom
+- name: dma-api
+  weekly_downloads: 2213
+  first_released: '2024-11-20'
+  description: Trait for DMA alloc and some collections
+- name: kurtbuilds_sql
+  weekly_downloads: 2027
+  first_released: '2025-08-06'
+  description: Structs representing sql queries, enabling query building, migrations,
+    and more
+- name: vise-exporter
+  weekly_downloads: 2996
+  first_released: '2024-07-05'
+  description: Prometheus exporter for metrics defined using `vise`
+- name: libdisplay-info
+  weekly_downloads: 5972
+  first_released: '2024-08-31'
+  description: EDID and DisplayID library.
+- name: fetchkit
+  weekly_downloads: 2720
+  first_released: '2026-02-12'
+  description: AI-friendly web content fetching and HTML-to-Markdown conversion library
+- name: sentencepiece-rs
+  weekly_downloads: 3607
+  first_released: '2026-05-10'
+  description: Rust runtime reimplementation of SentencePiece model loading, normalization,
+    encoding, and decoding.
+- name: environs
+  weekly_downloads: 2010
+  first_released: '2026-02-23'
+  description: typed environment variable resolution with fallback key chains
+- name: fcnet
+  weekly_downloads: 15684
+  first_released: '2024-08-07'
+  description: An in-process Firecracker microVM networking backend based on fcnet-types.
+- name: spareval
+  weekly_downloads: 22030
+  first_released: '2025-01-11'
+  description: SPARQL evaluator
+- name: moonpool-sim
+  weekly_downloads: 7777
+  first_released: '2025-12-03'
+  description: Simulation engine for the moonpool framework
+- name: mailify-lib
+  weekly_downloads: 6362
+  first_released: '2026-01-06'
+  description: Identify if a mail address exists

@@ -1,0 +1,2717 @@
+fetched: '2026-11-01'
+libraries:
+  next:
+    group: fast-frontend
+    ecosystem: npm
+    latest: 16.4.3
+    latest_released: '2026-10-23'
+    first_released: '2011-07-11'
+    stable_versions: 424
+    releases_12mo: 87
+    series:
+      '0.1':
+        version: 0.1.0
+        released: '2011-07-11'
+      '0.2':
+        version: 0.2.0
+        released: '2011-08-08'
+      '0.3':
+        version: 0.3.0
+        released: '2012-10-04'
+      '0.4':
+        version: 0.4.0
+        released: '2014-04-27'
+      '0.9':
+        version: 0.9.9
+        released: '2016-10-25'
+      '1':
+        version: 1.0.0
+        released: '2016-10-25'
+      '2':
+        version: 2.0.0
+        released: '2017-03-27'
+      '3':
+        version: 3.0.1
+        released: '2017-08-09'
+      '4':
+        version: 4.0.0
+        released: '2017-10-09'
+      '5':
+        version: 5.0.0
+        released: '2018-02-05'
+      '6':
+        version: 6.0.0
+        released: '2018-04-29'
+      '7':
+        version: 7.0.0
+        released: '2018-09-19'
+      '8':
+        version: 8.0.0
+        released: '2019-02-11'
+      '9':
+        version: 9.0.0
+        released: '2019-07-08'
+      '10':
+        version: 10.0.0
+        released: '2020-10-27'
+      '11':
+        version: 11.0.0
+        released: '2021-06-15'
+      '12':
+        version: 12.0.0
+        released: '2021-10-26'
+      '13':
+        version: 13.0.0
+        released: '2022-10-25'
+      '14':
+        version: 14.0.0
+        released: '2023-10-26'
+      '15':
+        version: 15.0.0
+        released: '2024-10-21'
+      '16':
+        version: 16.0.0
+        released: '2025-10-22'
+    weekly_downloads: 90620731
+  react-router:
+    group: fast-frontend
+    ecosystem: npm
+    latest: 8.5.1
+    latest_released: '2026-10-27'
+    first_released: '2014-02-02'
+    stable_versions: 227
+    releases_12mo: 35
+    series:
+      '0.0':
+        version: 0.0.0
+        released: '2014-02-02'
+      '0.4':
+        version: 0.4.0
+        released: '2014-07-24'
+      '0.5':
+        version: 0.5.0
+        released: '2014-07-26'
+      '0.6':
+        version: 0.6.0
+        released: '2014-08-29'
+      '0.7':
+        version: 0.7.0
+        released: '2014-09-02'
+      '0.8':
+        version: 0.8.0
+        released: '2014-10-04'
+      '0.9':
+        version: 0.9.0
+        released: '2014-10-06'
+      '0.10':
+        version: 0.10.0
+        released: '2014-10-30'
+      '0.11':
+        version: 0.11.0
+        released: '2014-11-22'
+      '0.12':
+        version: 0.12.0
+        released: '2015-02-10'
+      '0.13':
+        version: 0.13.0
+        released: '2015-03-20'
+      '1':
+        version: 1.0.0
+        released: '2015-11-09'
+      '2':
+        version: 2.0.0
+        released: '2016-02-10'
+      '3':
+        version: 3.0.0
+        released: '2016-10-25'
+      '4':
+        version: 4.0.0
+        released: '2017-03-11'
+      '5':
+        version: 5.0.0
+        released: '2019-03-18'
+      '6':
+        version: 6.0.0
+        released: '2021-11-03'
+      '7':
+        version: 7.0.0
+        released: '2024-11-22'
+      '8':
+        version: 8.0.0
+        released: '2026-06-17'
+    weekly_downloads: 74131496
+  tailwindcss:
+    group: fast-frontend
+    ecosystem: npm
+    latest: 4.3.3
+    latest_released: '2026-07-16'
+    first_released: '2017-10-06'
+    stable_versions: 239
+    releases_12mo: 12
+    series:
+      '0.0':
+        version: 0.0.1
+        released: '2017-10-06'
+      '0.1':
+        version: 0.1.0
+        released: '2017-11-01'
+      '0.2':
+        version: 0.2.0
+        released: '2017-11-17'
+      '0.3':
+        version: 0.3.0
+        released: '2017-12-01'
+      '0.4':
+        version: 0.4.0
+        released: '2017-12-15'
+      '0.5':
+        version: 0.5.0
+        released: '2018-03-13'
+      '0.6':
+        version: 0.6.0
+        released: '2018-06-21'
+      '0.7':
+        version: 0.7.0
+        released: '2018-10-31'
+      '1':
+        version: 1.0.0
+        released: '2019-05-13'
+      '2':
+        version: 2.0.0
+        released: '2020-11-18'
+      '3':
+        version: 3.0.0
+        released: '2021-12-09'
+      '4':
+        version: 4.0.0
+        released: '2025-01-21'
+    weekly_downloads: 167732034
+  vite:
+    group: fast-frontend
+    ecosystem: npm
+    latest: 8.3.5
+    latest_released: '2026-10-21'
+    first_released: '2020-04-21'
+    stable_versions: 440
+    releases_12mo: 52
+    series:
+      '0.1':
+        version: 0.1.0
+        released: '2020-04-21'
+      '0.2':
+        version: 0.2.0
+        released: '2020-04-21'
+      '0.3':
+        version: 0.3.0
+        released: '2020-04-22'
+      '0.4':
+        version: 0.4.0
+        released: '2020-04-23'
+      '0.5':
+        version: 0.5.0
+        released: '2020-04-24'
+      '0.6':
+        version: 0.6.0
+        released: '2020-04-27'
+      '0.7':
+        version: 0.7.0
+        released: '2020-04-29'
+      '0.8':
+        version: 0.8.0
+        released: '2020-04-30'
+      '0.9':
+        version: 0.9.0
+        released: '2020-05-03'
+      '0.10':
+        version: 0.10.0
+        released: '2020-05-04'
+      '0.11':
+        version: 0.11.0
+        released: '2020-05-06'
+      '0.12':
+        version: 0.12.0
+        released: '2020-05-07'
+      '0.13':
+        version: 0.13.0
+        released: '2020-05-08'
+      '0.14':
+        version: 0.14.0
+        released: '2020-05-10'
+      '0.15':
+        version: 0.15.0
+        released: '2020-05-14'
+      '0.16':
+        version: 0.16.0
+        released: '2020-05-19'
+      '0.17':
+        version: 0.17.0
+        released: '2020-05-26'
+      '0.18':
+        version: 0.18.0
+        released: '2020-05-28'
+      '0.19':
+        version: 0.19.0
+        released: '2020-05-30'
+      '0.20':
+        version: 0.20.0
+        released: '2020-06-02'
+      '2':
+        version: 2.0.0
+        released: '2021-02-16'
+      '3':
+        version: 3.0.0
+        released: '2022-07-13'
+      '4':
+        version: 4.0.0
+        released: '2022-12-09'
+      '5':
+        version: 5.0.0
+        released: '2023-11-16'
+      '6':
+        version: 6.0.0
+        released: '2024-11-26'
+      '7':
+        version: 7.0.0
+        released: '2025-06-24'
+      '8':
+        version: 8.0.0
+        released: '2026-03-12'
+    weekly_downloads: 251989031
+  svelte:
+    group: fast-frontend
+    ecosystem: npm
+    latest: 5.57.3
+    latest_released: '2026-10-26'
+    first_released: '2016-11-17'
+    stable_versions: 769
+    releases_12mo: 94
+    series:
+      '0.0':
+        version: 0.0.1
+        released: '2016-11-17'
+      '0.1':
+        version: 0.1.0
+        released: '2016-11-21'
+      '0.2':
+        version: 0.2.0
+        released: '2016-11-25'
+      '0.3':
+        version: 0.3.0
+        released: '2016-11-26'
+      '1':
+        version: 1.0.0
+        released: '2016-11-29'
+      '2':
+        version: 2.0.0
+        released: '2018-04-19'
+      '3':
+        version: 3.0.0
+        released: '2019-04-21'
+      '4':
+        version: 4.0.0
+        released: '2023-06-22'
+      '5':
+        version: 5.0.0
+        released: '2024-10-19'
+    weekly_downloads: 8995097
+  astro:
+    group: fast-frontend
+    ecosystem: npm
+    latest: 7.4.4
+    latest_released: '2026-10-28'
+    first_released: '2021-03-13'
+    stable_versions: 710
+    releases_12mo: 113
+    series:
+      '0.1':
+        version: 0.1.0
+        released: '2021-03-13'
+      '0.0':
+        version: 0.0.2
+        released: '2021-04-10'
+      '0.10':
+        version: 0.10.0
+        released: '2021-05-17'
+      '0.11':
+        version: 0.11.0
+        released: '2021-05-24'
+      '0.12':
+        version: 0.12.0
+        released: '2021-06-02'
+      '0.13':
+        version: 0.13.0
+        released: '2021-06-11'
+      '0.14':
+        version: 0.14.0
+        released: '2021-06-22'
+      '0.15':
+        version: 0.15.0
+        released: '2021-06-25'
+      '0.16':
+        version: 0.16.0
+        released: '2021-07-01'
+      '0.17':
+        version: 0.17.0
+        released: '2021-07-08'
+      '0.18':
+        version: 0.18.0
+        released: '2021-07-27'
+      '0.19':
+        version: 0.19.0
+        released: '2021-08-18'
+      '0.20':
+        version: 0.20.0
+        released: '2021-08-26'
+      '0.21':
+        version: 0.21.0
+        released: '2021-11-19'
+      '0.22':
+        version: 0.22.1
+        released: '2021-12-23'
+      '0.23':
+        version: 0.23.0
+        released: '2022-02-18'
+      '0.24':
+        version: 0.24.0
+        released: '2022-03-11'
+      '0.25':
+        version: 0.25.0
+        released: '2022-03-25'
+      '0.26':
+        version: 0.26.0
+        released: '2022-04-02'
+      '1':
+        version: 1.0.0
+        released: '2022-08-09'
+      '2':
+        version: 2.0.0
+        released: '2023-01-24'
+      '3':
+        version: 3.0.0
+        released: '2023-08-30'
+      '4':
+        version: 4.0.0
+        released: '2023-12-05'
+      '5':
+        version: 5.0.0
+        released: '2024-12-03'
+      '6':
+        version: 6.0.0
+        released: '2026-03-10'
+      '7':
+        version: 7.0.0
+        released: '2026-06-22'
+    weekly_downloads: 10765753
+  anthropic:
+    group: ai-sdk
+    ecosystem: pypi
+    latest: 2.3.0
+    latest_released: '2026-10-23'
+    first_released: '2023-02-09'
+    stable_versions: 234
+    releases_12mo: 91
+    series:
+      '0.2':
+        version: 0.2.2
+        released: '2023-02-09'
+      '0.3':
+        version: 0.3.0
+        released: '2023-06-28'
+      '0.4':
+        version: 0.4.1
+        released: '2023-10-16'
+      '0.5':
+        version: 0.5.0
+        released: '2023-10-18'
+      '0.6':
+        version: 0.6.0
+        released: '2023-11-09'
+      '0.7':
+        version: 0.7.0
+        released: '2023-11-16'
+      '0.8':
+        version: 0.8.0
+        released: '2023-12-19'
+      '0.9':
+        version: 0.9.0
+        released: '2024-01-08'
+      '0.10':
+        version: 0.10.0
+        released: '2024-01-18'
+      '0.11':
+        version: 0.11.0
+        released: '2024-01-23'
+      '0.12':
+        version: 0.12.0
+        released: '2024-01-26'
+      '0.13':
+        version: 0.13.0
+        released: '2024-01-31'
+      '0.14':
+        version: 0.14.0
+        released: '2024-01-31'
+      '0.15':
+        version: 0.15.0
+        released: '2024-02-02'
+      '0.16':
+        version: 0.16.0
+        released: '2024-02-13'
+      '0.17':
+        version: 0.17.0
+        released: '2024-03-04'
+      '0.18':
+        version: 0.18.0
+        released: '2024-03-04'
+      '0.19':
+        version: 0.19.0
+        released: '2024-03-06'
+      '0.20':
+        version: 0.20.0
+        released: '2024-03-13'
+      '0.21':
+        version: 0.21.0
+        released: '2024-03-19'
+      '0.22':
+        version: 0.22.0
+        released: '2024-04-04'
+      '0.23':
+        version: 0.23.0
+        released: '2024-04-04'
+      '0.24':
+        version: 0.24.0
+        released: '2024-04-09'
+      '0.25':
+        version: 0.25.0
+        released: '2024-04-09'
+      '0.26':
+        version: 0.26.0
+        released: '2024-05-16'
+      '0.27':
+        version: 0.27.0
+        released: '2024-05-30'
+      '0.28':
+        version: 0.28.0
+        released: '2024-05-30'
+      '0.29':
+        version: 0.29.0
+        released: '2024-06-20'
+      '0.30':
+        version: 0.30.0
+        released: '2024-06-26'
+      '0.31':
+        version: 0.31.0
+        released: '2024-07-10'
+      '0.32':
+        version: 0.32.0
+        released: '2024-07-29'
+      '0.33':
+        version: 0.33.0
+        released: '2024-08-09'
+      '0.34':
+        version: 0.34.0
+        released: '2024-08-14'
+      '0.35':
+        version: 0.35.0
+        released: '2024-10-04'
+      '0.36':
+        version: 0.36.0
+        released: '2024-10-08'
+      '0.37':
+        version: 0.37.0
+        released: '2024-10-22'
+      '0.38':
+        version: 0.38.0
+        released: '2024-11-01'
+      '0.39':
+        version: 0.39.0
+        released: '2024-11-04'
+      '0.40':
+        version: 0.40.0
+        released: '2024-11-28'
+      '0.41':
+        version: 0.41.0
+        released: '2024-12-17'
+      '0.42':
+        version: 0.42.0
+        released: '2024-12-17'
+      '0.43':
+        version: 0.43.0
+        released: '2025-01-14'
+      '0.44':
+        version: 0.44.0
+        released: '2025-01-21'
+      '0.45':
+        version: 0.45.0
+        released: '2025-01-23'
+      '0.46':
+        version: 0.46.0
+        released: '2025-02-18'
+      '0.47':
+        version: 0.47.0
+        released: '2025-02-24'
+      '0.48':
+        version: 0.48.0
+        released: '2025-02-27'
+      '0.49':
+        version: 0.49.0
+        released: '2025-02-28'
+      '0.50':
+        version: 0.50.0
+        released: '2025-04-22'
+      '0.51':
+        version: 0.51.0
+        released: '2025-05-07'
+      '0.52':
+        version: 0.52.0
+        released: '2025-05-22'
+      '0.53':
+        version: 0.53.0
+        released: '2025-06-09'
+      '0.54':
+        version: 0.54.0
+        released: '2025-06-11'
+      '0.55':
+        version: 0.55.0
+        released: '2025-06-23'
+      '0.56':
+        version: 0.56.0
+        released: '2025-07-01'
+      '0.57':
+        version: 0.57.0
+        released: '2025-07-03'
+      '0.58':
+        version: 0.58.0
+        released: '2025-07-18'
+      '0.59':
+        version: 0.59.0
+        released: '2025-07-23'
+      '0.60':
+        version: 0.60.0
+        released: '2025-07-28'
+      '0.61':
+        version: 0.61.0
+        released: '2025-08-05'
+      '0.62':
+        version: 0.62.0
+        released: '2025-08-08'
+      '0.63':
+        version: 0.63.0
+        released: '2025-08-12'
+      '0.64':
+        version: 0.64.0
+        released: '2025-08-13'
+      '0.65':
+        version: 0.65.0
+        released: '2025-09-02'
+      '0.66':
+        version: 0.66.0
+        released: '2025-09-03'
+      '0.67':
+        version: 0.67.0
+        released: '2025-09-10'
+      '0.68':
+        version: 0.68.0
+        released: '2025-09-17'
+      '0.69':
+        version: 0.69.0
+        released: '2025-09-29'
+      '0.70':
+        version: 0.70.0
+        released: '2025-10-15'
+      '0.71':
+        version: 0.71.0
+        released: '2025-10-16'
+      '0.72':
+        version: 0.72.0
+        released: '2025-10-28'
+      '0.73':
+        version: 0.73.0
+        released: '2025-11-14'
+      '0.74':
+        version: 0.74.0
+        released: '2025-11-18'
+      '0.75':
+        version: 0.75.0
+        released: '2025-11-24'
+      '0.76':
+        version: 0.76.0
+        released: '2026-01-13'
+      '0.77':
+        version: 0.77.0
+        released: '2026-01-29'
+      '0.78':
+        version: 0.78.0
+        released: '2026-02-05'
+      '0.79':
+        version: 0.79.0
+        released: '2026-02-07'
+      '0.80':
+        version: 0.80.0
+        released: '2026-02-17'
+      '0.81':
+        version: 0.81.0
+        released: '2026-02-18'
+      '0.82':
+        version: 0.82.0
+        released: '2026-02-18'
+      '0.83':
+        version: 0.83.0
+        released: '2026-02-19'
+      '0.84':
+        version: 0.84.0
+        released: '2026-02-25'
+      '0.85':
+        version: 0.85.0
+        released: '2026-03-16'
+      '0.86':
+        version: 0.86.0
+        released: '2026-03-18'
+      '0.87':
+        version: 0.87.0
+        released: '2026-03-31'
+      '0.88':
+        version: 0.88.0
+        released: '2026-04-01'
+      '0.89':
+        version: 0.89.0
+        released: '2026-04-03'
+      '0.90':
+        version: 0.90.0
+        released: '2026-04-07'
+      '0.91':
+        version: 0.91.0
+        released: '2026-04-07'
+      '0.92':
+        version: 0.92.0
+        released: '2026-04-08'
+      '0.93':
+        version: 0.93.0
+        released: '2026-04-09'
+      '0.94':
+        version: 0.94.0
+        released: '2026-04-10'
+      '0.95':
+        version: 0.95.0
+        released: '2026-04-14'
+      '0.96':
+        version: 0.96.0
+        released: '2026-04-16'
+      '0.97':
+        version: 0.97.0
+        released: '2026-04-23'
+      '0.98':
+        version: 0.98.0
+        released: '2026-05-04'
+      '0.99':
+        version: 0.99.0
+        released: '2026-05-05'
+      '0.100':
+        version: 0.100.0
+        released: '2026-05-06'
+      '0.101':
+        version: 0.101.0
+        released: '2026-05-11'
+      '0.102':
+        version: 0.102.0
+        released: '2026-05-13'
+      '0.103':
+        version: 0.103.0
+        released: '2026-05-19'
+      '0.104':
+        version: 0.104.0
+        released: '2026-05-21'
+      '0.105':
+        version: 0.105.0
+        released: '2026-05-28'
+      '0.106':
+        version: 0.106.0
+        released: '2026-06-05'
+      '0.107':
+        version: 0.107.0
+        released: '2026-06-06'
+      '0.108':
+        version: 0.108.0
+        released: '2026-06-09'
+      '0.109':
+        version: 0.109.0
+        released: '2026-06-09'
+      '0.110':
+        version: 0.110.0
+        released: '2026-06-18'
+      '0.111':
+        version: 0.111.0
+        released: '2026-06-18'
+      '0.112':
+        version: 0.112.0
+        released: '2026-06-24'
+      '0.113':
+        version: 0.113.0
+        released: '2026-06-29'
+      '0.114':
+        version: 0.114.0
+        released: '2026-06-30'
+      '0.115':
+        version: 0.115.0
+        released: '2026-06-30'
+      '0.116':
+        version: 0.116.0
+        released: '2026-07-02'
+      '0.117':
+        version: 0.117.0
+        released: '2026-07-16'
+      '0.118':
+        version: 0.118.0
+        released: '2026-07-22'
+      '0.119':
+        version: 0.119.0
+        released: '2026-07-23'
+      '0.120':
+        version: 0.120.0
+        released: '2026-07-24'
+      '0.121':
+        version: 0.121.0
+        released: '2026-08-07'
+      '0.122':
+        version: 0.122.0
+        released: '2026-08-13'
+      '0.123':
+        version: 0.123.0
+        released: '2026-08-19'
+      '0.124':
+        version: 0.124.0
+        released: '2026-08-19'
+      '0.125':
+        version: 0.125.0
+        released: '2026-08-19'
+      '1':
+        version: 1.0.0
+        released: '2026-08-20'
+      '2':
+        version: 2.0.0
+        released: '2026-10-21'
+    weekly_downloads: 46914523
+  openai:
+    group: ai-sdk
+    ecosystem: pypi
+    latest: 3.42.0
+    latest_released: '2026-10-31'
+    first_released: '2020-02-18'
+    stable_versions: 456
+    releases_12mo: 106
+    series:
+      '0.0':
+        version: 0.0.2
+        released: '2020-02-18'
+      '0.1':
+        version: 0.1.0
+        released: '2020-06-13'
+      '0.2':
+        version: 0.2.0
+        released: '2020-06-13'
+      '0.3':
+        version: 0.3.0
+        released: '2021-01-27'
+      '0.4':
+        version: 0.4.0
+        released: '2021-03-04'
+      '0.6':
+        version: 0.6.0
+        released: '2021-03-18'
+      '0.7':
+        version: 0.7.0
+        released: '2021-06-11'
+      '0.8':
+        version: 0.8.0
+        released: '2021-06-17'
+      '0.9':
+        version: 0.9.0
+        released: '2021-06-29'
+      '0.10':
+        version: 0.10.0
+        released: '2021-07-14'
+      '0.11':
+        version: 0.11.0
+        released: '2021-10-27'
+      '0.12':
+        version: 0.12.0
+        released: '2022-01-22'
+      '0.13':
+        version: 0.13.0
+        released: '2022-01-25'
+      '0.14':
+        version: 0.14.0
+        released: '2022-02-02'
+      '0.15':
+        version: 0.15.0
+        released: '2022-02-24'
+      '0.16':
+        version: 0.16.0
+        released: '2022-03-17'
+      '0.18':
+        version: 0.18.0
+        released: '2022-04-08'
+      '0.19':
+        version: 0.19.0
+        released: '2022-05-24'
+      '0.20':
+        version: 0.20.0
+        released: '2022-06-16'
+      '0.22':
+        version: 0.22.0
+        released: '2022-07-26'
+      '0.23':
+        version: 0.23.0
+        released: '2022-08-24'
+      '0.24':
+        version: 0.24.0
+        released: '2022-10-21'
+      '0.25':
+        version: 0.25.0
+        released: '2022-11-02'
+      '0.26':
+        version: 0.26.0
+        released: '2023-01-06'
+      '0.27':
+        version: 0.27.0
+        released: '2023-03-01'
+      '0.28':
+        version: 0.28.0
+        released: '2023-08-31'
+      '1':
+        version: 1.0.0
+        released: '2023-11-06'
+      '2':
+        version: 2.0.0
+        released: '2025-09-30'
+      '3':
+        version: 3.0.0
+        released: '2026-08-12'
+    weekly_downloads: 85437895
+  langchain:
+    group: ai-sdk
+    ecosystem: pypi
+    latest: 1.4.7
+    latest_released: '2026-10-21'
+    first_released: '2022-10-25'
+    stable_versions: 477
+    releases_12mo: 58
+    series:
+      '0.0':
+        version: 0.0.1
+        released: '2022-10-25'
+      '0.1':
+        version: 0.1.0
+        released: '2024-01-06'
+      '0.2':
+        version: 0.2.0
+        released: '2024-05-17'
+      '0.3':
+        version: 0.3.0
+        released: '2024-09-13'
+      '1':
+        version: 1.0.0
+        released: '2025-10-17'
+    weekly_downloads: 37058402
+  ai:
+    group: ai-sdk
+    ecosystem: npm
+    latest: 7.0.159
+    latest_released: '2026-10-30'
+    first_released: '2014-02-21'
+    stable_versions: 1159
+    releases_12mo: 656
+    series:
+      '0.0':
+        version: 0.0.1
+        released: '2014-02-21'
+      '1':
+        version: 1.0.0
+        released: '2014-08-15'
+      '2':
+        version: 2.0.0
+        released: '2023-06-14'
+      '3':
+        version: 3.0.0
+        released: '2024-02-29'
+      '4':
+        version: 4.0.0
+        released: '2024-11-18'
+      '5':
+        version: 5.0.0
+        released: '2025-07-31'
+      '6':
+        version: 6.0.0
+        released: '2025-12-22'
+      '7':
+        version: 7.0.0
+        released: '2026-06-25'
+    weekly_downloads: 41889127
+  llama-index:
+    group: ai-sdk
+    ecosystem: pypi
+    latest: 0.14.25
+    latest_released: '2026-09-21'
+    first_released: '2023-02-16'
+    stable_versions: 413
+    releases_12mo: 16
+    series:
+      '0.4':
+        version: 0.4.4
+        released: '2023-02-16'
+      '0.5':
+        version: 0.5.0
+        released: '2023-03-28'
+      '0.6':
+        version: 0.6.0
+        released: '2023-05-02'
+      '0.7':
+        version: 0.7.0
+        released: '2023-07-04'
+      '0.8':
+        version: 0.8.0
+        released: '2023-08-11'
+      '0.9':
+        version: 0.9.0
+        released: '2023-11-15'
+      '0.10':
+        version: 0.10.0
+        released: '2024-02-12'
+      '0.11':
+        version: 0.11.0
+        released: '2024-08-22'
+      '0.12':
+        version: 0.12.0
+        released: '2024-11-18'
+      '0.13':
+        version: 0.13.0
+        released: '2025-07-31'
+      '0.14':
+        version: 0.14.0
+        released: '2025-09-08'
+    weekly_downloads: 415045
+  mcp:
+    group: ai-sdk
+    ecosystem: pypi
+    latest: 2.3.0
+    latest_released: '2026-10-02'
+    first_released: '2024-11-20'
+    stable_versions: 65
+    releases_12mo: 25
+    series:
+      '0.9':
+        version: 0.9.1
+        released: '2024-11-20'
+      '1':
+        version: 1.0.0
+        released: '2024-11-25'
+      '2':
+        version: 2.0.0
+        released: '2026-07-28'
+    weekly_downloads: 71072297
+  requests:
+    group: stable
+    ecosystem: pypi
+    latest: 2.34.2
+    latest_released: '2026-05-14'
+    first_released: '2011-02-14'
+    stable_versions: 159
+    releases_12mo: 5
+    series:
+      '0.2':
+        version: 0.2.0
+        released: '2011-02-14'
+      '0.3':
+        version: 0.3.0
+        released: '2011-02-25'
+      '0.4':
+        version: 0.4.0
+        released: '2011-05-15'
+      '0.5':
+        version: 0.5.0
+        released: '2011-06-22'
+      '0.6':
+        version: 0.6.0
+        released: '2011-08-17'
+      '0.7':
+        version: 0.7.0
+        released: '2011-10-23'
+      '0.8':
+        version: 0.8.0
+        released: '2011-11-13'
+      '0.9':
+        version: 0.9.0
+        released: '2011-12-28'
+      '0.10':
+        version: 0.10.0
+        released: '2012-01-22'
+      '0.11':
+        version: 0.11.1
+        released: '2012-03-31'
+      '0.12':
+        version: 0.12.0
+        released: '2012-05-03'
+      '0.13':
+        version: 0.13.0
+        released: '2012-05-30'
+      '0.14':
+        version: 0.14.0
+        released: '2012-09-02'
+      '1':
+        version: 1.0.0
+        released: '2012-12-17'
+      '2':
+        version: 2.0.0
+        released: '2013-11-15'
+    weekly_downloads: 353421454
+  express:
+    group: stable
+    ecosystem: npm
+    latest: 5.3.0
+    latest_released: '2026-10-09'
+    first_released: '2010-12-29'
+    stable_versions: 247
+    releases_12mo: 7
+    series:
+      '0.14':
+        version: 0.14.0
+        released: '2010-12-29'
+      '1':
+        version: 1.0.0
+        released: '2010-12-29'
+      '2':
+        version: 2.0.0
+        released: '2011-03-18'
+      '3':
+        version: 3.0.0
+        released: '2012-10-23'
+      '4':
+        version: 4.0.0
+        released: '2014-04-09'
+      '5':
+        version: 5.0.0
+        released: '2024-09-10'
+    weekly_downloads: 196630276
+  lodash:
+    group: stable
+    ecosystem: npm
+    latest: 4.18.1
+    latest_released: '2026-04-01'
+    first_released: '2012-04-23'
+    stable_versions: 113
+    releases_12mo: 3
+    series:
+      '0.1':
+        version: 0.1.0
+        released: '2012-04-23'
+      '0.2':
+        version: 0.2.0
+        released: '2012-05-22'
+      '0.3':
+        version: 0.3.0
+        released: '2012-06-06'
+      '0.4':
+        version: 0.4.0
+        released: '2012-07-11'
+      '0.5':
+        version: 0.5.0
+        released: '2012-08-17'
+      '0.6':
+        version: 0.6.0
+        released: '2012-08-28'
+      '0.7':
+        version: 0.7.0
+        released: '2012-09-11'
+      '0.8':
+        version: 0.8.0
+        released: '2012-10-02'
+      '0.9':
+        version: 0.9.0
+        released: '2013-08-31'
+      '0.10':
+        version: 0.10.0
+        released: '2013-08-31'
+      '1':
+        version: 1.0.0
+        released: '2013-08-31'
+      '2':
+        version: 2.0.0
+        released: '2013-09-14'
+      '3':
+        version: 3.0.0
+        released: '2015-01-26'
+      '4':
+        version: 4.0.0
+        released: '2016-01-12'
+    weekly_downloads: 206478795
+  numpy:
+    group: stable
+    ecosystem: pypi
+    latest: 2.5.4
+    latest_released: '2026-10-10'
+    first_released: '2009-04-06'
+    stable_versions: 133
+    releases_12mo: 13
+    series:
+      '1':
+        version: 1.3.0
+        released: '2009-04-06'
+      '2':
+        version: 2.0.0
+        released: '2024-06-16'
+    weekly_downloads: 250936541
+  flask:
+    group: stable
+    ecosystem: pypi
+    latest: 3.1.3
+    latest_released: '2026-02-19'
+    first_released: '2010-04-16'
+    stable_versions: 62
+    releases_12mo: 1
+    series:
+      '0.1':
+        version: 0.1.0
+        released: '2010-04-16'
+      '0.2':
+        version: 0.2.0
+        released: '2010-05-12'
+      '0.3':
+        version: 0.3.0
+        released: '2010-05-28'
+      '0.4':
+        version: 0.4.0
+        released: '2010-06-18'
+      '0.5':
+        version: 0.5.0
+        released: '2010-07-06'
+      '0.6':
+        version: 0.6.0
+        released: '2010-07-27'
+      '0.7':
+        version: 0.7.0
+        released: '2011-06-28'
+      '0.8':
+        version: 0.8.0
+        released: '2011-09-29'
+      '0.9':
+        version: 0.9.0
+        released: '2012-07-01'
+      '0.10':
+        version: 0.10.0
+        released: '2013-06-13'
+      '0.11':
+        version: 0.11.0
+        released: '2016-05-29'
+      '0.12':
+        version: 0.12.0
+        released: '2016-12-21'
+      '1':
+        version: 1.0.0
+        released: '2018-04-26'
+      '2':
+        version: 2.0.0
+        released: '2021-05-11'
+      '3':
+        version: 3.0.0
+        released: '2023-09-30'
+    weekly_downloads: 55313509
+  serde:
+    group: stable
+    ecosystem: cargo
+    latest: 1.0.229
+    latest_released: '2026-07-18'
+    first_released: '2014-12-05'
+    stable_versions: 308
+    releases_12mo: 1
+    series:
+      '0.0':
+        version: 0.0.0
+        released: '2014-12-05'
+      '0.2':
+        version: 0.2.0
+        released: '2015-03-09'
+      '0.3':
+        version: 0.3.0
+        released: '2015-03-31'
+      '0.4':
+        version: 0.4.0
+        released: '2015-05-19'
+      '0.5':
+        version: 0.5.0
+        released: '2015-08-07'
+      '0.6':
+        version: 0.6.0
+        released: '2015-09-02'
+      '0.7':
+        version: 0.7.0
+        released: '2016-02-27'
+      '0.8':
+        version: 0.8.0
+        released: '2016-07-28'
+      '0.9':
+        version: 0.9.0
+        released: '2017-01-25'
+      '1':
+        version: 1.0.0
+        released: '2017-04-20'
+    weekly_downloads: 31051231
+  pandas:
+    group: python-data-web
+    ecosystem: pypi
+    latest: 3.1.0
+    latest_released: '2026-10-22'
+    first_released: '2009-12-25'
+    stable_versions: 116
+    releases_12mo: 8
+    series:
+      '0.1':
+        version: 0.1.0
+        released: '2009-12-25'
+      '0.2':
+        version: 0.2.0
+        released: '2010-05-18'
+      '0.3':
+        version: 0.3.0
+        released: '2011-02-20'
+      '0.4':
+        version: 0.4.0
+        released: '2011-09-12'
+      '0.5':
+        version: 0.5.0
+        released: '2011-10-25'
+      '0.6':
+        version: 0.6.0
+        released: '2011-11-26'
+      '0.7':
+        version: 0.7.0
+        released: '2012-02-09'
+      '0.8':
+        version: 0.8.0
+        released: '2012-06-29'
+      '0.9':
+        version: 0.9.0
+        released: '2012-10-08'
+      '0.10':
+        version: 0.10.0
+        released: '2012-12-17'
+      '0.11':
+        version: 0.11.0
+        released: '2013-04-23'
+      '0.12':
+        version: 0.12.0
+        released: '2013-07-24'
+      '0.13':
+        version: 0.13.0
+        released: '2014-01-16'
+      '0.14':
+        version: 0.14.0
+        released: '2014-05-30'
+      '0.15':
+        version: 0.15.0
+        released: '2014-10-19'
+      '0.16':
+        version: 0.16.0
+        released: '2015-03-22'
+      '0.17':
+        version: 0.17.0
+        released: '2015-10-09'
+      '0.18':
+        version: 0.18.0
+        released: '2016-03-12'
+      '0.19':
+        version: 0.19.0
+        released: '2016-10-02'
+      '0.20':
+        version: 0.20.0
+        released: '2017-05-05'
+      '0.21':
+        version: 0.21.0
+        released: '2017-10-28'
+      '0.22':
+        version: 0.22.0
+        released: '2017-12-31'
+      '0.23':
+        version: 0.23.0
+        released: '2018-05-16'
+      '0.24':
+        version: 0.24.0
+        released: '2019-01-25'
+      '0.25':
+        version: 0.25.0
+        released: '2019-07-19'
+      '1':
+        version: 1.0.0
+        released: '2020-01-30'
+      '2':
+        version: 2.0.0
+        released: '2023-04-03'
+      '3':
+        version: 3.0.0
+        released: '2026-01-21'
+    weekly_downloads: 166191400
+  pydantic:
+    group: python-data-web
+    ecosystem: pypi
+    latest: 2.14.2
+    latest_released: '2026-10-29'
+    first_released: '2017-05-03'
+    stable_versions: 174
+    releases_12mo: 14
+    series:
+      '0.0':
+        version: 0.0.1
+        released: '2017-05-03'
+      '0.1':
+        version: 0.1.0
+        released: '2017-06-03'
+      '0.2':
+        version: 0.2.0
+        released: '2017-06-07'
+      '0.3':
+        version: 0.3.0
+        released: '2017-06-21'
+      '0.4':
+        version: 0.4.0
+        released: '2017-07-08'
+      '0.5':
+        version: 0.5.0
+        released: '2017-10-23'
+      '0.6':
+        version: 0.6.0
+        released: '2017-11-07'
+      '0.7':
+        version: 0.7.0
+        released: '2018-02-06'
+      '0.8':
+        version: 0.8.0
+        released: '2018-03-25'
+      '0.9':
+        version: 0.9.0
+        released: '2018-04-28'
+      '0.10':
+        version: 0.10.0
+        released: '2018-06-11'
+      '0.11':
+        version: 0.11.0
+        released: '2018-06-28'
+      '0.12':
+        version: 0.12.0
+        released: '2018-07-31'
+      '0.13':
+        version: 0.13.0
+        released: '2018-08-25'
+      '0.14':
+        version: 0.14.0
+        released: '2018-10-02'
+      '0.15':
+        version: 0.15.0
+        released: '2018-11-18'
+      '0.16':
+        version: 0.16.0
+        released: '2018-12-03'
+      '0.17':
+        version: 0.17.0
+        released: '2018-12-27'
+      '0.18':
+        version: 0.18.0
+        released: '2019-01-13'
+      '0.19':
+        version: 0.19.0
+        released: '2019-02-04'
+      '0.20':
+        version: 0.20.0
+        released: '2019-02-18'
+      '0.21':
+        version: 0.21.0
+        released: '2019-03-15'
+      '0.22':
+        version: 0.22.0
+        released: '2019-03-29'
+      '0.23':
+        version: 0.23.0
+        released: '2019-04-04'
+      '0.24':
+        version: 0.24.0
+        released: '2019-04-23'
+      '0.25':
+        version: 0.25.0
+        released: '2019-05-05'
+      '0.26':
+        version: 0.26.0
+        released: '2019-05-22'
+      '0.27':
+        version: 0.27.0
+        released: '2019-05-30'
+      '0.28':
+        version: 0.28.0
+        released: '2019-06-11'
+      '0.29':
+        version: 0.29.0
+        released: '2019-06-19'
+      '0.30':
+        version: 0.30.0
+        released: '2019-07-07'
+      '0.31':
+        version: 0.31.0
+        released: '2019-07-24'
+      '0.32':
+        version: 0.32.0
+        released: '2019-08-06'
+      '1':
+        version: 1.0.0
+        released: '2019-10-23'
+      '2':
+        version: 2.0.0
+        released: '2023-06-30'
+    weekly_downloads: 260521987
+  fastapi:
+    group: python-data-web
+    ecosystem: pypi
+    latest: 0.162.0
+    latest_released: '2026-10-23'
+    first_released: '2018-12-08'
+    stable_versions: 353
+    releases_12mo: 120
+    series:
+      '0.1':
+        version: 0.1.0
+        released: '2018-12-08'
+      '0.2':
+        version: 0.2.0
+        released: '2019-02-08'
+      '0.3':
+        version: 0.3.0
+        released: '2019-02-12'
+      '0.4':
+        version: 0.4.0
+        released: '2019-02-14'
+      '0.5':
+        version: 0.5.0
+        released: '2019-02-16'
+      '0.6':
+        version: 0.6.0
+        released: '2019-02-19'
+      '0.7':
+        version: 0.7.0
+        released: '2019-03-03'
+      '0.8':
+        version: 0.8.0
+        released: '2019-03-16'
+      '0.9':
+        version: 0.9.0
+        released: '2019-03-22'
+      '0.10':
+        version: 0.10.0
+        released: '2019-03-24'
+      '0.11':
+        version: 0.11.0
+        released: '2019-04-03'
+      '0.12':
+        version: 0.12.0
+        released: '2019-04-05'
+      '0.13':
+        version: 0.13.0
+        released: '2019-04-09'
+      '0.14':
+        version: 0.14.0
+        released: '2019-04-12'
+      '0.15':
+        version: 0.15.0
+        released: '2019-04-14'
+      '0.16':
+        version: 0.16.0
+        released: '2019-04-16'
+      '0.17':
+        version: 0.17.0
+        released: '2019-04-20'
+      '0.18':
+        version: 0.18.0
+        released: '2019-04-22'
+      '0.19':
+        version: 0.19.0
+        released: '2019-04-26'
+      '0.20':
+        version: 0.20.0
+        released: '2019-04-27'
+      '0.21':
+        version: 0.21.0
+        released: '2019-05-15'
+      '0.22':
+        version: 0.22.0
+        released: '2019-05-16'
+      '0.23':
+        version: 0.23.0
+        released: '2019-05-21'
+      '0.24':
+        version: 0.24.0
+        released: '2019-05-24'
+      '0.25':
+        version: 0.25.0
+        released: '2019-05-27'
+      '0.26':
+        version: 0.26.0
+        released: '2019-05-29'
+      '0.27':
+        version: 0.27.0
+        released: '2019-05-30'
+      '0.28':
+        version: 0.28.0
+        released: '2019-06-05'
+      '0.29':
+        version: 0.29.0
+        released: '2019-06-06'
+      '0.30':
+        version: 0.30.0
+        released: '2019-06-20'
+      '0.31':
+        version: 0.31.0
+        released: '2019-06-28'
+      '0.32':
+        version: 0.32.0
+        released: '2019-07-12'
+      '0.33':
+        version: 0.33.0
+        released: '2019-07-13'
+      '0.34':
+        version: 0.34.0
+        released: '2019-08-06'
+      '0.35':
+        version: 0.35.0
+        released: '2019-08-08'
+      '0.36':
+        version: 0.36.0
+        released: '2019-08-26'
+      '0.37':
+        version: 0.37.0
+        released: '2019-08-31'
+      '0.38':
+        version: 0.38.0
+        released: '2019-08-31'
+      '0.39':
+        version: 0.39.0
+        released: '2019-09-29'
+      '0.40':
+        version: 0.40.0
+        released: '2019-10-04'
+      '0.41':
+        version: 0.41.0
+        released: '2019-10-07'
+      '0.42':
+        version: 0.42.0
+        released: '2019-10-09'
+      '0.43':
+        version: 0.43.0
+        released: '2019-11-24'
+      '0.44':
+        version: 0.44.0
+        released: '2019-11-27'
+      '0.45':
+        version: 0.45.0
+        released: '2019-12-11'
+      '0.46':
+        version: 0.46.0
+        released: '2020-01-08'
+      '0.47':
+        version: 0.47.0
+        released: '2020-01-18'
+      '0.48':
+        version: 0.48.0
+        released: '2020-02-04'
+      '0.49':
+        version: 0.49.0
+        released: '2020-02-16'
+      '0.50':
+        version: 0.50.0
+        released: '2020-02-29'
+      '0.51':
+        version: 0.51.0
+        released: '2020-03-01'
+      '0.52':
+        version: 0.52.0
+        released: '2020-03-01'
+      '0.53':
+        version: 0.53.0
+        released: '2020-03-27'
+      '0.54':
+        version: 0.54.0
+        released: '2020-04-05'
+      '0.55':
+        version: 0.55.0
+        released: '2020-05-23'
+      '0.56':
+        version: 0.56.0
+        released: '2020-06-11'
+      '0.57':
+        version: 0.57.0
+        released: '2020-06-13'
+      '0.58':
+        version: 0.58.0
+        released: '2020-06-15'
+      '0.59':
+        version: 0.59.0
+        released: '2020-07-10'
+      '0.60':
+        version: 0.60.0
+        released: '2020-07-20'
+      '0.61':
+        version: 0.61.0
+        released: '2020-08-09'
+      '0.62':
+        version: 0.62.0
+        released: '2020-11-29'
+      '0.63':
+        version: 0.63.0
+        released: '2020-12-20'
+      '0.64':
+        version: 0.64.0
+        released: '2021-05-07'
+      '0.65':
+        version: 0.65.0
+        released: '2021-05-10'
+      '0.66':
+        version: 0.66.0
+        released: '2021-07-04'
+      '0.67':
+        version: 0.67.0
+        released: '2021-07-21'
+      '0.68':
+        version: 0.68.0
+        released: '2021-07-29'
+      '0.69':
+        version: 0.69.0
+        released: '2021-10-07'
+      '0.70':
+        version: 0.70.0
+        released: '2021-10-07'
+      '0.71':
+        version: 0.71.0
+        released: '2022-01-07'
+      '0.72':
+        version: 0.72.0
+        released: '2022-01-16'
+      '0.73':
+        version: 0.73.0
+        released: '2022-01-23'
+      '0.74':
+        version: 0.74.0
+        released: '2022-02-17'
+      '0.75':
+        version: 0.75.0
+        released: '2022-03-04'
+      '0.76':
+        version: 0.76.0
+        released: '2022-05-05'
+      '0.77':
+        version: 0.77.0
+        released: '2022-05-10'
+      '0.78':
+        version: 0.78.0
+        released: '2022-05-14'
+      '0.79':
+        version: 0.79.0
+        released: '2022-07-14'
+      '0.80':
+        version: 0.80.0
+        released: '2022-08-23'
+      '0.81':
+        version: 0.81.0
+        released: '2022-08-26'
+      '0.82':
+        version: 0.82.0
+        released: '2022-09-04'
+      '0.83':
+        version: 0.83.0
+        released: '2022-09-11'
+      '0.84':
+        version: 0.84.0
+        released: '2022-09-14'
+      '0.85':
+        version: 0.85.0
+        released: '2022-09-15'
+      '0.86':
+        version: 0.86.0
+        released: '2022-11-03'
+      '0.87':
+        version: 0.87.0
+        released: '2022-11-13'
+      '0.88':
+        version: 0.88.0
+        released: '2022-11-27'
+      '0.89':
+        version: 0.89.0
+        released: '2023-01-07'
+      '0.90':
+        version: 0.90.0
+        released: '2023-02-08'
+      '0.91':
+        version: 0.91.0
+        released: '2023-02-10'
+      '0.92':
+        version: 0.92.0
+        released: '2023-02-14'
+      '0.93':
+        version: 0.93.0
+        released: '2023-03-07'
+      '0.94':
+        version: 0.94.0
+        released: '2023-03-10'
+      '0.95':
+        version: 0.95.0
+        released: '2023-03-18'
+      '0.96':
+        version: 0.96.0
+        released: '2023-06-03'
+      '0.97':
+        version: 0.97.0
+        released: '2023-06-11'
+      '0.98':
+        version: 0.98.0
+        released: '2023-06-22'
+      '0.99':
+        version: 0.99.0
+        released: '2023-06-30'
+      '0.100':
+        version: 0.100.0
+        released: '2023-07-07'
+      '0.101':
+        version: 0.101.0
+        released: '2023-08-04'
+      '0.102':
+        version: 0.102.0
+        released: '2023-08-25'
+      '0.103':
+        version: 0.103.0
+        released: '2023-08-26'
+      '0.104':
+        version: 0.104.0
+        released: '2023-10-18'
+      '0.105':
+        version: 0.105.0
+        released: '2023-12-12'
+      '0.106':
+        version: 0.106.0
+        released: '2023-12-25'
+      '0.107':
+        version: 0.107.0
+        released: '2023-12-26'
+      '0.108':
+        version: 0.108.0
+        released: '2023-12-26'
+      '0.109':
+        version: 0.109.0
+        released: '2024-01-11'
+      '0.110':
+        version: 0.110.0
+        released: '2024-02-24'
+      '0.111':
+        version: 0.111.0
+        released: '2024-05-03'
+      '0.112':
+        version: 0.112.0
+        released: '2024-08-02'
+      '0.113':
+        version: 0.113.0
+        released: '2024-09-05'
+      '0.114':
+        version: 0.114.0
+        released: '2024-09-06'
+      '0.115':
+        version: 0.115.0
+        released: '2024-09-17'
+      '0.116':
+        version: 0.116.0
+        released: '2025-07-07'
+      '0.117':
+        version: 0.117.0
+        released: '2025-09-20'
+      '0.118':
+        version: 0.118.0
+        released: '2025-09-29'
+      '0.119':
+        version: 0.119.0
+        released: '2025-10-11'
+      '0.120':
+        version: 0.120.0
+        released: '2025-10-23'
+      '0.121':
+        version: 0.121.0
+        released: '2025-11-03'
+      '0.122':
+        version: 0.122.0
+        released: '2025-11-24'
+      '0.123':
+        version: 0.123.0
+        released: '2025-11-30'
+      '0.124':
+        version: 0.124.0
+        released: '2025-12-06'
+      '0.125':
+        version: 0.125.0
+        released: '2025-12-17'
+      '0.126':
+        version: 0.126.0
+        released: '2025-12-20'
+      '0.127':
+        version: 0.127.0
+        released: '2025-12-21'
+      '0.128':
+        version: 0.128.0
+        released: '2025-12-27'
+      '0.129':
+        version: 0.129.0
+        released: '2026-02-12'
+      '0.130':
+        version: 0.130.0
+        released: '2026-02-22'
+      '0.131':
+        version: 0.131.0
+        released: '2026-02-22'
+      '0.132':
+        version: 0.132.0
+        released: '2026-02-23'
+      '0.133':
+        version: 0.133.0
+        released: '2026-02-24'
+      '0.134':
+        version: 0.134.0
+        released: '2026-02-27'
+      '0.135':
+        version: 0.135.0
+        released: '2026-03-01'
+      '0.136':
+        version: 0.136.0
+        released: '2026-04-16'
+      '0.137':
+        version: 0.137.0
+        released: '2026-06-14'
+      '0.138':
+        version: 0.138.0
+        released: '2026-06-20'
+      '0.139':
+        version: 0.139.0
+        released: '2026-07-01'
+      '0.140':
+        version: 0.140.0
+        released: '2026-07-24'
+      '0.141':
+        version: 0.141.0
+        released: '2026-07-29'
+      '0.142':
+        version: 0.142.0
+        released: '2026-09-29'
+      '0.143':
+        version: 0.143.0
+        released: '2026-10-08'
+      '0.144':
+        version: 0.144.0
+        released: '2026-10-18'
+      '0.145':
+        version: 0.145.0
+        released: '2026-10-18'
+      '0.146':
+        version: 0.146.0
+        released: '2026-10-18'
+      '0.147':
+        version: 0.147.0
+        released: '2026-10-19'
+      '0.148':
+        version: 0.148.0
+        released: '2026-10-19'
+      '0.149':
+        version: 0.149.0
+        released: '2026-10-19'
+      '0.150':
+        version: 0.150.0
+        released: '2026-10-19'
+      '0.151':
+        version: 0.151.0
+        released: '2026-10-20'
+      '0.152':
+        version: 0.152.0
+        released: '2026-10-20'
+      '0.153':
+        version: 0.153.0
+        released: '2026-10-20'
+      '0.154':
+        version: 0.154.0
+        released: '2026-10-20'
+      '0.155':
+        version: 0.155.0
+        released: '2026-10-20'
+      '0.156':
+        version: 0.156.0
+        released: '2026-10-20'
+      '0.157':
+        version: 0.157.0
+        released: '2026-10-21'
+      '0.158':
+        version: 0.158.0
+        released: '2026-10-21'
+      '0.159':
+        version: 0.159.0
+        released: '2026-10-21'
+      '0.160':
+        version: 0.160.0
+        released: '2026-10-22'
+      '0.161':
+        version: 0.161.0
+        released: '2026-10-22'
+      '0.162':
+        version: 0.162.0
+        released: '2026-10-23'
+    weekly_downloads: 122696725
+  sqlalchemy:
+    group: python-data-web
+    ecosystem: pypi
+    latest: 2.1.6
+    latest_released: '2026-10-21'
+    first_released: '2006-02-14'
+    stable_versions: 289
+    releases_12mo: 18
+    series:
+      '0.1':
+        version: 0.1.0
+        released: '2006-02-14'
+      '0.2':
+        version: 0.2.0
+        released: '2006-05-27'
+      '0.3':
+        version: 0.3.0
+        released: '2006-10-22'
+      '0.4':
+        version: 0.4.0
+        released: '2007-10-17'
+      '0.5':
+        version: 0.5.0
+        released: '2009-01-06'
+      '0.6':
+        version: 0.6.0
+        released: '2010-04-19'
+      '0.7':
+        version: 0.7.0
+        released: '2011-05-21'
+      '0.8':
+        version: 0.8.0
+        released: '2013-03-10'
+      '0.9':
+        version: 0.9.0
+        released: '2013-12-30'
+      '1':
+        version: 1.0.0
+        released: '2015-04-16'
+      '2':
+        version: 2.0.0
+        released: '2023-01-26'
+    weekly_downloads: 94198288
+  polars:
+    group: python-data-web
+    ecosystem: pypi
+    latest: 2.1.0
+    latest_released: '2026-10-25'
+    first_released: '2021-03-15'
+    stable_versions: 391
+    releases_12mo: 25
+    series:
+      '0.0':
+        version: 0.0.1
+        released: '2021-03-15'
+      '0.7':
+        version: 0.7.3
+        released: '2021-03-28'
+      '0.8':
+        version: 0.8.0
+        released: '2021-06-03'
+      '0.9':
+        version: 0.9.0
+        released: '2021-08-31'
+      '0.10':
+        version: 0.10.0
+        released: '2021-10-08'
+      '0.11':
+        version: 0.11.0
+        released: '2021-12-13'
+      '0.12':
+        version: 0.12.0
+        released: '2021-12-18'
+      '0.13':
+        version: 0.13.0
+        released: '2022-02-11'
+      '0.14':
+        version: 0.14.0
+        released: '2022-08-09'
+      '0.15':
+        version: 0.15.0
+        released: '2022-11-25'
+      '0.16':
+        version: 0.16.1
+        released: '2023-01-29'
+      '0.17':
+        version: 0.17.0
+        released: '2023-04-07'
+      '0.18':
+        version: 0.18.0
+        released: '2023-05-29'
+      '0.19':
+        version: 0.19.0
+        released: '2023-08-30'
+      '0.20':
+        version: 0.20.0
+        released: '2023-12-16'
+      '1':
+        version: 1.0.0
+        released: '2024-07-01'
+      '2':
+        version: 2.0.0
+        released: '2026-10-06'
+    weekly_downloads: 16501273
+  httpx:
+    group: python-data-web
+    ecosystem: pypi
+    latest: 0.28.1
+    latest_released: '2024-12-06'
+    first_released: '2019-07-19'
+    stable_versions: 67
+    releases_12mo: 0
+    series:
+      '0.6':
+        version: 0.6.7
+        released: '2019-07-19'
+      '0.7':
+        version: 0.7.0
+        released: '2019-08-17'
+      '0.8':
+        version: 0.8.0
+        released: '2019-11-27'
+      '0.9':
+        version: 0.9.0
+        released: '2019-12-06'
+      '0.10':
+        version: 0.10.0
+        released: '2019-12-29'
+      '0.11':
+        version: 0.11.0
+        released: '2020-01-09'
+      '0.12':
+        version: 0.12.0
+        released: '2020-03-09'
+      '0.13':
+        version: 0.13.0
+        released: '2020-05-22'
+      '0.14':
+        version: 0.14.0
+        released: '2020-08-07'
+      '0.15':
+        version: 0.15.0
+        released: '2020-09-22'
+      '0.16':
+        version: 0.16.0
+        released: '2020-10-06'
+      '0.17':
+        version: 0.17.0
+        released: '2021-02-28'
+      '0.18':
+        version: 0.18.0
+        released: '2021-04-27'
+      '0.19':
+        version: 0.19.0
+        released: '2021-08-19'
+      '0.20':
+        version: 0.20.0
+        released: '2021-10-13'
+      '0.21':
+        version: 0.21.0
+        released: '2021-11-15'
+      '0.22':
+        version: 0.22.0
+        released: '2022-01-26'
+      '0.23':
+        version: 0.23.0
+        released: '2022-05-23'
+      '0.24':
+        version: 0.24.0
+        released: '2023-04-11'
+      '0.25':
+        version: 0.25.0
+        released: '2023-09-11'
+      '0.26':
+        version: 0.26.0
+        released: '2023-12-20'
+      '0.27':
+        version: 0.27.0
+        released: '2024-02-21'
+      '0.28':
+        version: 0.28.0
+        released: '2024-11-28'
+    weekly_downloads: 179867821
+  boto3:
+    group: infra-cloud
+    ecosystem: pypi
+    latest: 1.43.123
+    latest_released: '2026-10-30'
+    first_released: '2014-11-11'
+    stable_versions: 2146
+    releases_12mo: 240
+    series:
+      '0.0':
+        version: 0.0.1
+        released: '2014-11-11'
+      '1':
+        version: 1.0.0
+        released: '2015-06-22'
+    weekly_downloads: 619007329
+  stripe:
+    group: infra-cloud
+    ecosystem: npm
+    latest: 23.1.0
+    latest_released: '2026-10-29'
+    first_released: '2011-11-26'
+    stable_versions: 602
+    releases_12mo: 34
+    series:
+      '0.0':
+        version: 0.0.5
+        released: '2011-11-26'
+      '1':
+        version: 1.0.0
+        released: '2011-12-06'
+      '2':
+        version: 2.0.0
+        released: '2013-10-21'
+      '3':
+        version: 3.0.0
+        released: '2014-11-18'
+      '4':
+        version: 4.0.0
+        released: '2015-09-17'
+      '5':
+        version: 5.0.0
+        released: '2017-09-12'
+      '6':
+        version: 6.0.0
+        released: '2018-05-14'
+      '7':
+        version: 7.0.0
+        released: '2019-05-14'
+      '8':
+        version: 8.0.0
+        released: '2020-01-10'
+      '9':
+        version: 9.0.0
+        released: '2022-05-10'
+      '10':
+        version: 10.0.0
+        released: '2022-08-02'
+      '11':
+        version: 11.0.0
+        released: '2022-11-16'
+      '12':
+        version: 12.0.0
+        released: '2023-04-06'
+      '13':
+        version: 13.0.0
+        released: '2023-08-16'
+      '14':
+        version: 14.0.0
+        released: '2023-10-16'
+      '15':
+        version: 15.0.0
+        released: '2024-04-10'
+      '16':
+        version: 16.0.0
+        released: '2024-06-24'
+      '17':
+        version: 17.0.0
+        released: '2024-10-01'
+      '18':
+        version: 18.0.0
+        released: '2025-04-01'
+      '19':
+        version: 19.0.0
+        released: '2025-09-30'
+      '20':
+        version: 20.0.0
+        released: '2025-11-18'
+      '21':
+        version: 21.0.0
+        released: '2026-03-26'
+      '22':
+        version: 22.0.0
+        released: '2026-04-03'
+      '23':
+        version: 23.0.0
+        released: '2026-10-01'
+    weekly_downloads: 32466313
+  '@aws-sdk/client-s3':
+    group: infra-cloud
+    ecosystem: npm
+    latest: 3.1161.0
+    latest_released: '2026-10-30'
+    first_released: '2020-12-15'
+    stable_versions: 754
+    releases_12mo: 221
+    series:
+      '3':
+        version: 3.0.0
+        released: '2020-12-15'
+    weekly_downloads: 69726284
+  kubernetes:
+    group: infra-cloud
+    ecosystem: pypi
+    latest: 37.0.1
+    latest_released: '2026-10-09'
+    first_released: '2017-03-01'
+    stable_versions: 49
+    releases_12mo: 7
+    series:
+      '1':
+        version: 1.0.0
+        released: '2017-03-01'
+      '2':
+        version: 2.0.0
+        released: '2017-05-03'
+      '3':
+        version: 3.0.0
+        released: '2017-08-11'
+      '4':
+        version: 4.0.0
+        released: '2017-11-20'
+      '5':
+        version: 5.0.0
+        released: '2018-02-13'
+      '6':
+        version: 6.0.0
+        released: '2018-04-12'
+      '7':
+        version: 7.0.0
+        released: '2018-08-16'
+      '8':
+        version: 8.0.0
+        released: '2018-11-02'
+      '9':
+        version: 9.0.0
+        released: '2019-03-20'
+      '10':
+        version: 10.0.0
+        released: '2019-07-03'
+      '11':
+        version: 11.0.0
+        released: '2020-03-12'
+      '12':
+        version: 12.0.0
+        released: '2020-10-15'
+      '17':
+        version: 17.17.0
+        released: '2021-05-13'
+      '18':
+        version: 18.20.0
+        released: '2021-08-16'
+      '19':
+        version: 19.15.0
+        released: '2021-10-25'
+      '20':
+        version: 20.13.0
+        released: '2021-11-29'
+      '21':
+        version: 21.7.0
+        released: '2021-12-15'
+      '22':
+        version: 22.6.0
+        released: '2022-02-14'
+      '23':
+        version: 23.3.0
+        released: '2022-02-28'
+      '24':
+        version: 24.2.0
+        released: '2022-06-22'
+      '25':
+        version: 25.3.0
+        released: '2022-10-26'
+      '26':
+        version: 26.1.0
+        released: '2023-02-16'
+      '27':
+        version: 27.2.0
+        released: '2023-07-17'
+      '28':
+        version: 28.1.0
+        released: '2023-09-18'
+      '29':
+        version: 29.0.0
+        released: '2024-01-08'
+      '30':
+        version: 30.1.0
+        released: '2024-06-06'
+      '31':
+        version: 31.0.0
+        released: '2024-09-20'
+      '32':
+        version: 32.0.0
+        released: '2025-01-23'
+      '33':
+        version: 33.1.0
+        released: '2025-06-09'
+      '34':
+        version: 34.1.0
+        released: '2025-09-29'
+      '35':
+        version: 35.0.0
+        released: '2026-01-16'
+      '36':
+        version: 36.0.0
+        released: '2026-05-20'
+      '37':
+        version: 37.0.0
+        released: '2026-10-07'
+    weekly_downloads: 20307792
+  google-cloud-storage:
+    group: infra-cloud
+    ecosystem: pypi
+    latest: 3.17.1
+    latest_released: '2026-10-15'
+    first_released: '2016-09-29'
+    stable_versions: 127
+    releases_12mo: 18
+    series:
+      '0.20':
+        version: 0.20.0
+        released: '2016-09-29'
+      '0.21':
+        version: 0.21.0
+        released: '2016-11-14'
+      '0.22':
+        version: 0.22.0
+        released: '2016-12-10'
+      '0.23':
+        version: 0.23.0
+        released: '2017-02-25'
+      '1':
+        version: 1.0.0
+        released: '2017-03-31'
+      '2':
+        version: 2.0.0
+        released: '2022-01-12'
+      '3':
+        version: 3.0.0
+        released: '2025-01-29'
+    weekly_downloads: 40093206
+  twilio:
+    group: infra-cloud
+    ecosystem: npm
+    latest: 6.2.0
+    latest_released: '2026-10-12'
+    first_released: '2011-03-08'
+    stable_versions: 311
+    releases_12mo: 18
+    series:
+      '0.0':
+        version: 0.0.0
+        released: '2011-03-08'
+      '0.2':
+        version: 0.2.0
+        released: '2011-03-08'
+      '0.3':
+        version: 0.3.0
+        released: '2011-03-08'
+      '0.4':
+        version: 0.4.0
+        released: '2011-04-04'
+      '0.5':
+        version: 0.5.0
+        released: '2012-12-19'
+      '0.6':
+        version: 0.6.0
+        released: '2012-12-20'
+      '0.7':
+        version: 0.7.0
+        released: '2012-12-28'
+      '0.8':
+        version: 0.8.0
+        released: '2013-02-18'
+      '1':
+        version: 1.0.0
+        released: '2013-03-07'
+      '2':
+        version: 2.0.0
+        released: '2015-04-16'
+      '3':
+        version: 3.0.0
+        released: '2017-05-03'
+      '4':
+        version: 4.6.0
+        released: '2017-07-27'
+      '5':
+        version: 5.0.0
+        released: '2024-03-12'
+      '6':
+        version: 6.0.0
+        released: '2026-04-20'
+    weekly_downloads: 9420142
+  '@embrace-io/web-sdk':
+    group: niche
+    ecosystem: npm
+    latest: 2.32.0
+    latest_released: '2026-10-29'
+    first_released: '2025-04-03'
+    stable_versions: 70
+    releases_12mo: 31
+    series:
+      '0.0':
+        version: 0.0.11
+        released: '2025-04-03'
+      '0.1':
+        version: 0.1.5
+        released: '2025-04-16'
+      '0.2':
+        version: 0.2.0
+        released: '2025-04-25'
+      '1':
+        version: 1.0.0
+        released: '2025-05-29'
+      '2':
+        version: 2.0.0
+        released: '2025-09-02'
+    weekly_downloads: 12730
+  '@frontmcp/auth':
+    group: niche
+    ecosystem: npm
+    latest: 1.10.15
+    latest_released: '2026-11-01'
+    first_released: '2026-01-26'
+    stable_versions: 70
+    releases_12mo: 70
+    series:
+      '0.0':
+        version: 0.0.1
+        released: '2026-01-26'
+      '0.8':
+        version: 0.8.0
+        released: '2026-02-02'
+      '0.9':
+        version: 0.9.0
+        released: '2026-02-05'
+      '0.10':
+        version: 0.10.0
+        released: '2026-02-13'
+      '0.11':
+        version: 0.11.0
+        released: '2026-02-19'
+      '0.12':
+        version: 0.12.0
+        released: '2026-02-25'
+      '1':
+        version: 1.0.0
+        released: '2026-04-06'
+    weekly_downloads: 2413
+  mjlab:
+    group: niche
+    ecosystem: pypi
+    latest: 1.6.0
+    latest_released: '2026-08-09'
+    first_released: '2025-09-26'
+    stable_versions: 19
+    releases_12mo: 11
+    series:
+      '0.0':
+        version: 0.0.0
+        released: '2025-09-26'
+      '0.1':
+        version: 0.1.0
+        released: '2025-09-29'
+      '1':
+        version: 1.0.0
+        released: '2026-02-02'
+    weekly_downloads: 24651
+  cachekit:
+    group: niche
+    ecosystem: pypi
+    latest: 0.25.1
+    latest_released: '2026-10-30'
+    first_released: '2025-10-29'
+    stable_versions: 32
+    releases_12mo: 31
+    series:
+      '0.0':
+        version: 0.0.1
+        released: '2025-10-29'
+      '0.1':
+        version: 0.1.0
+        released: '2025-12-12'
+      '0.2':
+        version: 0.2.0
+        released: '2025-12-16'
+      '0.3':
+        version: 0.3.0
+        released: '2026-01-13'
+      '0.4':
+        version: 0.4.0
+        released: '2026-03-17'
+      '0.6':
+        version: 0.6.1
+        released: '2026-05-16'
+      '0.7':
+        version: 0.7.0
+        released: '2026-05-28'
+      '0.8':
+        version: 0.8.0
+        released: '2026-06-03'
+      '0.9':
+        version: 0.9.0
+        released: '2026-06-11'
+      '0.10':
+        version: 0.10.0
+        released: '2026-06-18'
+      '0.11':
+        version: 0.11.0
+        released: '2026-06-21'
+      '0.14':
+        version: 0.14.0
+        released: '2026-07-22'
+      '0.15':
+        version: 0.15.0
+        released: '2026-07-23'
+      '0.16':
+        version: 0.16.0
+        released: '2026-07-24'
+      '0.17':
+        version: 0.17.0
+        released: '2026-07-29'
+      '0.18':
+        version: 0.18.0
+        released: '2026-09-04'
+      '0.19':
+        version: 0.19.0
+        released: '2026-09-22'
+      '0.20':
+        version: 0.20.0
+        released: '2026-09-30'
+      '0.21':
+        version: 0.21.0
+        released: '2026-10-03'
+      '0.22':
+        version: 0.22.0
+        released: '2026-10-04'
+      '0.23':
+        version: 0.23.0
+        released: '2026-10-18'
+      '0.24':
+        version: 0.24.0
+        released: '2026-10-19'
+      '0.25':
+        version: 0.25.0
+        released: '2026-10-28'
+    weekly_downloads: 14630
+  mlt-core:
+    group: niche
+    ecosystem: cargo
+    latest: 0.22.1
+    latest_released: '2026-10-27'
+    first_released: '2026-02-20'
+    stable_versions: 53
+    releases_12mo: 53
+    series:
+      '0.1':
+        version: 0.1.0
+        released: '2026-02-20'
+      '0.2':
+        version: 0.2.0
+        released: '2026-03-04'
+      '0.3':
+        version: 0.3.0
+        released: '2026-03-08'
+      '0.4':
+        version: 0.4.0
+        released: '2026-03-10'
+      '0.5':
+        version: 0.5.0
+        released: '2026-03-23'
+      '0.6':
+        version: 0.6.0
+        released: '2026-03-24'
+      '0.7':
+        version: 0.7.0
+        released: '2026-04-13'
+      '0.8':
+        version: 0.8.0
+        released: '2026-04-22'
+      '0.9':
+        version: 0.9.0
+        released: '2026-04-29'
+      '0.10':
+        version: 0.10.0
+        released: '2026-06-08'
+      '0.11':
+        version: 0.11.0
+        released: '2026-06-15'
+      '0.12':
+        version: 0.12.0
+        released: '2026-06-19'
+      '0.13':
+        version: 0.13.0
+        released: '2026-09-14'
+      '0.14':
+        version: 0.14.0
+        released: '2026-09-18'
+      '0.15':
+        version: 0.15.0
+        released: '2026-09-25'
+      '0.16':
+        version: 0.16.0
+        released: '2026-09-28'
+      '0.17':
+        version: 0.17.0
+        released: '2026-10-01'
+      '0.18':
+        version: 0.18.0
+        released: '2026-10-02'
+      '0.19':
+        version: 0.19.0
+        released: '2026-10-03'
+      '0.20':
+        version: 0.20.0
+        released: '2026-10-09'
+      '0.21':
+        version: 0.21.0
+        released: '2026-10-17'
+      '0.22':
+        version: 0.22.0
+        released: '2026-10-21'
+    weekly_downloads: 5660
+  dma-api:
+    group: niche
+    ecosystem: cargo
+    latest: 0.10.2
+    latest_released: '2026-09-09'
+    first_released: '2024-11-20'
+    stable_versions: 41
+    releases_12mo: 17
+    series:
+      '0.1':
+        version: 0.1.0
+        released: '2024-11-20'
+      '0.2':
+        version: 0.2.0
+        released: '2024-12-10'
+      '0.3':
+        version: 0.3.0
+        released: '2025-03-14'
+      '0.4':
+        version: 0.4.0
+        released: '2025-07-18'
+      '0.5':
+        version: 0.5.0
+        released: '2025-09-15'
+      '0.6':
+        version: 0.6.0
+        released: '2026-01-23'
+      '0.7':
+        version: 0.7.0
+        released: '2026-01-26'
+      '0.8':
+        version: 0.8.0
+        released: '2026-06-03'
+      '0.9':
+        version: 0.9.0
+        released: '2026-06-27'
+      '0.10':
+        version: 0.10.0
+        released: '2026-08-20'
+    weekly_downloads: 2213
