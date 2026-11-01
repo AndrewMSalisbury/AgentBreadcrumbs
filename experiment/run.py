@@ -12,6 +12,10 @@ and logs tokens, tool calls, time and the final answer to out/results.jsonl.
   python run.py cold-nowrite-related [--task ID]  # related question, no registry, no writing
   python run.py warm-related-nowrite [--task ID]  # related question, cold run's registry, no writing
   python run.py warm-same-nowrite [--task ID]     # same question, cold run's registry, no writing
+  python run.py memory --tasks ../research/probe/questions.yaml  # no tools: answer from memory
+
+--tasks reads another task file (default tasks.yaml); `related` is optional there,
+for files like the knowledge-gap probe's that only use memory and cold-nowrite.
 
 --iteration picks the card style and write policy, named <approach>-0.<n> in the
 order they were tried (LOG.md); use each with its own --out. narrow-0.1 (cards
@@ -62,7 +66,7 @@ PY = sys.executable
 TOOLS = ["WebSearch", "mcp__web__fetch", "mcp__web__render", "mcp__registry__lookup",
          "mcp__registry__write"]
 CONDITIONS = ("baseline", "cold", "cold-nowrite", "warm-same", "warm-related", "cold-nowrite-related",
-              "warm-related-nowrite", "warm-same-nowrite")
+              "warm-related-nowrite", "warm-same-nowrite", "memory")
 # Claude Code's own MCP output limit counts more strictly than the web server's
 # 20k-token cap; raise it so long pages reach the agent instead of a file it can't read.
 AGENT_ENV = {**os.environ, "MAX_MCP_OUTPUT_TOKENS": "60000"}
@@ -123,6 +127,14 @@ ENFORCED_ROUTE_WRITE_RULE = ROUTE_WRITE_RULE.replace("   If lookup had everythin
 # Every cold card that later saved tokens came from a run that pulled 2,286+; the cards that saved
 # nothing (render, a sonatype related run) came from runs that pulled ~450-550.
 MIN_PULL = 2000
+# memory (knowledge-gap probe): no tools, so the answer shows what the model remembers.
+MEMORY_SYSTEM = """You answer questions about software libraries from what you already know. You have no tools. Today is {today}.
+
+1. Answer from memory, for the version the question names.
+2. If you don't know, or aren't sure your answer holds for that version, answer UNSURE rather than guess.
+3. End with two lines:
+ANSWER: <answer, or UNSURE>
+CONFIDENCE: <high or low>"""
 # miss-*: the rule itself arrives with a lookup that misses (see bc/registry_server.py).
 MISS_RULE = "3. Call write only if a lookup result asks for breadcrumbs, and then as it says."
 NOWRITE_RULE = "3. Do not call write in this session."
@@ -135,16 +147,17 @@ ITERATIONS = {"map-0.1": ("map", WRITE_RULE), "route-0.1": ("route", ROUTE_WRITE
               **{i: ("route", MISS_RULE) for i in MISS}}
 ITERATION = "map-0.1"  # set from --iteration
 CARDS = "map"
+TASKS = ROOT / "tasks.yaml"  # set from --tasks
 
 
 def load_tasks(task_id: str | None, task_set: str = "all") -> list[dict]:
-    tasks = yaml.safe_load((ROOT / "tasks.yaml").read_text(encoding="utf-8"))
+    tasks = yaml.safe_load(TASKS.read_text(encoding="utf-8"))
     if task_set != "all":
         tasks = [t for t in tasks if t.get("set", "easy") == task_set]
     if task_id:
         tasks = [t for t in tasks if t["id"] == task_id]
         if not tasks:
-            sys.exit(f"no task {task_id!r} in tasks.yaml")
+            sys.exit(f"no task {task_id!r} in {TASKS.name}")
     return tasks
 
 
@@ -152,7 +165,8 @@ def verify(tasks: list[dict]) -> bool:
     """Re-check every answer at its source, so stale answers are caught before a run."""
     pages, ok_all = {}, True
     for t in tasks:
-        for label, q in ((t["id"], t), (t["id"] + " (related)", t["related"])):
+        qs = [(t["id"], t)] + ([(t["id"] + " (related)", t["related"])] if "related" in t else [])
+        for label, q in qs:
             c = q["check"]
             key = (c["url"], tuple(c.get("select") or ()))
             if key not in pages:
@@ -240,7 +254,8 @@ def parse_stream(lines: list[str]) -> dict:
             "write_input_tokens": write_tokens, "write_results": writes, "turns": result.get("num_turns"),
             "duration_ms": result.get("duration_ms"), "cost_usd": result.get("total_cost_usd"),
             "is_error": result.get("is_error", True), "terminal_reason": result.get("terminal_reason"),
-            "answer": m[-1].strip() if m else text.strip()[-300:]}
+            "answer": m[-1].strip() if m else text.strip()[-300:],
+            "confidence": (re.findall(r"CONFIDENCE:\s*(high|low)", text, re.I) or [None])[-1]}
 
 
 def grade(answer: str, expect: list[str]) -> bool:
@@ -267,7 +282,7 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
     else:
         question, expect = task["question"], task["expect"]
 
-    writes = "nowrite" not in cond and cond != "baseline"
+    writes = "nowrite" not in cond and cond not in ("baseline", "memory")
     it = ITERATION
     call_log = run_dir / "calls.log" if (it in ENFORCED or it in MISS[1:]) and writes else None
     cfg = run_dir / "mcp.json"
@@ -276,16 +291,17 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
             **({"BC_MIN_PULL": str(MIN_PULL), "BC_FILE_LOOKUP": "1"} if it in MISS[4:] else {}),
             **({"BC_NOTE_SITE": "1"} if it in MISS[5:] else {})} \
         if it in MISS and writes else None
-    cfg.write_text(json.dumps(mcp_config(registry, call_log, miss), indent=2), encoding="utf-8")
+    cfg.write_text(json.dumps({"mcpServers": {}} if cond == "memory" else mcp_config(registry, call_log, miss),
+                              indent=2), encoding="utf-8")
     today = datetime.date.today().isoformat()
     write_rule = ITERATIONS[it][1]
     rule = NOWRITE_RULE if "nowrite" in cond else write_rule.format(today=today, model=model)
-    system = SYSTEM.format(today=today, write_rule=rule)
+    system = MEMORY_SYSTEM.format(today=today) if cond == "memory" else SYSTEM.format(today=today, write_rule=rule)
     cmd = ["claude", "-p", question, "--model", model, "--system-prompt", system,
            "--output-format", "stream-json", "--verbose", "--setting-sources", "",
            "--strict-mcp-config", "--mcp-config", str(cfg), "--no-session-persistence",
            "--permission-mode", "dontAsk"]
-    cmd += ["--tools", "", "--allowedTools", ""] if cond == "baseline" else \
+    cmd += ["--tools", "", "--allowedTools", ""] if cond in ("baseline", "memory") else \
            ["--tools", "WebSearch", "--allowedTools", ",".join(TOOLS)]
     if it in ENFORCED and call_log:
         cmd += ["--settings", search_hook(call_log)]
@@ -303,13 +319,19 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
     (run_dir / "stream.jsonl").write_text(stdout, encoding="utf-8")
     (run_dir / "stderr.txt").write_text(stderr, encoding="utf-8")
 
-    row = {"condition": cond, "task": tid, "iteration": ITERATION, "cards": CARDS, "use_case": task["use_case"] if task else None,
+    row = {"condition": cond, "task": tid, "iteration": ITERATION, "cards": CARDS,
+           "use_case": task.get("use_case") if task else None, "library": task.get("library") if task else None,
+           "sample": task.get("sample") if task else None,
            "set": task.get("set", "easy") if task else None,
            "rep": rep, "model": model, "question": question,
            "started_at": datetime.datetime.fromtimestamp(t0).isoformat(timespec="seconds"),
            "wall_s": round(time.time() - t0, 1), "exit_code": code,
            **parse_stream(stdout.splitlines())}
     row["correct"] = grade(row["answer"], expect)
+    if cond == "memory":  # right / wrong-high / wrong-low / unsure (research/knowledge-gap-probe.md)
+        unsure = re.fullmatch(r"\W*unsure\W*", row["answer"], re.I) is not None
+        row["outcome"] = "unsure" if unsure else "right" if row["correct"] else \
+            "wrong-low" if (row["confidence"] or "").lower() == "low" else "wrong-high"
     (run_dir / "result.json").write_text(json.dumps(row, indent=2), encoding="utf-8")
     with open(OUT / "results.jsonl", "a", encoding="utf-8") as f:
         f.write(json.dumps(row) + "\n")
@@ -323,12 +345,15 @@ def main():
     ap.add_argument("--set", default="all", choices=("all", "easy", "hard"), help="task set (default all)")
     ap.add_argument("--rep", type=int, default=1, help="repeat number (default 1)")
     ap.add_argument("--model", default="sonnet")
+    ap.add_argument("--tasks", help="task file (default tasks.yaml)")
     ap.add_argument("--out", help="results and runs directory (default out/); warm runs read its cold registries")
     ap.add_argument("--iteration", default="map-0.1", choices=tuple(ITERATIONS),
                     help="card style and write policy (default map-0.1); see the list above")
     a = ap.parse_args()
-    global OUT, CARDS, ITERATION
+    global OUT, CARDS, ITERATION, TASKS
     ITERATION, CARDS = a.iteration, ITERATIONS[a.iteration][0]
+    if a.tasks:
+        TASKS = pathlib.Path(a.tasks).resolve()
     if a.out:
         OUT = pathlib.Path(a.out).resolve()
     if a.condition == "verify":
