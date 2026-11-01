@@ -524,3 +524,30 @@ To test: cold and warm runs on the one-fetch API tasks (hard: terraform, galaxy,
 - 14 of miss-0.5's 29 records already note a `select` or a size, which is what the jetbrains record lacked.
 
 Verdict: miss-0.6 is a negative result, and miss-0.5 stays the policy. A sentence that leads with what not to write suppresses writes. A next try would change only the site-record bullet, in positive terms: write one whenever an API or raw-source URL works for other pages, even after one fetch, and give the fetch arguments that keep the result small and its rough size.
+
+## 2026-11-01: field data from one developer's transcripts (not an iteration)
+
+A developer ran an aggregate-only script over their local Claude Code transcripts (835, in `~/.claude` and `~/.claude2`) and sent back counts. No text, URLs or domains were shared. A web call is `WebSearch`, `WebFetch` or a browser page load or read. A lookup is a run of web calls that ends at the next user message, or after GAP non-web tool calls in a row (GAP = 3 and GAP = 1 reported).
+
+| | GAP = 3 | GAP = 1 |
+|---|---|---|
+| Web calls (search / fetch / browser) | 46 (17 / 26 / 3) | same |
+| Lookups | 18 | 19 |
+| Exactly one call | 9 (50%) | 9 (47%) |
+| ...of which a fetch with no search before it | 8 | 8 |
+| Fetches to a domain fetched in an earlier lookup | 12 of 29 (41%) | same |
+
+84% of the transcripts are on one large codebase (Loom) with few, pinned dependencies, vendored upstream code and its own agent guides. 13 of 30 `WebFetch` calls went to GitHub, not split into own repos versus upstream.
+
+- **Web lookups are rare here:** about one web call per 18 transcripts. Whatever breadcrumbs save, the total here is small.
+- **Half the lookups are one-fetch,** the case where miss-0.5 can only add cost (about +7% median, above). Multi-fetch tasks are -27% / -32% under miss-0.4. Weighted 50/50 by lookup count, that's roughly -10 to -12%. Even at zero cost on one-fetch lookups it's about -15%, still under the 30% bar. Multi-call lookups probably use more tokens, so a token-weighted blend would be better, but the report counts calls only.
+- **One-fetch lookups are almost all a known URL with no search first** (8 of 9). The harness can see that before the fetch runs, so it may be a usable signal for skipping the lookup.
+- **41% repeat-domain fetches** is the case site records and warm-related runs are built for.
+
+Limits: 18 lookups (one lookup moves the single-call share by about 5 points), one developer, one main codebase, no research or shopping lookups, the two folders may overlap, and transcripts only go back about 30 days.
+
+## Next
+
+- **Estimate demand without developers.** The developer's top suggestion: ask the model versioned API questions about popular libraries and check the answers against the docs. The error rate by library and release date shows where a lookup would change the result. Public agent instruction files (`CLAUDE.md`, `AGENTS.md`) that point at docs are a second, passive signal.
+- **Skip or fold the lookup on known-URL fetches.** Skip the registry lookup on a first fetch with no search before it, or return the breadcrumb inside the fetch result so a miss costs almost nothing.
+- **Ask the developer for:** tokens per lookup, a folder-overlap check, and GitHub own versus upstream.
