@@ -22,6 +22,8 @@ miss-0.5 adds BC_MIN_PULL (no nudge and no page card unless the run's fetches
 returned that many tokens; see bc.common.card_block) and BC_FILE_LOOKUP=1: a page
 card must be filed under a site this run looked up, since later agents look up the
 page they start from, not the raw source or API that route.url points to.
+BC_NOTE_SITE=1 (miss-0.6) puts lean-0.1's one-fetch site-record sentence back in the
+note: miss-0.2's note dropped it, and one-fetch API runs stopped writing site records.
 """
 import sys, pathlib, json, re, hashlib, os, sqlite3, datetime
 from urllib.parse import urlsplit
@@ -42,6 +44,7 @@ MISS = os.environ.get("BC_MISS") in ("1", "x")
 MISSX = os.environ.get("BC_MISS") == "x"
 MISS_SITE = os.environ.get("BC_MISS_SITE") == "1"
 FILE_LOOKUP = os.environ.get("BC_FILE_LOOKUP") == "1"
+NOTE_SITE = os.environ.get("BC_NOTE_SITE") == "1"
 _looked_up: list[str] = []  # sites this run's lookups asked for, in order
 WRITER = os.environ.get("BC_WRITER", "unknown")
 MAX_OTHER = 20
@@ -245,6 +248,10 @@ MISSX_NOTE = """
   - answers: the topics the whole page covers, not your question. No values anywhere in the card.
 - Site record: only if you learned how to get content from any page on the site (an API or raw-source URL pattern with {{name}} in it, Markdown versions, JavaScript needed) and lookup did not already say so. It is stored after any number of fetches.
 Use schema "0.2" and provenance {{"writer": "{writer}", "observed_at": "{today}"}}.]"""
+# miss-0.6: lean-0.1's sentence, placed where a one-fetch agent stops reading for page cards.
+NOTE_BAR = "a fetch result will say when this run has passed that bar."
+ONE_FETCH_SITE = (" If you got the answer with one fetch or render, write no page card, but a site record is "
+                  "still worth writing if it gives a URL pattern lookup lacked.")
 _told = False
 
 
@@ -258,7 +265,8 @@ def _miss_note() -> str:
         return MISS_NOTE.format(writer=WRITER, today=today)
     log_call("note", "miss")  # the web server says once when a card from this run would be stored
     n = call_counts()["fetch"]
-    return MISSX_NOTE.format(writer=WRITER, today=today) + (
+    note = MISSX_NOTE.replace(NOTE_BAR, NOTE_BAR + ONE_FETCH_SITE) if NOTE_SITE else MISSX_NOTE
+    return note.format(writer=WRITER, today=today) + (
         f"\n[breadcrumbs: this run has taken {n} fetches, so write would store a page card from it.]" if n > 1 else "")
 
 

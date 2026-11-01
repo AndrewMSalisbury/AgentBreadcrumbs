@@ -16,7 +16,8 @@ Each iteration is named `<approach>-0.<n>`: a new approach starts at 0.1 and eac
 | miss-0.2 | Route rule in the miss note, one-fetch cards refused, nudge on the eligible fetch | `out_miss-0.2/` |
 | miss-0.3 | Stop hook: a nudged run that stored nothing is sent back once | `out_miss-0.3/` |
 | miss-0.4 | No note for runs whose lookups found anything | `out_miss-0.4/` |
-| miss-0.5 | Cards need 2,000+ fetched tokens and must be filed under a looked-up site | `out_miss-0.5_smoke/` |
+| miss-0.5 | Cards need 2,000+ fetched tokens and must be filed under a looked-up site | `out_miss-0.5/` |
+| miss-0.6 | The note says again that one-fetch runs still write a site record with a URL pattern (worse: halved site records) | `out_miss-0.6_smoke/` |
 
 `out_rep1_oldrule/` and `out_smoke_2026-10-26/` are setup runs from before narrow-0.1.
 
@@ -496,3 +497,30 @@ Verdict: miss-0.5 does no harm beyond its fixed cost on cheap pages. About +7% m
 
 - **Cut the fixed cost on one-fetch pages.** The note is ~450 tokens on every miss. A shorter note, or sending it only after the run's second fetch (when a card could be stored), would remove most of the +7%.
 - **Related questions** (above) are the other lever.
+
+## 2026-10-31: miss-0.6, one-fetch site records (`--iteration miss-0.6`, cold runs in `out_miss-0.6_smoke/`)
+
+miss-0.5 with one sentence added back to the miss note, inside the page-card bullet: "If you got the answer with one fetch or render, write no page card, but a site record is still worth writing if it gives a URL pattern lookup lacked."
+
+Why: lean-0.1 added that sentence after a smoke run showed puppet's one-fetch site record carrying a useful `{owner}-{name}` pattern, and miss-0.1's note kept it. miss-0.2 rebuilt the note from the route rule to get page cards on multi-fetch pages, and the sentence went with the lean rule's skip list. Nothing in this log gives a reason to drop it, and the registry stores site records at any fetch count. Since then one-fetch API runs write site records less often. jetbrains cold runs stored one in 3/3 under lean-0.1, lean-0.2 and miss-0.1, and in 0/3 under miss-0.2, miss-0.3 and miss-0.5. All six lean-0.1 and miss-0.5 cold runs fetched the same Marketplace API. With the record, lean-0.1's warm jetbrains runs read about 170 tokens instead of a 9k page (-92% uncached), against +43% under miss-0.5. enforced-0.1 saw the same effect ("the note reads as 'don't write' when it only covers page cards"). terraform, galaxy and puppet still get site records under miss-0.5, so the loss may be limited to opaque-ID patterns like jetbrains' `{pluginId}`.
+
+To test: cold and warm runs on the one-fetch API tasks (hard: terraform, galaxy, artifacthub, puppet, jetbrains; easy: the 8 hard_access tasks), checking that site records come back without page cards from one-fetch runs.
+
+**Smoke (rep 1, plus terraform reps 2-3).** jetbrains cold stored a site record with the `{pluginId}` pattern and no page card. But the record didn't mention the ~8k changelog payload, so the warm run fetched it whole: 23.2k, no better than the 23.5k baseline. lean-0.1's record had noted the size and fields, and its warm runs used `select` (11.9k, -49%). terraform stored its site record in 1/3 (miss-0.5 3/3), flathub 0/1, and compose wrote nothing.
+
+**Site-record check (cold only, 5 reps).** The 13 one-fetch API tasks (8 easy hard_access, plus terraform, galaxy, artifacthub, puppet and jetbrains). miss-0.6 reps 1-5 in `out_miss-0.6_smoke/`, and miss-0.5 reps 4-5 in `out_miss-0.5_sitecheck/` so both have 5 reps (`run_sitecheck.sh`). 86 runs, all correct.
+
+| Cold runs storing a site record | miss-0.5 | miss-0.6 |
+|---|---|---|
+| terraform / galaxy / artifacthub / puppet | 5 / 3 / 4 / 5 of 5 | 1 / 0 / 1 / 3 of 5 |
+| openvsx / amo / crates / bundlephobia / npm | 4 / 2 / 1 / 3 / 2 | 2 / 0 / 0 / 2 / 2 |
+| jsdelivr / jetbrains | 0 / 0 | 2 / 1 |
+| flathub / depsdev | 0 / 0 | 0 / 0 |
+| All 13 tasks | **29/65** | **14/65** |
+
+- The sentence halved site records. The two sites it gained (jsdelivr, jetbrains) gained 3 between them, and the sites that reliably wrote under miss-0.5 lost 16. jetbrains, the target, got only 1/5.
+- This matches terraform's earlier dips: lean-0.2 (1/3) and enforced-0.2 (0/3) also lead with what not to write after one fetch. "Write no page card, but..." reads as "write nothing".
+- No one-fetch run wrote a page card in either iteration.
+- 14 of miss-0.5's 29 records already note a `select` or a size, which is what the jetbrains record lacked.
+
+Verdict: miss-0.6 is a negative result, and miss-0.5 stays the policy. A sentence that leads with what not to write suppresses writes. A next try would change only the site-record bullet, in positive terms: write one whenever an API or raw-source URL works for other pages, even after one fetch, and give the fetch arguments that keep the result small and its rough size.

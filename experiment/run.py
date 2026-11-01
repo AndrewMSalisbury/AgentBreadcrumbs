@@ -42,6 +42,8 @@ holding only the answer's sections) used an earlier prompt and can't be rerun.
   miss-0.5      the nudge and page cards need the run's fetches to have returned
                 2,000+ tokens in all, and a page card must be filed under a site
                 the run looked up
+  miss-0.6      the note says again that a one-fetch run still writes a site record
+                that gives a URL pattern (lean-0.1's sentence, dropped in miss-0.2)
 coldonly-0.1 is lean-0.1's cold registries scored with the nowrite warm arms.
 
 Each run gets its own directory under out/runs/<condition>/<task>/r<rep>/ with
@@ -124,7 +126,7 @@ MIN_PULL = 2000
 # miss-*: the rule itself arrives with a lookup that misses (see bc/registry_server.py).
 MISS_RULE = "3. Call write only if a lookup result asks for breadcrumbs, and then as it says."
 NOWRITE_RULE = "3. Do not call write in this session."
-MISS = ("miss-0.1", "miss-0.2", "miss-0.3", "miss-0.4", "miss-0.5")
+MISS = ("miss-0.1", "miss-0.2", "miss-0.3", "miss-0.4", "miss-0.5", "miss-0.6")
 ENFORCED = ("enforced-0.1", "enforced-0.2")
 # Iteration name: (page-card style, step 3 of the prompt).
 ITERATIONS = {"map-0.1": ("map", WRITE_RULE), "route-0.1": ("route", ROUTE_WRITE_RULE),
@@ -271,7 +273,8 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
     cfg = run_dir / "mcp.json"
     miss = {"BC_MISS": "1" if it == "miss-0.1" else "x", "BC_WRITER": model,
             **({"BC_MISS_SITE": "1"} if it in MISS[3:] else {}),
-            **({"BC_MIN_PULL": str(MIN_PULL), "BC_FILE_LOOKUP": "1"} if it == "miss-0.5" else {})} \
+            **({"BC_MIN_PULL": str(MIN_PULL), "BC_FILE_LOOKUP": "1"} if it in MISS[4:] else {}),
+            **({"BC_NOTE_SITE": "1"} if it in MISS[5:] else {})} \
         if it in MISS and writes else None
     cfg.write_text(json.dumps(mcp_config(registry, call_log, miss), indent=2), encoding="utf-8")
     today = datetime.date.today().isoformat()
