@@ -47,8 +47,8 @@
 - id: openvsx-rust-analyzer
   use_case: hard_access
   question: What is the latest version of the rust-analyzer extension (rust-lang.rust-analyzer) on open-vsx.org?
-  expect: ['0\.4\.3101']
-  check: {url: 'https://open-vsx.org/api/rust-lang/rust-analyzer', select: [version], pattern: '"0\.4\.3101"'}
+  expect: ['0\.4\.3103']
+  check: {url: 'https://open-vsx.org/api/rust-lang/rust-analyzer', select: [version], pattern: '"0\.4\.3103"'}
   related:
     question: What is the latest version of the Prettier extension (esbenp.prettier-vscode) on open-vsx.org?
     expect: ['12\.4\.0']

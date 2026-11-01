@@ -468,6 +468,31 @@ Verdict: miss-0.5 is the first policy to pass the viability bar on warm related 
 
 ## Next
 
-- **miss-0.5 on the one-fetch tasks.** The 9 hard-set tasks left out here are where the registry can only add cost (lookup and the miss note). Their overhead is what a deployment pays on most pages. They need cold and the warm arms, reps 1-3 (about 160 runs with baselines copied).
-- **Related questions are the weak side.** Read-only related is -26%: warm agents find the card but the related answer is on another page (gha limits vs workflow-syntax, rust `pop_if`). A card's `answers` and links decide whether a related question can use it.
-- **Budget.** The 324-run batch used the rest of the weekly limit. Check what's left before the next batch.
+- **Related questions are the weak side.** Read-only related is -26%: warm agents find the card, but the related answer is on another page (gha limits vs workflow-syntax, rust `pop_if`). What a card's `answers` and links say decides whether a related question can use it.
+
+## 2026-10-31: miss-0.5 on the easy set and the one-fetch hard tasks (`out_miss-0.5/`, reps 1-3)
+
+`python out_miss-0.5/drive.py cheap`: the 24 easy tasks and the 9 one-fetch hard tasks, cold and both warm arms, reps 1-3. The easy set needed new no-write baselines (its only earlier run, `out_rep1_oldrule/`, predates narrow-0.1). The one-fetch hard baselines are the rows miss-0.1 to miss-0.3 used, copied from miss-0.3. Read-only arms were left out, since no warm agent wrote in the multi-fetch run. 441 runs. The 5-hour limit hit at the start of phase 2, a memory-pressure kill stopped the driver while it waited, and it resumed after the reset with nothing lost.
+
+Before the run, `verify` found openvsx rust-analyzer had moved from 0.4.3101 to 0.4.3102. It moved again to 0.4.3103 during the run: two warm-same runs answered 0.4.3103 and were regraded correct (marked `regraded`), and `tasks.yaml` now expects 0.4.3103. 441/441 correct.
+
+| Mean per-task change vs no-write, reps 1-3 | Tasks | Write cost | Warm same | Warm related | Medians |
+|---|---|---|---|---|---|
+| Easy, all | 24 | +2.6k | +11% | +13% | +7% / +7% |
+| Easy, hard_access / docs / coding | 8 / 8 / 8 | +1.6k / +2.2k / +3.9k | +13% / +14% / +6% | +34% / +7% / -3% | |
+| Easy, one fetch | 20 | +2.0k | +12% | +16% | +7% / +7% |
+| Easy, 2+ fetches | 4 | +5.2k | +4% | -3% | +6% / -4% |
+| Hard, one fetch | 9 | +3.0k | +20% | +8% | +10% / +9% |
+
+- **On one-fetch pages miss-0.5 costs about +7% (median):** a lookup plus, when it misses, the ~450-token note. It can't save anything there. Means run higher because of single expensive runs: jsdelivr related +142%, depsdev related +67%, jetbrains same +62%, pypi same +57%, crates same +51%, letsencrypt same +51%.
+- **Same as earlier policies on the hard one-fetch tasks**, on the same baselines: warm same / related +8% / +7% (miss-0.1), +9% / +4% (miss-0.2), +21% / +9% (miss-0.3), +20% / +8% (miss-0.5). miss-0.3 and miss-0.5 both have the Stop hook, but it fired in none of these runs. The gap to miss-0.1/0.2 comes from jetbrains and pypi same, so it's single-run variance at 3 reps.
+- **Write cost is small** (+2-3k): one-fetch cold runs get no nudge and store no page card. Site records with API URL patterns are still stored (openvsx, terraform, galaxy and puppet in 3/3).
+- **Warm agents wrote in 13 of 198 runs, all of them misses.** Every one first got the miss note, because its cold run had left nothing for that site. 10 of the 13 were site records for API sites (crates, npm, jsdelivr, depsdev, artifacthub, jetbrains), which are stored at any fetch count. The other 3 were page cards after a nudge (discord, tailwind, depsdev). None wrote over an existing record.
+- **The few easy tasks that need several fetches do save on related questions:** python-json-bytes -21% / -25%, go -19% related, tailwind -17% related. That's only 4 tasks at 3 reps.
+
+Verdict: miss-0.5 does no harm beyond its fixed cost on cheap pages. About +7% median on a page answered in one fetch, against -44% same / -32% related on pages that take several fetches. Whether it pays in deployment depends on that mix: with the +7% and -32% figures, it breaks even when about 1 lookup in 6 is for a multi-fetch page.
+
+## Next
+
+- **Cut the fixed cost on one-fetch pages.** The note is ~450 tokens on every miss. A shorter note, or sending it only after the run's second fetch (when a card could be stored), would remove most of the +7%.
+- **Related questions** (above) are the other lever.
