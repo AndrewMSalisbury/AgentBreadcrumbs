@@ -24,6 +24,10 @@ card must be filed under a site this run looked up, since later agents look up t
 page they start from, not the raw source or API that route.url points to.
 BC_NOTE_SITE=1 (miss-0.6) puts lean-0.1's one-fetch site-record sentence back in the
 note: miss-0.2's note dropped it, and one-fetch API runs stopped writing site records.
+BC_SEARCHES=1 (miss-0.7) counts searches toward the page-card bar again, so a run that
+searched and then fetched once can store a card (BC_MIN_PULL still applies): finding
+the page is what such a card saves. miss-0.2 stopped counting them for pypi's
+search-then-write loop, before miss-0.4 and miss-0.5 narrowed who writes.
 """
 import sys, pathlib, json, re, hashlib, os, sqlite3, datetime
 from urllib.parse import urlsplit
@@ -45,6 +49,7 @@ MISSX = os.environ.get("BC_MISS") == "x"
 MISS_SITE = os.environ.get("BC_MISS_SITE") == "1"
 FILE_LOOKUP = os.environ.get("BC_FILE_LOOKUP") == "1"
 NOTE_SITE = os.environ.get("BC_NOTE_SITE") == "1"
+SEARCHES = os.environ.get("BC_SEARCHES") == "1"
 _looked_up: list[str] = []  # sites this run's lookups asked for, in order
 WRITER = os.environ.get("BC_WRITER", "unknown")
 MAX_OTHER = 20
@@ -146,7 +151,7 @@ def write_page(record: dict) -> str:
         route = record.get("route") if isinstance(record.get("route"), dict) else {}
         with connect() as db:
             sites = [json.loads(r) for (r,) in db.execute("SELECT record FROM sites")]
-        if why := card_block([record.get("url"), route.get("url")], sites, call_counts(), searches=not MISSX):
+        if why := card_block([record.get("url"), route.get("url")], sites, call_counts(), searches=not MISSX or SEARCHES):
             return f"not stored: {why}. Site records are still stored."
     if FILE_LOOKUP and _looked_up and isinstance(record.get("url"), str) \
             and host_of(record["url"]) not in _looked_up:
@@ -250,6 +255,11 @@ MISSX_NOTE = """
 Use schema "0.2" and provenance {{"writer": "{writer}", "observed_at": "{today}"}}.]"""
 # miss-0.6: lean-0.1's sentence, placed where a one-fetch agent stops reading for page cards.
 NOTE_BAR = "a fetch result will say when this run has passed that bar."
+# miss-0.7: a search counts toward the bar.
+NOTE_NO_SEARCH = ("took more than one fetch or render. write refuses page cards from runs with one fetch or "
+                  "render (searches do not count)")
+NOTE_SEARCH = ("took more than one fetch or render, or a search and a fetch. write refuses page cards from runs "
+               "with one fetch or render and no search")
 ONE_FETCH_SITE = (" If you got the answer with one fetch or render, write no page card, but a site record is "
                   "still worth writing if it gives a URL pattern lookup lacked.")
 _told = False
@@ -264,8 +274,17 @@ def _miss_note() -> str:
     if not MISSX:
         return MISS_NOTE.format(writer=WRITER, today=today)
     log_call("note", "miss")  # the web server says once when a card from this run would be stored
-    n = call_counts()["fetch"]
+    counts = call_counts()
+    n = counts["fetch"]
     note = MISSX_NOTE.replace(NOTE_BAR, NOTE_BAR + ONE_FETCH_SITE) if NOTE_SITE else MISSX_NOTE
+    if SEARCHES:
+        note = note.replace(NOTE_NO_SEARCH, NOTE_SEARCH)
+        if card_block([], [], counts) is None:
+            s = counts["search"]
+            return note.format(writer=WRITER, today=today) + (
+                f"\n[breadcrumbs: this run has taken {n} fetch{'es' if n != 1 else ''}"
+                f"{f' and {s} search' + ('es' if s != 1 else '') if s else ''}, so write would store a page card from it.]")
+        return note.format(writer=WRITER, today=today)
     return note.format(writer=WRITER, today=today) + (
         f"\n[breadcrumbs: this run has taken {n} fetches, so write would store a page card from it.]" if n > 1 else "")
 

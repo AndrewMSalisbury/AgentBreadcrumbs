@@ -18,6 +18,7 @@ Each iteration is named `<approach>-0.<n>`: a new approach starts at 0.1 and eac
 | miss-0.4 | No note for runs whose lookups found anything | `out_miss-0.4/` |
 | miss-0.5 | Cards need 2,000+ fetched tokens and must be filed under a looked-up site | `out_miss-0.5/` |
 | miss-0.6 | The note says again that one-fetch runs still write a site record with a URL pattern (worse: halved site records) | `out_miss-0.6_smoke/` |
+| miss-0.7 | miss-0.5, with a search counting toward the page-card bar again (a search and one fetch can earn a card) | `out_miss-0.7_probe/` |
 | probe-0.1 | Not a write policy: library-docs demand, 72 versioned questions on 12 libraries, miss-0.5 arms plus memory, open and oracle | `out_probe-0.1/` |
 
 `out_rep1_oldrule/` and `out_smoke_2026-10-26/` are setup runs from before narrow-0.1.
@@ -581,7 +582,55 @@ The real question from the field data: are multi-fetch docs lookups common enoug
 
 Verdict: no win on library docs for coding agents. That's the plan's "no win" branch for this use case. The remaining case is access knowledge for hard sites (multi-fetch hard tasks, −27% to −32% under miss-0.4), whose real-world demand is untested.
 
+## 2026-11-02: access-failure counts, this machine (not an iteration)
+
+`research/scripts/access_failures.py` counts fetches that fail or come back near-empty, what the lookup does next, and whether the same site fails again in another session. Lookups are as in `lookups_local.py` (GAP=3). Failures are classed from the opening text of each result: blocked (401/403/429, bot checks), gone (404/410, "page not found"), too large, server error, redirect, and JavaScript-only or empty (the summarizer reports only a title or incomplete content). The classes were hand-checked against this machine's results. The script prints counts only; domains are kept in memory to count repeats.
+
+| | This machine (64 transcripts) |
+|---|---|
+| Lookups / web calls | 44 / 203 (92 fetches, 111 searches) |
+| Failed fetches | 14 (15%): gone 6, blocked 3, JS/empty 2, redirect 2, too large 1 |
+| Lookups with an access failure (blocked, JS/empty, too large) | 5 (11%) |
+| Web calls per lookup, clean vs with an access failure | median 2 vs 9 |
+| After the first access failure | 42 more web calls in all, median 2; 3 lookups later fetched something, 2 never did; none switched to a browser tool |
+| Domains with an access failure | 6, none failing in 2+ sessions |
+
+- **Access failures are expensive when they happen.** Lookups that hit one ran to a median of 9 web calls.
+- **They are rare, and they don't repeat.** 5 lookups in 64 transcripts. No site failed in two sessions, so no breadcrumb from an earlier session would have helped here.
+- **Most failures are dead links, not hard sites.** Gone (404/410) is the largest class, mostly expired job postings, and a site record can't fix those.
+
+Limits: one machine, mostly this research project plus some job-search sessions, about 30 days of transcripts, 5 access-failure lookups. A shared registry pools sites across users, so repeats across developers matter more than repeats on one machine. That needs the script run on other machines.
+
+## 2026-11-02: miss-0.7, searches count toward the card bar (`--iteration miss-0.7`, `out_miss-0.7_probe/`)
+
+Why: in probe-0.1 the related questions with the most room to save (oracle −33% median) were the ones whose cold run searched, fetched once and was refused a card, since miss-0.2 counts fetches only. miss-0.7 is miss-0.5 with `BC_SEARCHES=1`: a search counts toward the bar again, and the 2,000-token pull and miss-0.4's rules stay. miss-0.2 had stopped counting searches because of pypi's search-then-write loop, before miss-0.4 and miss-0.5 narrowed who writes.
+
+Fixes found on the way: miss mode never logged WebSearch calls (only enforced-* installed `log_search.py`), so miss-0.7 installs that hook alongside the Stop hook. `BC_NOTE_SITE` is now on for miss-0.6 only (it was `MISS[5:]`).
+
+Run: probe-0.1's 36 pairs, reps 1-2, with cold, warm-related and warm-related-nowrite under miss-0.7. That's 216 runs, scored against probe-0.1's no-registry rows (copied; they don't depend on the policy). The 5-hour limit hit once and the driver waited. `out_miss-0.7_probe/report.py` gives the token table.
+
+| | miss-0.5 | miss-0.7 |
+|---|---|---|
+| Cold runs storing a card (of 72) | 24 | 30 (5 after a search and one fetch) |
+| Warm-related, tokens median / weighted | +9% / +22% | +15% / +27% |
+| Read-only related, tokens | −0% / −3% | +3% / −14% |
+| Read-only related, cold stored nothing (empty registry), tokens | −0% / −3% | +4% / −13% |
+| Same in dollars (`cost_usd`): warm-related | +8% / +6% | +14% / +7% |
+| Dollars: read-only related | −1% / +1% | +3% / −7% |
+| Dollars: read-only related, cold stored | +2% / −1% (n=24) | +3% / −13% (n=30) |
+| Dollars: warm-related, cold stored nothing | +8% / +5% | +25% / +21% |
+| Dollars: cold + one read-only reuse vs no registry (rep 1) | +8% / +8% | +12% / +9% |
+| Warm-related runs that wrote (all on misses) | 20/72 | 23/72 (6 via a search and one fetch) |
+
+- **The new cards are hit or miss.** Of the 5 added cards, 2 halved their related question: cachekit 102k → 48k (4 → 2 web calls) and stripe-invoice 58k → 27k (5 → 2). One was flat (embrace), and astro's related question was already cheap (12k) and got dearer (26k, 13k).
+- **Most of the aggregate is noise.** Read-only runs on an *empty* registry should match the baseline, but they came out at −13% tokens. That's the noise floor for a token-weighted mean at n≈40 with 200k+ outliers. Medians are flat for both policies.
+- **The token metric overstates write cost.** "Total" counts cache reads at full weight. A cold write adds ~40k total tokens but only ~1.7k uncached (+$0.004 median), because it's extra turns over a cached context. In dollars every result here shrinks toward zero: miss-0.5's +22% warm-related is +6%, and read-only −3% is +1%. Earlier LOG entries use the same metric, so their gains and losses are overstated too, in both directions.
+- **Warm writes on misses cost more** (+21% vs +5% in dollars) because miss-0.7 lets more of them earn a card. In a shared registry those are first writes, the same as cold runs, and are paid back by later readers. One reuse is the least favourable accounting.
+- **Wrong answers are not card-caused.** All 4 pydantic EllipsisType misses are on a question that only the source answers. The r2 cold registry was empty, and miss-0.5 missed it too.
+
+Verdict: miss-0.7 does what it was meant to: more cards, and large savings where the related question was expensive. At 2 reps it can't be told apart from miss-0.5 on totals (net +9% vs +8% in dollars over one reuse). Keep it as a candidate. The bigger finding is the metric: rescore earlier results in dollars before comparing policies further.
+
 ## Next
 
-- **Measure demand for access knowledge on hard sites.** Extend the field script to count, per transcript, fetches that return near-empty or error pages and the retries after them (counts only). That's the one use case where breadcrumbs saved tokens.
+- **Measure demand for access knowledge on hard sites.** Done on this machine (2026-11-02 above): rare and not repeated. Next, send `access_failures.py` to the developer and other users; cross-user repeats of the same failing site are what a shared registry needs.
 - **If library docs are revisited**, file cards by library rather than landing page, and write raw-source URL patterns (`raw.githubusercontent.com/<repo>/<tag>/...`) as site records. The oracle caps a route-only breadcrumb at about −12% on this workload.

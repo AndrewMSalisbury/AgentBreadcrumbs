@@ -5,6 +5,7 @@ result ends with a note saying whether write would store a page card from this r
 With BC_MISS=x (miss-0.2) calls are logged too, and only the first fetch or
 render that makes a page card storable, in a run whose lookup sent the miss note,
 says so. Each logged call records the tokens its reply returned (BC_MIN_PULL reads them).
+BC_SEARCHES=1 (miss-0.7) counts searches toward that bar, as the registry does.
 """
 import sys, pathlib, re, os
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
@@ -18,6 +19,7 @@ MAX_TOKENS = 10000
 MAX_CHARS = 36000
 ENFORCE = os.environ.get("BC_ENFORCE") == "1"
 MISSX = os.environ.get("BC_MISS") == "x"
+SEARCHES = os.environ.get("BC_SEARCHES") == "1"
 LOGGED = ENFORCE or MISSX
 HEADING = re.compile(r"^(#{1,6})\s+(.+)$")
 mcp = MCPServer("web")
@@ -86,11 +88,13 @@ def _card_note(url: str, reply: str) -> str:
         if _nudged or "note\tmiss" not in _call_lines():
             return reply
         counts = call_counts()
-        if card_block([url], stored_site_records(os.environ.get("BC_REGISTRY")), counts, searches=False):
+        if card_block([url], stored_site_records(os.environ.get("BC_REGISTRY")), counts, searches=SEARCHES):
             return reply
         _nudged = True
         log_call("nudge", url)  # read by the miss-0.3+ Stop hook
-        return reply + (f"\n[breadcrumbs: this run has now taken {counts['fetch']} fetches, so write would store "
+        taken = f"{counts['fetch']} fetch{'es' if counts['fetch'] != 1 else ''}" + (
+            f" and {counts['search']} search{'es' if counts['search'] != 1 else ''}" if SEARCHES and counts["search"] else "")
+        return reply + (f"\n[breadcrumbs: this run has now taken {taken}, so write would store "
                         "a page card from it: write one for the page that holds the answer before answering.]")
     if not ENFORCE:
         return reply
