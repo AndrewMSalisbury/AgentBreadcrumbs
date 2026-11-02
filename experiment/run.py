@@ -13,6 +13,7 @@ and logs tokens, tool calls, time and the final answer to out/results.jsonl.
   python run.py warm-related-nowrite [--task ID]  # related question, cold run's registry, no writing
   python run.py warm-same-nowrite [--task ID]     # same question, cold run's registry, no writing
   python run.py memory --tasks ../research/probe/questions.yaml  # no tools: answer from memory
+  python run.py open --tasks ../research/probe/questions.yaml    # web tools, no registry; the agent decides whether to look up
 
 --tasks reads another task file (default tasks.yaml); `related` is optional there,
 for files like the knowledge-gap probe's that only use memory and cold-nowrite.
@@ -66,7 +67,7 @@ PY = sys.executable
 TOOLS = ["WebSearch", "mcp__web__fetch", "mcp__web__render", "mcp__registry__lookup",
          "mcp__registry__write"]
 CONDITIONS = ("baseline", "cold", "cold-nowrite", "warm-same", "warm-related", "cold-nowrite-related",
-              "warm-related-nowrite", "warm-same-nowrite", "memory")
+              "warm-related-nowrite", "warm-same-nowrite", "memory", "open")
 # Claude Code's own MCP output limit counts more strictly than the web server's
 # 20k-token cap; raise it so long pages reach the agent instead of a file it can't read.
 AGENT_ENV = {**os.environ, "MAX_MCP_OUTPUT_TOKENS": "60000"}
@@ -135,6 +136,15 @@ MEMORY_SYSTEM = """You answer questions about software libraries from what you a
 3. End with two lines:
 ANSWER: <answer, or UNSURE>
 CONFIDENCE: <high or low>"""
+# open (knowledge-gap probe): web tools but no registry, and no rule to look things up, so
+# whether the agent looks anything up is its own choice, as in ordinary coding work.
+OPEN_SYSTEM = """You answer questions about software libraries. Today is {today}.
+
+Tools: fetch and render get pages as Markdown; WebSearch finds pages.
+
+1. Use the tools when you need to check something. If you already know the answer for the version asked about, answer directly.
+2. End with one line: ANSWER: <answer> (source: <URL, or memory>)"""
+OPEN_TOOLS = ["WebSearch", "mcp__web__fetch", "mcp__web__render"]
 # miss-*: the rule itself arrives with a lookup that misses (see bc/registry_server.py).
 MISS_RULE = "3. Call write only if a lookup result asks for breadcrumbs, and then as it says."
 NOWRITE_RULE = "3. Do not call write in this session."
@@ -282,7 +292,7 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
     else:
         question, expect = task["question"], task["expect"]
 
-    writes = "nowrite" not in cond and cond not in ("baseline", "memory")
+    writes = "nowrite" not in cond and cond not in ("baseline", "memory", "open")
     it = ITERATION
     call_log = run_dir / "calls.log" if (it in ENFORCED or it in MISS[1:]) and writes else None
     cfg = run_dir / "mcp.json"
@@ -291,18 +301,21 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
             **({"BC_MIN_PULL": str(MIN_PULL), "BC_FILE_LOOKUP": "1"} if it in MISS[4:] else {}),
             **({"BC_NOTE_SITE": "1"} if it in MISS[5:] else {})} \
         if it in MISS and writes else None
-    cfg.write_text(json.dumps({"mcpServers": {}} if cond == "memory" else mcp_config(registry, call_log, miss),
-                              indent=2), encoding="utf-8")
+    servers = {"mcpServers": {}} if cond == "memory" else mcp_config(registry, call_log, miss)
+    if cond == "open":
+        del servers["mcpServers"]["registry"]
+    cfg.write_text(json.dumps(servers, indent=2), encoding="utf-8")
     today = datetime.date.today().isoformat()
     write_rule = ITERATIONS[it][1]
     rule = NOWRITE_RULE if "nowrite" in cond else write_rule.format(today=today, model=model)
-    system = MEMORY_SYSTEM.format(today=today) if cond == "memory" else SYSTEM.format(today=today, write_rule=rule)
+    system = MEMORY_SYSTEM.format(today=today) if cond == "memory" else OPEN_SYSTEM.format(today=today) \
+        if cond == "open" else SYSTEM.format(today=today, write_rule=rule)
     cmd = ["claude", "-p", question, "--model", model, "--system-prompt", system,
            "--output-format", "stream-json", "--verbose", "--setting-sources", "",
            "--strict-mcp-config", "--mcp-config", str(cfg), "--no-session-persistence",
            "--permission-mode", "dontAsk"]
     cmd += ["--tools", "", "--allowedTools", ""] if cond in ("baseline", "memory") else \
-           ["--tools", "WebSearch", "--allowedTools", ",".join(TOOLS)]
+           ["--tools", "WebSearch", "--allowedTools", ",".join(OPEN_TOOLS if cond == "open" else TOOLS)]
     if it in ENFORCED and call_log:
         cmd += ["--settings", search_hook(call_log)]
     elif it in MISS[2:] and call_log:

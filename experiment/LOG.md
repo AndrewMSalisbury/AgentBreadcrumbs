@@ -18,6 +18,7 @@ Each iteration is named `<approach>-0.<n>`: a new approach starts at 0.1 and eac
 | miss-0.4 | No note for runs whose lookups found anything | `out_miss-0.4/` |
 | miss-0.5 | Cards need 2,000+ fetched tokens and must be filed under a looked-up site | `out_miss-0.5/` |
 | miss-0.6 | The note says again that one-fetch runs still write a site record with a URL pattern (worse: halved site records) | `out_miss-0.6_smoke/` |
+| probe-0.1 | Not a write policy: library-docs demand, 72 versioned questions on 12 libraries, miss-0.5 arms plus memory, open and oracle | `out_probe-0.1/` |
 
 `out_rep1_oldrule/` and `out_smoke_2026-10-26/` are setup runs from before narrow-0.1.
 
@@ -551,3 +552,36 @@ Limits: 18 lookups (one lookup moves the single-call share by about 5 points), o
 - **Estimate demand without developers.** The developer's top suggestion: ask the model versioned API questions about popular libraries and check the answers against the docs. The error rate by library and release date shows where a lookup would change the result. Public agent instruction files (`CLAUDE.md`, `AGENTS.md`) that point at docs are a second, passive signal.
 - **Skip or fold the lookup on known-URL fetches.** Skip the registry lookup on a first fetch with no search before it, or return the breadcrumb inside the fetch result so a miss costs almost nothing.
 - **Ask the developer for:** tokens per lookup, a folder-overlap check, and GitHub own versus upstream.
+
+## 2026-11-01: probe-0.1, library-docs demand (`out_probe-0.1/`, report in `research/knowledge-gap-probe-report.md`)
+
+The real question from the field data: are multi-fetch docs lookups common enough for breadcrumbs to pay? 72 questions (`research/probe/questions.yaml`), 6 per library on 12 libraries in 6 groups. Each names a version and is checked against a file pinned to a release tag. 3 are drawn from the documented API, 3 from changelog entries since 2025-06. Arms, all Sonnet and miss-0.5:
+- memory: no tools.
+- open: web tools, no registry, no rule to look up.
+- forced lookup: cold-nowrite and cold-nowrite-related.
+- breadcrumbs: cold → warm-related, warm-related-nowrite and warm-same, on pairs within each library (questions 1→2, 3→4, 5→6), 2 reps.
+- oracle: the source URL in the prompt.
+
+576 scored runs (504 main, 72 oracle). The usage limit hit twice and the runs were retried after the reset.
+
+| | Result |
+|---|---|
+| Open: looked up | 71% (random 56%, changed before cutoff 84%, after 91%); 99% correct |
+| Open lookups with 2+ web calls | 67% (forced: 74%, median 29k total) |
+| Cold runs storing a record | 10/36 rep 1, 14/36 rep 2 (20/36 rep 1 were one-fetch) |
+| warm-related vs cold-nowrite-related | median +9%, token-weighted **+22%** |
+| warm-related-nowrite (read only) | median −0%, token-weighted **−3%** |
+| warm-same, cold stored | median −37%, token-weighted −20% (n=10) |
+| Oracle | median −22%, token-weighted **−12%**, mean +26% |
+
+- **Lookups with several fetches are common.** When an agent checks a library fact, it looks up on its own and usually needs 2+ calls. It looks up on 95% of the questions it was unsure about from memory. Only 1 of 72 open runs was confidently wrong without looking (Express 5.3 `req.fresh`, after the cutoff).
+- **Breadcrumbs don't make them cheaper.** Every stored record was a page card filed under the page the cold agent landed on (GitHub repo, PyPI, readthedocs), and no site records were written. A related question needs another page and enters by another URL, so lookups miss. Then the warm agent pays for the miss note and the write.
+- **Even a perfect route saves only 12%** (token-weighted). The cost of a docs lookup is mostly agent overhead and the content, and the true source is often a large module file.
+- **Field data: lookups are a small part of a session.** This machine's 63 transcripts (aggregate counts only, same definitions as the developer's script): 29% of sessions have any web call, 41-46% of lookups are one call, and web results are 8.3% of tool-result tokens.
+
+Verdict: no win on library docs for coding agents. That's the plan's "no win" branch for this use case. The remaining case is access knowledge for hard sites (multi-fetch hard tasks, −27% to −32% under miss-0.4), whose real-world demand is untested.
+
+## Next
+
+- **Measure demand for access knowledge on hard sites.** Extend the field script to count, per transcript, fetches that return near-empty or error pages and the retries after them (counts only). That's the one use case where breadcrumbs saved tokens.
+- **If library docs are revisited**, file cards by library rather than landing page, and write raw-source URL patterns (`raw.githubusercontent.com/<repo>/<tag>/...`) as site records. The oracle caps a route-only breadcrumb at about −12% on this workload.

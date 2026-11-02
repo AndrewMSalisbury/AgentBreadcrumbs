@@ -1,0 +1,702 @@
+# Knowledge-gap probe questions (research/knowledge-gap-probe.md), in tasks.yaml format:
+#   python run.py verify --tasks ../research/probe/questions.yaml
+#   python run.py memory --tasks ../research/probe/questions.yaml --out out_probe-0.1
+#
+# Each library has 3 `random` and 3 `changed` questions. Every question names a
+# version, and every check reads a file pinned to a release tag, so answers don't drift.
+#
+# random:  public functions and methods in the library's API reference (requests:
+#          docs/api.rst), listed from the source at the tag, shuffled with seed 1;
+#          the first 3 that a one-line question can test.
+# changed: changelog entries from 2025-06 on (12 months before Sonnet 5.5's Jun 2026
+#          cutoff) that change something a caller sees (no internal fixes, docs or
+#          test changes), drawn with random.Random(1).sample(..., 3).
+#          changed_in gives the release and its date.
+#
+# kind: signature, exists (exists / deprecated / replaced), default, behavior,
+#       exception, type, snippet.
+
+# --- requests 2.34 (stable) --------------------------------------------------
+
+- id: requests-cookiejar-set-none
+  library: requests
+  sample: random
+  kind: behavior
+  question: In requests 2.34, what does RequestsCookieJar.set(name, None) do?
+  expect: ['remov|delet|unset|clear']
+  check: {url: 'https://raw.githubusercontent.com/psf/requests/v2.34.2/src/requests/cookies.py', pattern: 'if value is None: remove_cookie_by_name\('}
+
+- id: requests-response-json-error
+  library: requests
+  sample: random
+  kind: exception
+  question: In requests 2.34, which exception does Response.json() raise when the response body isn't valid JSON? Give its dotted name.
+  expect: ['requests\.(exceptions\.)?JSONDecodeError']
+  check: {url: 'https://raw.githubusercontent.com/psf/requests/v2.34.2/src/requests/models.py', pattern: ':raises requests\.exceptions\.JSONDecodeError: If the response body does not contain valid json'}
+
+- id: requests-put-signature
+  library: requests
+  sample: random
+  kind: signature
+  question: In requests 2.34, which named parameters does requests.put() take before **kwargs, and what are their defaults?
+  expect: ['\burl\b', '\bdata\b.{0,30}\bNone\b']
+  check: {url: 'https://raw.githubusercontent.com/psf/requests/v2.34.2/src/requests/api.py', pattern: 'def put\( url: _t\.UriType, data: _t\.DataType = None, \*\*kwargs'}
+
+- id: requests-response-reason-type
+  library: requests
+  sample: changed
+  changed_in: {version: 2.34.1, date: '2026-05-13'}
+  kind: type
+  question: In requests 2.34.2's inline type hints, what is the declared type of Response.reason?
+  expect: ['\bstr\b', '^(?!.*None)']
+  check: {url: 'https://raw.githubusercontent.com/psf/requests/v2.34.2/src/requests/models.py', pattern: 'reason: str (?!\|)'}
+
+- id: requests-json-param-type
+  library: requests
+  sample: changed
+  changed_in: {version: 2.34.1, date: '2026-05-13'}
+  kind: type
+  question: In requests 2.34.2's inline type hints, which abstract container types does the json parameter of requests.post() accept for objects and arrays?
+  expect: ['Mapping', 'Sequence']
+  check: {url: 'https://raw.githubusercontent.com/psf/requests/v2.34.2/src/requests/_types.py', pattern: '\| Sequence\["JsonType"\] \| Mapping\[str, "JsonType"\]'}
+
+- id: requests-python-min-2325
+  library: requests
+  sample: changed
+  changed_in: {version: 2.32.5, date: '2025-08-18'}
+  kind: exists
+  question: What is the oldest Python version that requests 2.32.5 supports?
+  expect: ['3\.9\b']
+  check: {url: 'https://raw.githubusercontent.com/psf/requests/v2.32.5/setup.py', pattern: 'python_requires=">=3\.9"'}
+
+# --- express 5.3 (stable) ----------------------------------------------------
+# random: app.*, req.* and res.* members defined in lib/application.js, request.js
+# and response.js at v5.3.0 (the API reference documents the same members; the site
+# itself isn't pinned to releases). Skipped in draw order: app.handle (internal).
+# Release dates from deps.dev (History.md has none).
+
+- id: express-req-ip
+  library: express
+  sample: random
+  kind: behavior
+  question: In Express 5.3, with the "trust proxy" setting off, where does req.ip get its value from?
+  expect: ['socket|remote ?address|connection']
+  check: {url: 'https://raw.githubusercontent.com/expressjs/express/v5.3.0/lib/request.js', pattern: 'This is the remote address on the socket unless'}
+
+- id: express-app-enable-return
+  library: express
+  sample: random
+  kind: signature
+  question: In Express 5.3, what does app.enable(setting) return?
+  expect: ['\bapp\b|application|\bthis\b|itself|chain']
+  check: {url: 'https://raw.githubusercontent.com/expressjs/express/v5.3.0/lib/application.js', pattern: 'app\.enable = function enable\(setting\) \{ return this\.set\(setting, true\);'}
+
+- id: express-jsonp-callback-name
+  library: express
+  sample: random
+  kind: default
+  question: In Express 5.3, which query parameter does res.jsonp() read the callback name from by default, and which app setting changes it?
+  expect: ['\bcallback\b', 'jsonp callback name']
+  check: {url: 'https://raw.githubusercontent.com/expressjs/express/v5.3.0/lib/application.js', pattern: 'this\.set\(''jsonp callback name'', ''callback''\)'}
+
+- id: express-redirect-html-body
+  library: express
+  sample: changed
+  changed_in: {version: 5.3.0, date: '2026-10-09'}
+  kind: behavior
+  question: In Express 5.3, when res.redirect() sends an HTML body, what does the body start with?
+  expect: ['<!DOCTYPE html>']
+  check: {url: 'https://raw.githubusercontent.com/expressjs/express/v5.3.0/lib/response.js', pattern: "body = '<!DOCTYPE html><head><title>'"}
+
+- id: express-req-fresh-methods
+  library: express
+  sample: changed
+  changed_in: {version: 5.3.0, date: '2026-10-09'}
+  kind: behavior
+  question: In Express 5.3, for which HTTP request methods can req.fresh be true?
+  expect: ['\bGET\b', '\bHEAD\b', '\bQUERY\b']
+  check: {url: 'https://raw.githubusercontent.com/expressjs/express/v5.3.0/lib/request.js', pattern: 'if \(''GET'' !== method && ''HEAD'' !== method && ''QUERY'' !== method\) return false;'}
+
+- id: express-redirect-undefined-url
+  library: express
+  sample: changed
+  changed_in: {version: 5.2.0, date: '2025-12-01'}
+  kind: behavior
+  question: In Express 5.2, what does res.redirect() do when it's called with an undefined URL?
+  expect: ['deprecat|warn']
+  check: {url: 'https://raw.githubusercontent.com/expressjs/express/v5.2.0/lib/response.js', pattern: 'if \(!address\) \{ deprecate\(''Provide a url argument''\);'}
+
+# --- pydantic 2.14 (python-data-web) ---------------------------------------------
+# random: functions and methods of BaseModel, TypeAdapter, Field, computed_field, the
+# validator and serializer decorators, create_model, validate_call and PrivateAttr.
+# changed (from here on, for long changelogs): only bullets under each release's
+# "New Features" heading, since 2025-06 (clbullets.py); changed_in is the final release.
+
+- id: pydantic-field-default-factory
+  library: pydantic
+  sample: random
+  kind: signature
+  question: In pydantic 2.14, which Field() argument takes a callable that generates the default value?
+  expect: ['default_factory']
+  check: {url: 'https://raw.githubusercontent.com/pydantic/pydantic/v2.14.2/pydantic/fields.py', pattern: 'default_factory: A callable to generate the default value'}
+
+- id: pydantic-copy-replacement
+  library: pydantic
+  sample: random
+  kind: exists
+  question: In pydantic 2.14, BaseModel.copy() is deprecated. Which method replaces it?
+  expect: ['model_copy']
+  check: {url: 'https://raw.githubusercontent.com/pydantic/pydantic/v2.14.2/pydantic/main.py', pattern: 'This method is now deprecated; use `model_copy` instead'}
+
+- id: pydantic-validate-from-attributes
+  library: pydantic
+  sample: random
+  kind: signature
+  question: In pydantic 2.14, which keyword argument of BaseModel.model_validate() makes it read values from an object's attributes (for example an ORM row)?
+  expect: ['from_attributes']
+  check: {url: 'https://raw.githubusercontent.com/pydantic/pydantic/v2.14.2/pydantic/main.py', pattern: 'from_attributes: Whether to extract data from object attributes'}
+
+- id: pydantic-ellipsistype
+  library: pydantic
+  sample: changed
+  changed_in: {version: 2.14.0, date: '2026-10-08'}
+  kind: exists
+  question: Does pydantic 2.14 support types.EllipsisType as a field annotation? Answer yes or no.
+  expect: ['^\W*yes']
+  check: {url: 'https://raw.githubusercontent.com/pydantic/pydantic/v2.14.2/pydantic/_internal/_generate_schema.py', pattern: 'EllipsisType: lambda self, obj: core_schema\.ellipsis_schema\(\)'}
+
+- id: pydantic-url-preserve-empty-path
+  library: pydantic
+  sample: changed
+  changed_in: {version: 2.12.0, date: '2025-10-07'}
+  kind: exists
+  question: In pydantic 2.12 and later, which ConfigDict option stops URLs with an empty path (like https://example.com) from being normalized to end in "/"?
+  expect: ['preserve_empty_path']
+  check: {url: 'https://raw.githubusercontent.com/pydantic/pydantic/v2.14.2/pydantic/networks.py', pattern: 'ConfigDict\(url_preserve_empty_path=True\)'}
+
+- id: pydantic-on-complete-hook
+  library: pydantic
+  sample: changed
+  changed_in: {version: 2.12.0, date: '2025-10-07'}
+  kind: exists
+  question: In pydantic 2.12 and later, which BaseModel classmethod hook is called once the class and its fields are fully initialized and ready to be used?
+  expect: ['__pydantic_on_complete__']
+  check: {url: 'https://raw.githubusercontent.com/pydantic/pydantic/v2.14.2/pydantic/main.py', pattern: 'def __pydantic_on_complete__\(cls\) -> None:'}
+
+# --- fastapi 0.162 (python-data-web) ---------------------------------------------
+# random: methods of FastAPI, APIRouter, the parameter functions, HTTPException,
+# WebSocketException, BackgroundTasks and UploadFile. Skipped in draw order:
+# APIRouter.handle (ASGI internal). changed: "Features" and "Breaking Changes" bullets.
+
+- id: fastapi-uploadfile-close-async
+  library: fastapi
+  sample: random
+  kind: signature
+  question: In FastAPI 0.162, is UploadFile.close() a coroutine you have to await? Answer yes or no.
+  expect: ['^\W*yes']
+  check: {url: 'https://raw.githubusercontent.com/fastapi/fastapi/0.162.0/fastapi/datastructures.py', pattern: 'async def close\(self\) -> None:'}
+
+- id: fastapi-add-websocket-route-params
+  library: fastapi
+  sample: random
+  kind: signature
+  question: In FastAPI 0.162, which parameters does APIRouter.add_websocket_route() take besides self?
+  expect: ['\bpath\b', '\bendpoint\b', '\bname\b']
+  check: {url: 'https://raw.githubusercontent.com/fastapi/fastapi/0.162.0/fastapi/routing.py', pattern: 'def add_websocket_route\( self, path: str, endpoint: Callable\[\[WebSocket\], Awaitable\[None\]\], name: str \| None = None, \) -> None:'}
+
+- id: fastapi-get-response-description
+  library: fastapi
+  sample: random
+  kind: default
+  question: In FastAPI 0.162, what is the default response_description of a route declared with app.get()?
+  expect: ['Successful Response']
+  check: {url: 'https://raw.githubusercontent.com/fastapi/fastapi/0.162.0/fastapi/applications.py', pattern: '\] = "Successful Response",'}
+
+- id: fastapi-security-websocket
+  library: fastapi
+  sample: changed
+  changed_in: {version: 0.144.0, date: '2026-10-18'}
+  kind: exists
+  question: In FastAPI 0.162, can security dependencies such as OAuth2PasswordBearer or APIKeyHeader be used on WebSocket endpoints? Answer yes or no.
+  expect: ['^\W*yes']
+  check: {url: 'https://raw.githubusercontent.com/fastapi/fastapi/0.162.0/fastapi/security/api_key.py', pattern: 'async def __call__\(self, request: HTTPConnection\) -> str \| None:'}
+
+- id: fastapi-openapi-type-array
+  library: fastapi
+  sample: changed
+  changed_in: {version: 0.117.0, date: '2025-09-20'}
+  kind: type
+  question: In FastAPI 0.117 and later, what type does the `type` field of fastapi.openapi.models.Schema accept?
+  expect: ['list|array|sequence']
+  check: {url: 'https://raw.githubusercontent.com/fastapi/fastapi/0.162.0/fastapi/openapi/models.py', pattern: 'type: SchemaType \| list\[SchemaType\] \| None = None'}
+
+- id: fastapi-query-extra-kwargs
+  library: fastapi
+  sample: changed
+  changed_in: {version: 0.155.0, date: '2026-10-20'}
+  kind: exists
+  question: In FastAPI 0.162, can you pass arbitrary extra keyword arguments (**extra) to Query() or Body()? Answer yes or no.
+  expect: ['^\W*no\b']
+  check: {url: 'https://raw.githubusercontent.com/fastapi/fastapi/0.162.0/docs/en/docs/release-notes.md', pattern: 'Remove deprecated `\*\*extra` from request parameters'}
+
+# --- anthropic 2.3 (ai-sdk) --------------------------------------------------------
+# random: methods of the sync resource classes under src/anthropic/resources, leaving out
+# beta/, organization/ and user_profiles/ (beta and admin APIs, little used) and the
+# Async*, *WithRawResponse and *WithStreamingResponse wrappers. changed: "Features"
+# bullets, skipping admin or beta entries and ones too vague for a one-line question
+# (skipped in draw order: Admin API analytics, spend cap, compliance settings, Managed
+# Agents web_fetch url_sources, "improve Managed Agents APIs").
+
+- id: anthropic-skill-versions-create
+  library: anthropic
+  sample: random
+  kind: signature
+  question: In the anthropic Python SDK 2.3, which required keyword argument does client.skills.versions.create() take besides skill_id?
+  expect: ['\bfiles\b']
+  check: {url: 'https://raw.githubusercontent.com/anthropics/anthropic-sdk-python/v2.3.0/src/anthropic/resources/skills/versions.py', pattern: 'def create\( self, skill_id: str, \*, files: SequenceNotStr\[FileTypes\],'}
+
+- id: anthropic-messages-stream-required
+  library: anthropic
+  sample: random
+  kind: signature
+  question: In the anthropic Python SDK 2.3, which keyword arguments are required by client.messages.stream()?
+  expect: ['max_tokens', '\bmessages\b', '\bmodel\b']
+  check: {url: 'https://raw.githubusercontent.com/anthropics/anthropic-sdk-python/v2.3.0/src/anthropic/resources/messages/messages.py', pattern: 'def stream\( self, \*, max_tokens: int, messages: Iterable\[MessageParam\], model: ModelParam,'}
+
+- id: anthropic-batches-accessor
+  library: anthropic
+  sample: random
+  kind: exists
+  question: In the anthropic Python SDK 2.3, through which attribute path on a client do you reach the Message Batches API?
+  expect: ['messages\.batches']
+  check: {url: 'https://raw.githubusercontent.com/anthropics/anthropic-sdk-python/v2.3.0/src/anthropic/resources/messages/messages.py', pattern: 'class Messages\(SyncAPIResource\): @cached_property def batches\(self\) -> Batches:'}
+
+- id: anthropic-sonnet-46-id
+  library: anthropic
+  sample: changed
+  changed_in: {version: 0.80.0, date: '2026-02-17'}
+  kind: exists
+  question: In the anthropic Python SDK (0.80 and later), what is the model ID string for Claude Sonnet 4.6?
+  expect: ['claude-sonnet-4-6']
+  check: {url: 'https://raw.githubusercontent.com/anthropics/anthropic-sdk-python/v2.3.0/src/anthropic/types/model_param.py', pattern: '"claude-sonnet-4-6",'}
+
+- id: anthropic-mythos-preview-id
+  library: anthropic
+  sample: changed
+  changed_in: {version: 0.90.0, date: '2026-04-07'}
+  kind: exists
+  question: In the anthropic Python SDK (0.90 and later), what is the model ID string for the Claude Mythos preview model?
+  expect: ['claude-mythos-preview']
+  check: {url: 'https://raw.githubusercontent.com/anthropics/anthropic-sdk-python/v2.3.0/src/anthropic/types/model_param.py', pattern: '"claude-mythos-preview",'}
+
+- id: anthropic-claude4-eol-date
+  library: anthropic
+  sample: changed
+  changed_in: {version: 0.95.0, date: '2026-04-14'}
+  kind: exists
+  question: In the anthropic Python SDK 2.3, which end-of-life date does the deprecation warning give for claude-sonnet-4-20250514?
+  expect: ['June 15', '2026']
+  check: {url: 'https://raw.githubusercontent.com/anthropics/anthropic-sdk-python/v2.3.0/src/anthropic/resources/messages/messages.py', pattern: '"claude-sonnet-4-20250514": "June 15th, 2026",'}
+
+# --- openai 3.42 (ai-sdk) ----------------------------------------------------------
+# Same rules as anthropic, leaving out beta/, admin/ and organization/. Skipped in
+# random draw order: ForksConnection.dispatch_events and LiveConnectionManager.off
+# (connection internals). Skipped in changed draw order: Live audio fixture playback,
+# "clean up environment call outs", "dev day 2025 launches" (too vague).
+
+- id: openai-videos-create-required
+  library: openai
+  sample: random
+  kind: signature
+  question: In the openai Python SDK 3.42, which keyword argument is required by client.videos.create()?
+  expect: ['\bprompt\b']
+  check: {url: 'https://raw.githubusercontent.com/openai/openai-python/v3.42.0/src/openai/resources/videos.py', pattern: 'def create\( self, \*, prompt: str, input_reference:'}
+
+- id: openai-batches-cancel-arg
+  library: openai
+  sample: random
+  kind: signature
+  question: In the openai Python SDK 3.42, which argument does client.batches.cancel() take to identify the batch?
+  expect: ['batch_id']
+  check: {url: 'https://raw.githubusercontent.com/openai/openai-python/v3.42.0/src/openai/resources/batches.py', pattern: 'def cancel\( self, batch_id: str, \*,'}
+
+- id: openai-chat-completion-messages
+  library: openai
+  sample: random
+  kind: exists
+  question: In the openai Python SDK 3.42, which method lists the messages of a stored chat completion? Give its attribute path on the client.
+  expect: ['chat\.completions\.messages\.list']
+  check: {url: 'https://raw.githubusercontent.com/openai/openai-python/v3.42.0/src/openai/resources/chat/completions/completions.py', pattern: 'def messages\(self\) -> Messages:'}
+
+- id: openai-realtime-on-handler
+  library: openai
+  sample: changed
+  changed_in: {version: 2.32.0, date: '2026-04-15'}
+  kind: exists
+  question: In the openai Python SDK 3.42, which method of a realtime connection registers an event handler for an event type (and also works as a decorator)?
+  expect: ['\.on\b|\bon\(']
+  check: {url: 'https://raw.githubusercontent.com/openai/openai-python/v3.42.0/src/openai/resources/realtime/realtime.py', pattern: 'def on\( self, event_type: str, handler: Callable\[\.\.\., Any\] \| None = None \)'}
+
+- id: openai-sequencenotstr
+  library: openai
+  sample: changed
+  changed_in: {version: 1.104.0, date: '2025-09-02'}
+  kind: type
+  question: In the openai Python SDK 1.104 and later, which type do request params like embeddings' input use for lists of strings, in place of List[str]?
+  expect: ['SequenceNotStr']
+  check: {url: 'https://raw.githubusercontent.com/openai/openai-python/v3.42.0/src/openai/types/embedding_create_params.py', pattern: 'input: Required\[Union\[str, SequenceNotStr\[str\]'}
+
+- id: openai-prompt-cache-retention
+  library: openai
+  sample: changed
+  changed_in: {version: 3.38.0, date: '2026-10-25'}
+  kind: exists
+  question: In the openai Python SDK 3.42, the prompt_cache_retention parameter of client.responses.create() is deprecated. What replaces it?
+  expect: ['prompt_cache_options', 'ttl']
+  check: {url: 'https://raw.githubusercontent.com/openai/openai-python/v3.42.0/src/openai/types/responses/response_create_params.py', pattern: 'Deprecated\. Use `prompt_cache_options\.ttl` instead\.'}
+
+# --- google-cloud-storage 3.17 (infra-cloud) ---------------------------------------
+# Replaces boto3, whose API is generated from service models. Source is in the
+# google-cloud-python monorepo since 3.11 (tags google-cloud-storage-vX.Y.Z).
+# random: methods of Client, Bucket and Blob. changed: "Features" bullets, skipping
+# experimental, async, zonal-bucket and benchmark entries (12 skipped in draw order).
+
+- id: gcs-get-bucket-notfound
+  library: google-cloud-storage
+  sample: random
+  kind: exception
+  question: In google-cloud-storage 3.17, which exception does Client.get_bucket() raise when the bucket doesn't exist?
+  expect: ['NotFound']
+  check: {url: 'https://raw.githubusercontent.com/googleapis/google-cloud-python/google-cloud-storage-v3.17.1/packages/google-cloud-storage/google/cloud/storage/client.py', pattern: 'google\.cloud\.exceptions\.NotFound If the bucket is not found\.'}
+
+- id: gcs-versioning-enabled
+  library: google-cloud-storage
+  sample: random
+  kind: exists
+  question: In google-cloud-storage 3.17, which Bucket property do you set to turn on object versioning?
+  expect: ['versioning_enabled']
+  check: {url: 'https://raw.githubusercontent.com/googleapis/google-cloud-python/google-cloud-storage-v3.17.1/packages/google-cloud-storage/google/cloud/storage/bucket.py', pattern: '@versioning_enabled\.setter def versioning_enabled\(self, value\):'}
+
+- id: gcs-list-blobs-projection
+  library: google-cloud-storage
+  sample: random
+  kind: default
+  question: In google-cloud-storage 3.17, what is the default value of the projection argument of Bucket.list_blobs()?
+  expect: ['noAcl']
+  check: {url: 'https://raw.githubusercontent.com/googleapis/google-cloud-python/google-cloud-storage-v3.17.1/packages/google-cloud-storage/google/cloud/storage/bucket.py', pattern: 'projection="noAcl",'}
+
+- id: gcs-list-buckets-partial
+  library: google-cloud-storage
+  sample: changed
+  changed_in: {version: 3.6.0, date: '2025-11-17'}
+  kind: signature
+  question: In google-cloud-storage 3.6 and later, which Client.list_buckets() argument makes the result also report buckets that are unreachable?
+  expect: ['return_partial_success']
+  check: {url: 'https://raw.githubusercontent.com/googleapis/google-cloud-python/google-cloud-storage-v3.17.1/packages/google-cloud-storage/google/cloud/storage/client.py', pattern: 'return_partial_success: bool :param return_partial_success: \(Optional\) If True, the response will also contain a list of unreachable buckets'}
+
+- id: gcs-update-user-agent
+  library: google-cloud-storage
+  sample: changed
+  changed_in: {version: 3.5.0, date: '2025-11-05'}
+  kind: exists
+  question: In google-cloud-storage 3.5 and later, which Client method adds a string to an existing client's user-agent?
+  expect: ['update_user_agent']
+  check: {url: 'https://raw.githubusercontent.com/googleapis/google-cloud-python/google-cloud-storage-v3.17.1/packages/google-cloud-storage/google/cloud/storage/client.py', pattern: 'def update_user_agent\(self, user_agent\):'}
+
+- id: gcs-python-min-311
+  library: google-cloud-storage
+  sample: changed
+  changed_in: {version: 3.11.0, date: '2026-06-02'}
+  kind: exists
+  question: What is the oldest Python version that google-cloud-storage 3.17 supports?
+  expect: ['3\.10\b']
+  check: {url: 'https://raw.githubusercontent.com/googleapis/google-cloud-python/google-cloud-storage-v3.17.1/packages/google-cloud-storage/setup.py', pattern: 'python_requires=">=3\.10"'}
+
+# --- stripe (node) 23.1 (infra-cloud) ----------------------------------------------
+# random: methods of the *Resource classes in src/resources at v23.1.0, leaving out
+# V2/ (the newer v2 API) and TestHelpers/. changed: every bullet of releases since
+# 2025-06 (the changelog has no sub-headings).
+
+- id: stripe-invoice-add-lines
+  library: stripe
+  sample: random
+  kind: exists
+  question: In stripe-node 23.1, which method on stripe.invoices adds multiple line items to a draft invoice?
+  expect: ['addLines']
+  check: {url: 'https://raw.githubusercontent.com/stripe/stripe-node/v23.1.0/src/resources/Invoices.ts', pattern: 'Adds multiple line items to an invoice\. This is only possible when an invoice is still a draft\. \*/ addLines\('}
+
+- id: stripe-payment-method-domains
+  library: stripe
+  sample: random
+  kind: exists
+  question: In stripe-node 23.1, which property of the Stripe client gives the PaymentMethodDomain resource (list, create, retrieve, validate)?
+  expect: ['paymentMethodDomains']
+  check: {url: 'https://raw.githubusercontent.com/stripe/stripe-node/v23.1.0/src/stripe.core.ts', pattern: 'this\.paymentMethodDomains = new PaymentMethodDomainResource\(this\);'}
+
+- id: stripe-reader-collect-payment-method
+  library: stripe
+  sample: random
+  kind: exists
+  question: In stripe-node 23.1, through which property path on the Stripe client do you call collectPaymentMethod on a Terminal reader?
+  expect: ['terminal\.readers\.collectPaymentMethod']
+  check: {url: 'https://raw.githubusercontent.com/stripe/stripe-node/v23.1.0/src/resources/Terminal/Readers.ts', pattern: 'collectPaymentMethod\( id: string, params: Terminal\.ReaderCollectPaymentMethodParams,'}
+
+- id: stripe-excluded-paypay
+  library: stripe
+  sample: changed
+  changed_in: {version: 23.0.0, date: '2026-09-30'}
+  kind: exists
+  question: In stripe-node 23.1, is 'paypay' an accepted value of excluded_payment_method_types when creating a Checkout Session? Answer yes or no.
+  expect: ['^\W*yes']
+  check: {url: 'https://raw.githubusercontent.com/stripe/stripe-node/v23.1.0/src/resources/Checkout/Sessions.ts', pattern: '\| ''paypay'''}
+
+- id: stripe-invoiceitem-quantity-decimal
+  library: stripe
+  sample: changed
+  changed_in: {version: 21.0.0, date: '2026-03-25'}
+  kind: signature
+  question: In stripe-node 21 and later, which InvoiceItemCreateParams field takes a decimal (non-integer) quantity?
+  expect: ['quantity_decimal']
+  check: {url: 'https://raw.githubusercontent.com/stripe/stripe-node/v23.1.0/src/resources/InvoiceItems.ts', pattern: 'The quantity of units for the invoice item\. \*/ quantity_decimal\?: Decimal;'}
+
+- id: stripe-capability-status-values
+  library: stripe
+  sample: changed
+  changed_in: {version: 18.4.0, date: '2025-07-30'}
+  kind: type
+  question: In stripe-node 23.1, which values does the Capability.Status type list?
+  expect: ['\bactive\b', '\binactive\b', '\bpending\b', '\bunrequested\b', '^(?!.*disabled)']
+  check: {url: 'https://raw.githubusercontent.com/stripe/stripe-node/v23.1.0/src/resources/Capabilities.ts', pattern: 'export type Status = \| ''active'' \| ''inactive'' \| ''pending'' \| ''unrequested'' \| OtherString;'}
+
+# --- vite 8.3 (fast-frontend) --------------------------------------------------------
+# random: config options documented under docs/config/*.md at v8.3.5 (headings with a
+# dotted name, plus top-level shared options). changed: "Features" and "Breaking
+# Changes" bullets of packages/vite/CHANGELOG.md. Skipped in draw order: "add input to
+# server.fs.allow" (not in the docs), "remove import.meta.hot.accept resolution
+# fallback" (internal), "update dynamic import warning to link to Vite docs" (message).
+
+- id: vite-worker-rollupoptions
+  library: vite
+  sample: random
+  kind: exists
+  question: In Vite 8.3, worker.rollupOptions is deprecated. Which option replaces it?
+  expect: ['rolldownOptions']
+  check: {url: 'https://raw.githubusercontent.com/vitejs/vite/v8.3.5/docs/config/worker-options.md', pattern: 'This option is an alias of `worker\.rolldownOptions` option\.'}
+
+- id: vite-resolve-conditions-default
+  library: vite
+  sample: random
+  kind: default
+  question: In Vite 8.3, what is the default value of resolve.conditions?
+  expect: ['\bmodule\b', '\bbrowser\b', 'development\W{1,5}production']
+  check: {url: 'https://raw.githubusercontent.com/vitejs/vite/v8.3.5/docs/config/shared-options.md', pattern: 'Default:\*\* `\[''module'', ''browser'', ''development\|production''\]`'}
+
+- id: vite-publicdir-default
+  library: vite
+  sample: random
+  kind: default
+  question: In Vite 8.3, what is the default value of the publicDir option?
+  expect: ['\bpublic\b']
+  check: {url: 'https://raw.githubusercontent.com/vitejs/vite/v8.3.5/docs/config/shared-options.md', pattern: '## publicDir - \*\*Type:\*\* `string \| false` - \*\*Default:\*\* `"public"`'}
+
+- id: vite-glob-case-sensitive
+  library: vite
+  sample: changed
+  changed_in: {version: 8.1.0, date: '2026-06-23'}
+  kind: exists
+  question: In Vite 8.1 and later, which import.meta.glob option, set to false, makes glob matching ignore case?
+  expect: ['caseSensitive']
+  check: {url: 'https://raw.githubusercontent.com/vitejs/vite/v8.3.5/docs/guide/features.md', pattern: 'You can use the `caseSensitive` option to change this behavior'}
+
+- id: vite-transformindexhtml-object-keys
+  library: vite
+  sample: changed
+  changed_in: {version: 7.0.0, date: '2025-06-24'}
+  kind: signature
+  question: In Vite 7 and later, when the transformIndexHtml plugin hook is given as an object, which two keys does that object take?
+  expect: ['\border\b', '\bhandler\b']
+  check: {url: 'https://raw.githubusercontent.com/vitejs/vite/v8.3.5/docs/guide/api-plugin.md', pattern: '\{ order\?: ''pre'' \| ''post'', handler: IndexHtmlTransformHook \}'}
+
+- id: vite-future-remove-ssrloadmodule
+  library: vite
+  sample: changed
+  changed_in: {version: 7.1.0, date: '2025-08-07'}
+  kind: exists
+  question: In Vite 8.3, which config option do you set to "warn" to find code that still uses server.ssrLoadModule?
+  expect: ['removeSsrLoadModule']
+  check: {url: 'https://raw.githubusercontent.com/vitejs/vite/v8.3.5/docs/changes/ssr-using-modulerunner.md', pattern: 'set `future\.removeSsrLoadModule` to `"warn"`'}
+
+# --- astro 7.4 (fast-frontend) -------------------------------------------------------
+# random: `@name` entries of packages/astro/src/types/public/config.ts at astro@7.4.4
+# (the source of the config reference). Skipped in draw order: "Image Options" (a
+# section heading), experimental.chromeDevtoolsWorkspace (experimental). changed:
+# bullets under "Minor Changes" and "Major Changes" of packages/astro/CHANGELOG.md;
+# release dates from deps.dev, since changesets changelogs have none. Skipped in draw
+# order: "Lets custom prerenderers report the images used" and "Removes deprecated
+# APIs exported from astro:transitions" (too vague for a one-line question).
+
+- id: astro-server-headers-default
+  library: astro
+  sample: random
+  kind: default
+  question: In Astro 7.4, what does the server.headers config option set, and what is its default value?
+  expect: ['header', '\{\s*\}|empty']
+  check: {url: 'https://raw.githubusercontent.com/withastro/astro/astro%407.4.4/packages/astro/src/types/public/config.ts', pattern: '@name server\.headers \* @typeraw \{OutgoingHttpHeaders\} \* @default `\{\}`'}
+
+- id: astro-i18n-locales
+  library: astro
+  sample: random
+  kind: exists
+  question: In Astro 7.4, which option inside the i18n config lists every locale the site supports?
+  expect: ['\blocales\b']
+  check: {url: 'https://raw.githubusercontent.com/withastro/astro/astro%407.4.4/packages/astro/src/types/public/config.ts', pattern: '@name i18n\.locales \* @type \{Locales\}'}
+
+- id: astro-font-formats-default
+  library: astro
+  sample: random
+  kind: default
+  question: In Astro 7.4, what is the default value of the formats option in a font family's configuration (font.formats)?
+  expect: ['woff2']
+  check: {url: 'https://raw.githubusercontent.com/withastro/astro/astro%407.4.4/packages/astro/src/types/public/config.ts', pattern: '@name font\.formats \* @type \{Array<"woff2" \| "woff" \| "otf" \| "ttf" \| "eot">\} \* @default `\["woff2"\]`'}
+
+- id: astro-queued-rendering-removed
+  library: astro
+  sample: changed
+  changed_in: {version: 7.0.0, date: '2026-06-22'}
+  kind: exists
+  question: In Astro 7, does the experimental.queuedRendering config setting still exist? Answer yes or no.
+  expect: ['^\W*no\b']
+  check: {url: 'https://raw.githubusercontent.com/withastro/astro/astro%407.4.4/packages/astro/CHANGELOG.md', pattern: 'Removes the setting `experimental\.queuedRendering`\. The new rendering engine is now stable'}
+
+- id: astro-notfound-handler
+  library: astro
+  sample: changed
+  changed_in: {version: 7.4.0, date: '2026-10-15'}
+  kind: exists
+  question: In Astro 7.4, which handler exported by astro/fetch and astro/hono renders the custom 404 page when no route matches?
+  expect: ['notFound']
+  check: {url: 'https://raw.githubusercontent.com/withastro/astro/astro%407.4.4/packages/astro/CHANGELOG.md', pattern: 'Adds a `notFound\(\)` handler to `astro/fetch` and `astro/hono`'}
+
+- id: astro-session-false
+  library: astro
+  sample: changed
+  changed_in: {version: 7.2.0, date: '2026-08-06'}
+  kind: default
+  question: In Astro 7.2 and later, what value of the session option in astro.config opts a project out of session support?
+  expect: ['\bfalse\b']
+  check: {url: 'https://raw.githubusercontent.com/withastro/astro/astro%407.4.4/packages/astro/src/types/public/config.ts', pattern: 'session\?: SessionConfig<TDriver> \| false;'}
+
+# --- cachekit 0.25 (niche, pypi) -----------------------------------------------------
+# random: headings with a code name in docs/api-reference.md at v0.25.1. Skipped in draw
+# order: AsyncMetricsCollector and get_cached_redis_client() (listed under "Internal
+# Reliability Components"). changed: "Features" and "Breaking Changes" bullets.
+
+- id: cachekit-config-env-prefix
+  library: cachekit
+  sample: random
+  kind: default
+  question: In cachekit 0.25, which environment variable prefix does CachekitConfig load its settings from?
+  expect: ['CACHEKIT_']
+  check: {url: 'https://raw.githubusercontent.com/cachekit-io/cachekit-py/v0.25.1/docs/api-reference.md', pattern: 'automatic environment variable loading with the `CACHEKIT_` prefix'}
+
+- id: cachekit-check-health-status
+  library: cachekit
+  sample: random
+  kind: behavior
+  question: In cachekit 0.25, which two values can the "status" field returned by a cached function's check_health() take?
+  expect: ['\bhealthy\b', '\bunhealthy\b']
+  check: {url: 'https://raw.githubusercontent.com/cachekit-io/cachekit-py/v0.25.1/docs/api-reference.md', pattern: 'Returns a simplified status: `"healthy"` or `"unhealthy"`'}
+
+- id: cachekit-get-health-status
+  library: cachekit
+  sample: random
+  kind: exists
+  question: In cachekit 0.25, which method on a @cache-decorated function returns its overall health plus circuit breaker, load-control and metrics stats per component?
+  expect: ['get_health_status']
+  check: {url: 'https://raw.githubusercontent.com/cachekit-io/cachekit-py/v0.25.1/docs/api-reference.md', pattern: '#### `get_health_status\(\)` Returns current health status: overall health, plus circuit breaker, load-control'}
+
+- id: cachekit-encrypted-config-error
+  library: cachekit
+  sample: changed
+  changed_in: {version: 0.23.0, date: '2026-10-18'}
+  kind: exception
+  question: In cachekit 0.23 and later, which exception does @cache(config=..., encryption=...) raise when the config passed is already encrypted (for example DecoratorConfig.secure(...))?
+  expect: ['ConfigurationError']
+  check: {url: 'https://raw.githubusercontent.com/cachekit-io/cachekit-py/v0.25.1/CHANGELOG.md', pattern: '`@cache\(config=\.\.\., encryption=\.\.\.\)` raises `ConfigurationError` when the config is encrypted'}
+
+- id: cachekit-orjson-extra
+  library: cachekit
+  sample: changed
+  changed_in: {version: 0.11.0, date: '2026-06-20'}
+  kind: exists
+  question: In cachekit 0.11 and later, which pip extra do you install to get the orjson serializer?
+  expect: ['cachekit\[json\]|\bjson\b']
+  check: {url: 'https://raw.githubusercontent.com/cachekit-io/cachekit-py/v0.25.1/pyproject.toml', pattern: 'json = \[ # OrjsonSerializer \(serializer="orjson"\) — fast JSON via orjson "orjson>=3\.9\.0",'}
+
+- id: cachekit-default-l1
+  library: cachekit
+  sample: changed
+  changed_in: {version: 0.23.0, date: '2026-10-18'}
+  kind: behavior
+  question: In cachekit 0.23 and later, with no backend configured at all, where does @cache store cached values?
+  expect: ['\bL1\b|in-memory|in memory|memory']
+  check: {url: 'https://raw.githubusercontent.com/cachekit-io/cachekit-py/v0.25.1/CHANGELOG.md', pattern: 'with nothing configured, @cache caches in L1 instead of dialling localhost Redis'}
+
+# --- @embrace-io/web-sdk 2.32 (niche, npm) -------------------------------------------
+# Monorepo; package in packages/web-sdk, tags without a v (2.32.0).
+# random: API calls in the code examples of packages/web-sdk/README.md (the *API classes
+# in src only hold manager getters and setters). changed: bullets under "Features" and
+# "Breaking" headings of GitHub release notes since 2025-06 (no CHANGELOG file). Skipped
+# in draw order: soft navigation polyfill, dom-state log, soft navigation in
+# EmbracePageManager (internal), "add EmbraceConfigManager" (internal manager).
+
+- id: embrace-addproperty-lifespan
+  library: '@embrace-io/web-sdk'
+  sample: random
+  kind: signature
+  question: In @embrace-io/web-sdk 2.32, which option of session.addProperty() makes a property apply to all sessions rather than only the current one, and with what value?
+  expect: ['lifespan', 'permanent']
+  check: {url: 'https://raw.githubusercontent.com/embrace-io/embrace-web-sdk/2.32.0/packages/web-sdk/README.md', pattern: 'session\.addProperty\("my-custom-property", "some value", \{ lifespan: ''permanent'', \}\);'}
+
+- id: embrace-unended-span-export
+  library: '@embrace-io/web-sdk'
+  sample: random
+  kind: behavior
+  question: In @embrace-io/web-sdk 2.32, is a span started with trace.startSpan() exported if it is never ended? Answer yes or no.
+  expect: ['^\W*no\b']
+  check: {url: 'https://raw.githubusercontent.com/embrace-io/embrace-web-sdk/2.32.0/packages/web-sdk/README.md', pattern: 'Only spans that are explicitly ended will be exported\.'}
+
+- id: embrace-span-fail
+  library: '@embrace-io/web-sdk'
+  sample: random
+  kind: exists
+  question: In @embrace-io/web-sdk 2.32, which method ends a span from trace.startSpan() and marks it as failed?
+  expect: ['\bfail\b']
+  check: {url: 'https://raw.githubusercontent.com/embrace-io/embrace-web-sdk/2.32.0/packages/web-sdk/README.md', pattern: '\.then\(\(\) => span\.end\(\)\) \.catch\(\(\) => span\.fail\(\)\);'}
+
+- id: embrace-cold-start-attribute
+  library: '@embrace-io/web-sdk'
+  sample: changed
+  changed_in: {version: 1.4.0, date: '2025-07-01'}
+  kind: exists
+  question: In @embrace-io/web-sdk 1.4 and later, which session attribute key marks a session as a cold start?
+  expect: ['emb\.cold_start']
+  check: {url: 'https://raw.githubusercontent.com/embrace-io/embrace-web-sdk/2.32.0/packages/web-sdk/src/constants/attributes.ts', pattern: 'export const KEY_EMB_COLD_START = ''emb\.cold_start'';'}
+
+- id: embrace-element-timing
+  library: '@embrace-io/web-sdk'
+  sample: changed
+  changed_in: {version: 2.20.0, date: '2026-04-27'}
+  kind: exists
+  question: In @embrace-io/web-sdk 2.20 and later, which instrumentation class records Element Timing API entries?
+  expect: ['ElementTimingInstrumentation']
+  check: {url: 'https://raw.githubusercontent.com/embrace-io/embrace-web-sdk/2.32.0/packages/web-sdk/src/instrumentations/element-timing/ElementTimingInstrumentation/ElementTimingInstrumentation.ts', pattern: 'export class ElementTimingInstrumentation extends EmbraceInstrumentationBase'}
+
+- id: embrace-otel-major
+  library: '@embrace-io/web-sdk'
+  sample: changed
+  changed_in: {version: 2.0.0, date: '2025-09-02'}
+  kind: exists
+  question: Which major version of the OpenTelemetry JS SDK packages (such as @opentelemetry/core) does @embrace-io/web-sdk 2.32 depend on?
+  expect: ['\b2\b|2\.x|2\.\d+']
+  check: {url: 'https://raw.githubusercontent.com/embrace-io/embrace-web-sdk/2.32.0/packages/web-sdk/package.json', pattern: '"@opentelemetry/core": "2\.12\.0"'}

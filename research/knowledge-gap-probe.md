@@ -1,5 +1,7 @@
 # Knowledge-gap probe (sketch)
 
+**Status (2026-11-01):** run as probe-0.1, redesigned to measure lookups the agent chooses to make, not only memory. Results and the answer are in [knowledge-gap-probe-report.md](knowledge-gap-probe-report.md); this file is the original sketch.
+
 Estimates where a docs lookup would change an agent's answer, without asking developers for data. It measures need, not actual lookups: how often the model's remembered API is wrong, by library. Proposed after the 2026-11-01 field data (`experiment/LOG.md`), which showed web lookups are rare in one developer's work but couldn't say whether other projects need them more.
 
 ## Questions it answers
