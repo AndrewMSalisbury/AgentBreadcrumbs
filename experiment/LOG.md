@@ -630,7 +630,36 @@ Run: probe-0.1's 36 pairs, reps 1-2, with cold, warm-related and warm-related-no
 
 Verdict: miss-0.7 does what it was meant to: more cards, and large savings where the related question was expensive. At 2 reps it can't be told apart from miss-0.5 on totals (net +9% vs +8% in dollars over one reuse). Keep it as a candidate. The bigger finding is the metric: rescore earlier results in dollars before comparing policies further.
 
+## 2026-11-02: every iteration rescored in dollars (`rescore.py`, not an iteration)
+
+`rescore.py` reruns each main results folder (map-0.1 to miss-0.5) in total tokens and in `cost_usd`. It uses the same rows, arms and baselines as `report.py`, and its token cuts match `report.py` (lean-0.1 multi-fetch related −27%, read-only −28%). Cells below are dollars, as mean of per-task changes / weighted change. All rows are the hard set's multi-fetch tasks (9 tasks; miss-0.5 has 7, since it reran its own no-write runs). Net is a write plus one related reuse.
+
+| | Write cost, tokens → $ (weighted) | Related | Related, read-only | Net | Net, read-only |
+|---|---|---|---|---|---|
+| narrow-0.1 | +54% → +30% | +25% / +11% | +30% / +26% | +52% / +20% | +57% / +28% |
+| map-0.1 | +106% → +55% | −8% / −14% | −16% / −14% | +22% / +13% | +18% / +13% |
+| route-0.1 | +68% → +18% | −20% / −38% | −17% / −24% | −4% / −16% | −1% / −7% |
+| lean-0.1 | +36% → +9% | **−34% / −38%** | **−30% / −37%** | **−20% / −19%** | −17% / −19% |
+| lean-0.2 | +36% → +7% | −26% / −29% | −19% / −35% | −12% / −15% | −8% / −18% |
+| enforced-0.1 | +68% → +26% | −13% / −21% | −19% / −29% | +2% / −3% | −1% / −7% |
+| enforced-0.2 | +42% → +15% | −19% / −28% | −23% / −32% | −10% / −11% | −12% / −14% |
+| miss-0.1 | +7% → +15% | −14% / −23% | −10% / −16% | −2% / −8% | +2% / −4% |
+| miss-0.2 | +29% → +18% | −26% / −43% | −23% / −22% | −6% / −19% | −3% / −6% |
+| miss-0.3 | +65% → +32% | −22% / −31% | −31% / −34% | −0% / −6% | −5% / −8% |
+| miss-0.4 | +65% → +32% | −25% / −35% | −31% / −34% | −2% / −8% | −5% / −8% |
+| miss-0.5 | +39% → +17% | −23% / −26% | −16% / −17% | −6% / −6% | −2% / −1% |
+
+Same question, dollars: miss-0.5 −39% / −39%, miss-0.4 −15% / −31%, lean-0.1 −14% / −20%. Full tables, all groups and both metrics, are in `out_rescore.md`.
+
+- **Write cost roughly halves in dollars.** Weighted write cost falls in every policy but miss-0.1 (+7% → +15%), by half or more in most (lean-0.1 +36% → +9%, route-0.1 +68% → +18%). Cheap pages go the other way: on miss-0.5's easy set the mean per-task write cost *rises* (+22% → +39%), because a one-fetch run has little cached context, so its extra turns are mostly uncached.
+- **Read-side savings mostly survive.** On multi-fetch tasks, related questions are 21-43% cheaper in dollars (weighted) for every policy after map-0.1, about the same as in tokens.
+- **The ranking changes.** In tokens, nets over one reuse sat near zero for every policy, and miss-0.4 and miss-0.5 led on the same question. In dollars, lean-0.1 is best on net (−20% / −19%), then route-0.1, miss-0.2 and lean-0.2 (−15% to −19% weighted). miss-0.4 and miss-0.5 sit at −6% to −8%. lean-0.1 is also the only policy whose mean per-task related cut clears the 30% bar in dollars (−34%). miss-0.5's edge is the same question (−39%), not related ones.
+- **But the spread is within noise.** miss-0.7's empty-registry check put the noise floor for a weighted mean at about ±13%, on n≈40. These are 9 tasks, so lean-0.1's lead over miss-0.5 (about 13 points of net) is not established. miss-0.5 also scored against its own no-write reruns, not map-0.1's copied ones.
+
+Verdict: in dollars, breadcrumbs pay on multi-fetch hard tasks after a single reuse under most policies (net −6% to −20%), where the token metric said they barely broke even. miss-0.5 was chosen on token results, and in dollars lean-0.1 is at least as good on related questions and on net. The policy choice should be settled in dollars, on more reps of the 9 multi-fetch tasks: lean-0.1 vs miss-0.5, with fresh shared no-write runs.
+
 ## Next
 
+- **lean-0.1 vs miss-0.5 in dollars.** Rerun both on the 9 hard multi-fetch tasks, with new no-write runs shared by both, reps 4-6. Score with `rescore.py` and make `report.py` report dollars too.
 - **Measure demand for access knowledge on hard sites.** Done on this machine (2026-11-02 above): rare and not repeated. Next, send `access_failures.py` to the developer and other users; cross-user repeats of the same failing site are what a shared registry needs.
 - **If library docs are revisited**, file cards by library rather than landing page, and write raw-source URL patterns (`raw.githubusercontent.com/<repo>/<tag>/...`) as site records. The oracle caps a route-only breadcrumb at about −12% on this workload.
