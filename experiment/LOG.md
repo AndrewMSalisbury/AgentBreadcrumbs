@@ -630,36 +630,48 @@ Run: probe-0.1's 36 pairs, reps 1-2, with cold, warm-related and warm-related-no
 
 Verdict: miss-0.7 does what it was meant to: more cards, and large savings where the related question was expensive. At 2 reps it can't be told apart from miss-0.5 on totals (net +9% vs +8% in dollars over one reuse). Keep it as a candidate. The bigger finding is the metric: rescore earlier results in dollars before comparing policies further.
 
-## 2026-11-02: every iteration rescored in dollars (`rescore.py`, not an iteration)
+## 2026-11-02: every iteration rescored in five measures (`rescore.py`, not an iteration)
 
-`rescore.py` reruns each main results folder (map-0.1 to miss-0.5) in total tokens and in `cost_usd`. It uses the same rows, arms and baselines as `report.py`, and its token cuts match `report.py` (lean-0.1 multi-fetch related −27%, read-only −28%). Cells below are dollars, as mean of per-task changes / weighted change. All rows are the hard set's multi-fetch tasks (9 tasks; miss-0.5 has 7, since it reran its own no-write runs). Net is a write plus one related reuse.
+Why: miss-0.7 found that total tokens count cache reads at full weight, which makes a write look far dearer than it is billed. Dollars aren't the answer for everyone either. API users pay `cost_usd`, but Pro and Max plans meter usage against 5-hour and weekly caps by a formula that isn't published, so we don't know how they weight cache reads, cache writes and output. `rescore.py` therefore scores each main results folder (narrow-0.1 to miss-0.5) in five measures:
+- total tokens
+- uncached tokens: total minus cache reads
+- dollars
+- output tokens
+- peak context: the largest single call's input, read from `stream.jsonl`, which is how full the context window gets
 
-| | Write cost, tokens → $ (weighted) | Related | Related, read-only | Net | Net, read-only |
-|---|---|---|---|---|---|
-| narrow-0.1 | +54% → +30% | +25% / +11% | +30% / +26% | +52% / +20% | +57% / +28% |
-| map-0.1 | +106% → +55% | −8% / −14% | −16% / −14% | +22% / +13% | +18% / +13% |
-| route-0.1 | +68% → +18% | −20% / −38% | −17% / −24% | −4% / −16% | −1% / −7% |
-| lean-0.1 | +36% → +9% | **−34% / −38%** | **−30% / −37%** | **−20% / −19%** | −17% / −19% |
-| lean-0.2 | +36% → +7% | −26% / −29% | −19% / −35% | −12% / −15% | −8% / −18% |
-| enforced-0.1 | +68% → +26% | −13% / −21% | −19% / −29% | +2% / −3% | −1% / −7% |
-| enforced-0.2 | +42% → +15% | −19% / −28% | −23% / −32% | −10% / −11% | −12% / −14% |
-| miss-0.1 | +7% → +15% | −14% / −23% | −10% / −16% | −2% / −8% | +2% / −4% |
-| miss-0.2 | +29% → +18% | −26% / −43% | −23% / −22% | −6% / −19% | −3% / −6% |
-| miss-0.3 | +65% → +32% | −22% / −31% | −31% / −34% | −0% / −6% | −5% / −8% |
-| miss-0.4 | +65% → +32% | −25% / −35% | −31% / −34% | −2% / −8% | −5% / −8% |
-| miss-0.5 | +39% → +17% | −23% / −26% | −16% / −17% | −6% / −6% | −2% / −1% |
+It uses `report.py`'s rows, arms and baselines, and its token cuts match `report.py` (lean-0.1 multi-fetch related −27%, read-only −28%). Copied baseline rows are matched to their own iteration's run folder by total. Every row has a peak except narrow-0.1's no-write related runs, whose folders weren't kept. Full tables are in `out_rescore.md`.
 
-Same question, dollars: miss-0.5 −39% / −39%, miss-0.4 −15% / −31%, lean-0.1 −14% / −20%. Full tables, all groups and both metrics, are in `out_rescore.md`.
+Hard set, multi-fetch tasks (9; miss-0.5 has 7, since it reran its own no-write runs), weighted change:
 
-- **Write cost roughly halves in dollars.** Weighted write cost falls in every policy but miss-0.1 (+7% → +15%), by half or more in most (lean-0.1 +36% → +9%, route-0.1 +68% → +18%). Cheap pages go the other way: on miss-0.5's easy set the mean per-task write cost *rises* (+22% → +39%), because a one-fetch run has little cached context, so its extra turns are mostly uncached.
-- **Read-side savings mostly survive.** On multi-fetch tasks, related questions are 21-43% cheaper in dollars (weighted) for every policy after map-0.1, about the same as in tokens.
-- **The ranking changes.** In tokens, nets over one reuse sat near zero for every policy, and miss-0.4 and miss-0.5 led on the same question. In dollars, lean-0.1 is best on net (−20% / −19%), then route-0.1, miss-0.2 and lean-0.2 (−15% to −19% weighted). miss-0.4 and miss-0.5 sit at −6% to −8%. lean-0.1 is also the only policy whose mean per-task related cut clears the 30% bar in dollars (−34%). miss-0.5's edge is the same question (−39%), not related ones.
-- **But the spread is within noise.** miss-0.7's empty-registry check put the noise floor for a weighted mean at about ±13%, on n≈40. These are 9 tasks, so lean-0.1's lead over miss-0.5 (about 13 points of net) is not established. miss-0.5 also scored against its own no-write reruns, not map-0.1's copied ones.
+| | Net, tokens | Net, uncached | Net, $ | Net, output | Related, tokens | Related, uncached | Related, $ | Related, peak |
+|---|---|---|---|---|---|---|---|---|
+| narrow-0.1 | +50% | +15% | +20% | +41% | +47% | +10% | +11% | - |
+| map-0.1 | +43% | +11% | +13% | +58% | +6% | −9% | −14% | −20% |
+| route-0.1 | +7% | −16% | −16% | +36% | −30% | −31% | −38% | −39% |
+| lean-0.1 | −9% | −14% | −19% | +10% | −35% | −27% | −38% | −35% |
+| lean-0.2 | +1% | −14% | −15% | +10% | −20% | −24% | −29% | −29% |
+| enforced-0.1 | +17% | −6% | −3% | +25% | −13% | −21% | −21% | −19% |
+| enforced-0.2 | +4% | −18% | −11% | +10% | −19% | −30% | −28% | −27% |
+| miss-0.1 | −18% | −15% | −8% | −9% | −32% | −25% | −23% | −20% |
+| miss-0.2 | −15% | −17% | −19% | +6% | −42% | −32% | −43% | −43% |
+| miss-0.3 | +9% | −11% | −6% | +13% | −24% | −29% | −31% | −30% |
+| miss-0.4 | +2% | −11% | −8% | +13% | −36% | −29% | −35% | −33% |
+| miss-0.5 | −4% | −11% | −6% | +1% | −37% | −24% | −26% | −21% |
 
-Verdict: in dollars, breadcrumbs pay on multi-fetch hard tasks after a single reuse under most policies (net −6% to −20%), where the token metric said they barely broke even. miss-0.5 was chosen on token results, and in dollars lean-0.1 is at least as good on related questions and on net. The policy choice should be settled in dollars, on more reps of the 9 multi-fetch tasks: lean-0.1 vs miss-0.5, with fresh shared no-write runs.
+Net is a write plus one related reuse. coldonly-0.1 matches lean-0.1 in these columns, since they share runs.
+
+- **The real split is whether cache reads count.** Uncached tokens and dollars agree within about 7 points on net for every policy after map-0.1. Total tokens is the odd one out, by up to 23 points. So a plan meter that discounts cache reads should see roughly the dollar result, and one that counts them in full should see the token result.
+- **A related reuse is cheaper in every measure.** On multi-fetch tasks, every policy after map-0.1 cuts related questions in tokens, uncached tokens, dollars and peak context, and nearly all cut output too. Peak context falls 19-43%, which matters to plan users apart from caps: a fuller window means earlier compaction.
+- **Net over one reuse depends on the measure.** Uncached and dollars: −3% to −19% for every policy after map-0.1. Total tokens: −18% to +17%. Output alone: worse for every policy but miss-0.1 (+1% to +36%), since a write is output.
+- **The best policy depends on the measure, within noise.** In dollars, lean-0.1 and miss-0.2 lead (−19%). In uncached tokens, enforced-0.2 and miss-0.2 do (−18%, −17%). In total tokens, miss-0.1 and miss-0.2 do (−18%, −15%). miss-0.5, the policy kept on token results, is never best on net. miss-0.7's empty-registry check put the noise floor for a weighted mean at about ±13% (n≈40), and these are 9 tasks, so none of these leads is established.
+- **Cheap pages lose in every measure.** On miss-0.5's easy set (24 one-fetch tasks), net over one reuse is +16% tokens, +20% uncached, +18% dollars and +12% output. A one-fetch run has little cached context, so discounting cache reads makes the write *dearer* in relative terms. miss-0.5's break-even estimate (about 1 multi-fetch lookup in 6, from tokens) needs a larger multi-fetch share under uncached tokens or dollars.
+- **Library docs lose in every measure checked.** From miss-0.7's entry, write plus one reuse is +8-9% in dollars as well as worse in tokens. The cards miss, so the metric can't rescue it.
+
+Verdict: no measure flips the overall picture. Breadcrumbs save on a reuse of a multi-fetch hard task in every measure, and lose on cheap pages and library docs in every measure. On net over one reuse, every policy after map-0.1 saves in uncached tokens and dollars, but only some do in total tokens. Whether plan users see that depends on how plans meter cache reads, which isn't published. Report results in all five measures from now on, and state which ones a conclusion holds in.
 
 ## Next
 
-- **lean-0.1 vs miss-0.5 in dollars.** Rerun both on the 9 hard multi-fetch tasks, with new no-write runs shared by both, reps 4-6. Score with `rescore.py` and make `report.py` report dollars too.
+- **Check how a plan meters cache reads.** Read `/usage` before and after a batch of runs on the plan, and compare the change with total and uncached tokens. That decides which column applies to plan users.
+- **Policy choice, if hard sites matter.** Rerun lean-0.1 and miss-0.5 on the 9 hard multi-fetch tasks, with new no-write runs shared by both, reps 4-6. Score them with `rescore.py`. Do this after the cross-user access-failure counts, since those decide whether hard sites are common enough to matter.
 - **Measure demand for access knowledge on hard sites.** Done on this machine (2026-11-02 above): rare and not repeated. Next, send `access_failures.py` to the developer and other users; cross-user repeats of the same failing site are what a shared registry needs.
 - **If library docs are revisited**, file cards by library rather than landing page, and write raw-source URL patterns (`raw.githubusercontent.com/<repo>/<tag>/...`) as site records. The oracle caps a route-only breadcrumb at about −12% on this workload.
