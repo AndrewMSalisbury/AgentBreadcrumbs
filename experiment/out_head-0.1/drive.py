@@ -18,6 +18,7 @@ TASKS = EXP / "tasks_head.yaml"
 PY = sys.executable
 WAIT = 15 * 60
 REPS = (1, 2)
+ITERATION = "miss-0.7"
 lock = threading.Lock()
 
 
@@ -42,7 +43,7 @@ def stream(name: str, jobs: list[tuple[str, str, int]]) -> None:
         r = result(cond, task, rep)
         while r is None or limited(r):
             subprocess.run([PY, "run.py", cond, "--task", task, "--rep", str(rep), "--tasks", str(TASKS),
-                            "--iteration", "miss-0.7", "--out", str(HERE)], cwd=EXP,
+                            "--iteration", ITERATION, "--out", str(HERE)], cwd=EXP,
                            stdin=subprocess.DEVNULL, capture_output=True)
             r = result(cond, task, rep)
             if r is None:

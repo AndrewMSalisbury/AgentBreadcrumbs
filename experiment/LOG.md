@@ -723,3 +723,57 @@ Verdict: on popular pages breadcrumbs pay where the lookup is expensive, and tha
 
 - **Raise the card bar to drop two-call cards.** Score miss-0.7 with a 3-call bar on this set: rerun cold under it, or count which stored cards the bar would have refused. Two-call pages would move from +14% net to about the one-call +9%.
 - **Concentration.** Ask a docs host (Mintlify, Read the Docs) or Context7 for the share of agent requests that land on their top 1%/10% of pages, or on pages requested by 2+ distinct clients a month. No public source has it.
+
+## 2026-11-03: a 3-call card bar on head-0.1, replayed offline (`out_head-0.1/bar3.py`, not an iteration)
+
+Why: two-call pages get cards that cost more to write than reuse saves (head-0.1 above). This asks what a bar of 3 web calls (searches counting, as in miss-0.7) would have done, using the 240 existing runs and no new ones.
+
+Method: a cold run that stored a card with fewer than 3 web calls is treated as refused. Its reuse runs then start from an empty registry, which is exactly cold-nowrite / cold-nowrite-related on the same task and rep, so those runs stand in. The refused cold run's own cost is cold-nowrite plus the write prompt's fixed cost, measured on the one-call pages, where no cold run stored anything. That fixed cost is taken two ways: as a percentage (+17% tokens, +31% dollars) or as a flat amount per run (2.1k tokens, $0.0039).
+
+The bar refuses 17 of 24 stored cold runs: 14 of 16 on two-call pages, and 3 of 8 on three+ pages (npm package.json r1-r2 and pytest reference r2, which happened to find the answer in 2 calls).
+
+| Net, write + one related reuse, weighted | Actual | Bar 3, % fixed cost | Bar 3, flat fixed cost |
+|---|---|---|---|
+| Two-call pages, tokens | +28% | +16% | +13% |
+| Two-call pages, dollars | +14% | +21% | +13% |
+| All 24, tokens | +0% | −5% | −6% |
+| All 24, dollars | −7% | −4% | −8% |
+
+- **In tokens the bar helps:** two-call pages go from +28% to about +15%, and all 24 from break-even to about −5%.
+- **In dollars it's a wash.** A refused two-call run's write costs $0.0085 over cold-nowrite, and $0.0039 of that is the fixed prompt cost the run pays anyway. The remaining ~$0.0046 is about what reuse of those cards saved. Which way the result tips depends on how the fixed cost scales, and the two models give opposite signs.
+- **Three+ pages barely notice.** Losing 3 of 8 cards moves related reuse from −52% to −52% in dollars, and from −63% to −62% in tokens: the other rep's card, or the page's other question, still carries the saving.
+
+Verdict: the head-0.1 prediction (two-call pages from +14% to about +9% in dollars) doesn't hold. The write call is a small part of the two-call loss in dollars. Most of it is the fixed cost of the write-side prompt, which a card bar doesn't remove. A 3-call bar is worth having for tokens and costs nothing elsewhere, but the larger dollar lever is that fixed cost.
+
+## Next
+
+- **Measure the fixed cost directly.** Run cold under a bar of 3 on the two-call pages (20 runs) to replace the modelled refused-run cost with a measured one. That settles the dollar column.
+- **Shrink the write-side prompt.** +31% in dollars on one-call pages is pure overhead. Try a shorter miss note, or one that appears only once the bar is passed.
+
+## 2026-11-03: miss-0.8, a 3-call card bar (`--iteration miss-0.8`, `out_miss-0.8/`)
+
+Why: the replay above couldn't settle the dollar column, because it had to model what a refused cold run costs. This measures it.
+
+What changed from miss-0.7: `BC_MIN_CALLS=3`. write refuses page cards from runs with fewer than 3 web calls (fetches, renders and searches together), and the note says so: "whenever getting it took 3 or more web calls (fetches, renders and searches together). write refuses page cards from runs with fewer". The fetch-result nudge and Stop hook use the same bar.
+
+Runs: cold on head-0.1's 10 two-call pages, reps 1-2, 20 runs, 20/20 correct. Only k8s probes (6-7 web calls) stored cards, so it alone got warm-same-nowrite and warm-related-nowrite (4 runs, 4/4 correct). Every other cold run stored nothing, and its reuse is the no-registry run, as in the replay. Agents made no refused write attempts. Baselines are head-0.1's cold-nowrite runs from the night before (`out_miss-0.8/report.py`).
+
+| Two-call pages, weighted | Write | Related | Net, write + one related reuse |
+|---|---|---|---|
+| Tokens, miss-0.7 | +62% | −7% | +28% |
+| Tokens, miss-0.8 | +21% | +0% | **+11%** |
+| Dollars, miss-0.7 | +33% | −3% | +14% |
+| Dollars, miss-0.8 | +24% | +0% | **+11%** |
+| Output, miss-0.7 | +61% | −13% | +28% |
+| Output, miss-0.8 | +11% | +0% | +6% |
+
+- **The bar helps in every measure,** and more in dollars than either replay model gave (+21% and +13%). Tokens and output fall the most: the 14 cards the bar now refuses were what made the write runs long.
+- **What's left is the fixed cost.** 18 of 20 runs stored nothing and still cost +24% in dollars over no-registry runs. That's the write-side prompt plus the lookup, the same cost seen on one-call pages (+31%).
+- **Across all 24 pages,** swapping these runs in for the two-call pages moves the net from +0% to −6% in tokens and from −7% to −8% in dollars. That leaves the three+ pages at miss-0.7, which the replay says loses almost nothing under the bar.
+
+Verdict: keep the 3-call bar. It drops the cards that don't pay, at no loss on expensive pages. The remaining loss on cheap pages is the fixed cost of the write-side prompt.
+
+## Next
+
+- **Shrink the write-side prompt.** +24-31% in dollars on runs that store nothing is now the policy's main cost on popular pages. Try a shorter miss note, or one that's sent only once a run passes the bar.
+- **Check miss-0.8 on the three+ pages and the hard set** with a few cold runs, to confirm the bar doesn't cost cards there.

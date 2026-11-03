@@ -139,6 +139,8 @@ def cap(text: str, max_tokens: int) -> tuple[str, bool]:
 CALL_LOG = os.environ.get("BC_CALL_LOG")
 # miss-0.5: page cards need the run's fetches to have returned this many tokens in all.
 MIN_PULL = int(os.environ.get("BC_MIN_PULL") or 0)
+# miss-0.8: page cards need this many web calls (fetches, renders and, if counted, searches).
+MIN_CALLS = int(os.environ.get("BC_MIN_CALLS") or 0)
 PATTERN_URL = re.compile(r"https?://[^\s\"'<>()]*\{[^}]+\}[^\s\"'<>()]*")
 
 
@@ -193,6 +195,10 @@ def card_block(urls: list[str], site_records: list[dict], counts: dict, searches
                     "so a later agent gets the page as cheaply without a card")
         return (f"this run took {counts['fetch']} fetch{'es' if counts['fetch'] != 1 else ''} and no search, "
                 "so a later agent gets the page as cheaply without a card")
+    calls = counts["fetch"] + (counts["search"] if searches else 0)
+    if calls < MIN_CALLS:
+        return (f"this run took {calls} web call{'s' if calls != 1 else ''}, fewer than {MIN_CALLS}, "
+                "so a card would save a later agent less than writing it costs")
     if counts["tokens"] < MIN_PULL:
         return (f"this run's fetches returned {counts['tokens']} tokens in all, "
                 "so a later agent gets the page as cheaply without a card")

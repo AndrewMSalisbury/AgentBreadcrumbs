@@ -26,7 +26,8 @@ BC_NOTE_SITE=1 (miss-0.6) puts lean-0.1's one-fetch site-record sentence back in
 note: miss-0.2's note dropped it, and one-fetch API runs stopped writing site records.
 BC_SEARCHES=1 (miss-0.7) counts searches toward the page-card bar again, so a run that
 searched and then fetched once can store a card (BC_MIN_PULL still applies): finding
-the page is what such a card saves. miss-0.2 stopped counting them for pypi's
+the page is what such a card saves. BC_MIN_CALLS (miss-0.8) raises the bar to that many
+web calls, searches included. miss-0.2 stopped counting them for pypi's
 search-then-write loop, before miss-0.4 and miss-0.5 narrowed who writes.
 """
 import sys, pathlib, json, re, hashlib, os, sqlite3, datetime
@@ -37,7 +38,7 @@ import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
 from mcp.server.mcpserver import MCPServer
-from bc.common import normalize_url, host_of, page_id, fetch_clean, tokens, card_block, call_counts, log_call
+from bc.common import normalize_url, host_of, page_id, fetch_clean, tokens, card_block, call_counts, log_call, MIN_CALLS
 
 ROOT = pathlib.Path(__file__).parent.parent
 DB_PATH = os.environ.get("BC_REGISTRY", str(ROOT / "out" / "registry.sqlite"))
@@ -260,6 +261,9 @@ NOTE_NO_SEARCH = ("took more than one fetch or render. write refuses page cards 
                   "render (searches do not count)")
 NOTE_SEARCH = ("took more than one fetch or render, or a search and a fetch. write refuses page cards from runs "
                "with one fetch or render and no search")
+# miss-0.8: a bar of BC_MIN_CALLS web calls, searches included.
+NOTE_CALLS = ("took {n} or more web calls (fetches, renders and searches together). write refuses page cards "
+              "from runs with fewer")
 ONE_FETCH_SITE = (" If you got the answer with one fetch or render, write no page card, but a site record is "
                   "still worth writing if it gives a URL pattern lookup lacked.")
 _told = False
@@ -278,7 +282,7 @@ def _miss_note() -> str:
     n = counts["fetch"]
     note = MISSX_NOTE.replace(NOTE_BAR, NOTE_BAR + ONE_FETCH_SITE) if NOTE_SITE else MISSX_NOTE
     if SEARCHES:
-        note = note.replace(NOTE_NO_SEARCH, NOTE_SEARCH)
+        note = note.replace(NOTE_NO_SEARCH, NOTE_CALLS.format(n=MIN_CALLS) if MIN_CALLS else NOTE_SEARCH)
         if card_block([], [], counts) is None:
             s = counts["search"]
             return note.format(writer=WRITER, today=today) + (
