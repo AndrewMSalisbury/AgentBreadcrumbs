@@ -1,0 +1,245 @@
+# Popular-page set (head-0.1): does a lookup on a page many developers use take several fetches?
+# 24 canonical reference pages of widely used technologies, none used by tasks.yaml. Two facts
+# per page, taken near 30% and 70% of the cleaned page where a crisp fact was there, otherwise
+# the nearest one. Run with cold-nowrite and cold-nowrite-related: no registry, so the result is
+# the lookup cost a shared registry would have to beat on the head of the distribution.
+
+- id: py-subprocess
+  use_case: coding
+  question: In the Python subprocess documentation, what is the default value of Popen's bufsize argument?
+  expect: ['-1']
+  check: {url: 'https://docs.python.org/3/library/subprocess.html', pattern: 'now defaults to -1'}
+  related:
+    question: In the Python subprocess documentation, which Windows priority-class constant for Popen's creationflags is the default?
+    expect: ['NORMAL_PRIORITY_CLASS|normal']
+    check: {url: 'https://docs.python.org/3/library/subprocess.html', pattern: 'will have a normal priority\. \(default\)'}
+
+- id: py-argparse
+  use_case: coding
+  question: In the Python argparse documentation, what character replaces hyphens when dest defaults to an optional argument's name?
+  expect: ['underscore|_']
+  check: {url: 'https://docs.python.org/3/library/argparse.html', pattern: 'dest\]\(#dest\) parameter defaults to the argument name'}
+  related:
+    question: In the Python argparse documentation, what is the default title of the sub-parser group in help output when a description is provided?
+    expect: ['subcommands']
+    check: {url: 'https://docs.python.org/3/library/argparse.html', pattern: "'subcommands'"}
+
+- id: mdn-set-cookie
+  use_case: coding
+  question: According to MDN's Set-Cookie page, what does the Path attribute default to if it is omitted?
+  expect: ['path|director']
+  check: {url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie', pattern: 'this attribute defaults to the path component of the request URL'}
+  related:
+    question: According to MDN's Set-Cookie page, if both Expires and Max-Age are set, which one has precedence?
+    expect: ['max-age']
+    check: {url: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie', pattern: '(?i)max-age.{0,20}has precedence'}
+
+- id: node-fs
+  use_case: coding
+  question: In the Node.js fs documentation, what is the default mode for fs.mkdir()?
+  expect: ['0o777|777']
+  check: {url: 'https://nodejs.org/api/fs.html', pattern: '0o777'}
+  related:
+    question: In the Node.js fs documentation, what is the default flag for fs.writeFile()?
+    expect: ["\\bw\\b"]
+    check: {url: 'https://nodejs.org/api/fs.html', pattern: "Default:\\*\\* `'w'`"}
+
+- id: node-child-process
+  use_case: coding
+  question: In the Node.js child_process documentation, what is the default maxBuffer for child_process.exec()?
+  expect: ['1024 ?\* ?1024|1,?048,?576|1 ?MiB|1 ?MB']
+  check: {url: 'https://nodejs.org/api/child_process.html', pattern: '1024 \* 1024'}
+  related:
+    question: In the Node.js child_process documentation, what is the default killSignal for child_process.exec()?
+    expect: ['SIGTERM']
+    check: {url: 'https://nodejs.org/api/child_process.html', pattern: "Default:\\*\\* `'SIGTERM'`"}
+
+- id: pg-connections
+  use_case: coding
+  question: In the PostgreSQL documentation on connection settings, what is the typical default value of max_connections?
+  expect: ['\b100\b']
+  check: {url: 'https://www.postgresql.org/docs/current/runtime-config-connection.html', pattern: 'typically 100 connections'}
+  related:
+    question: In the PostgreSQL documentation on connection settings, what is the default value of superuser_reserved_connections?
+    expect: ['\b3\b']
+    check: {url: 'https://www.postgresql.org/docs/current/runtime-config-connection.html', pattern: 'default value is three connections'}
+
+- id: dockerfile
+  use_case: coding
+  question: In the Dockerfile reference, if WORKDIR is not specified, what is the default working directory?
+  expect: ['/']
+  check: {url: 'https://docs.docker.com/reference/dockerfile/', pattern: 'default working directory is `/`'}
+  related:
+    question: In the Dockerfile reference, what is the default value of the HEALTHCHECK --interval option?
+    expect: ['30 ?s']
+    check: {url: 'https://docs.docker.com/reference/dockerfile/', pattern: '--interval=DURATION` \(default: `30s`\)'}
+
+- id: docker-run
+  use_case: coding
+  question: In the docker container run reference, what is the default value of the --pull flag?
+  expect: ['missing']
+  check: {url: 'https://docs.docker.com/reference/cli/docker/container/run/', pattern: '`missing` \(default\)'}
+  related:
+    question: In the docker container run reference, what is the default restart policy?
+    expect: ['\bno\b']
+    check: {url: 'https://docs.docker.com/reference/cli/docker/container/run/', pattern: "`no` \\| Don't automatically restart the container\\. \\(Default\\)"}
+
+- id: k8s-probes
+  use_case: coding
+  question: In the Kubernetes docs on liveness, readiness and startup probes, what is the default timeoutSeconds?
+  expect: ['\b1\b']
+  check: {url: 'https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/', pattern: 'timeoutSeconds` setting \(which defaults to 1s\)'}
+  related:
+    question: In the Kubernetes docs on liveness, readiness and startup probes, how often does the kubelet run the liveness probe in the first exec example?
+    expect: ['\b5\b|five']
+    check: {url: 'https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/', pattern: 'perform a liveness probe every 5 seconds'}
+
+- id: react-useeffect
+  use_case: coding
+  question: In React's useEffect reference, what does useEffect return?
+  expect: ['undefined']
+  check: {url: 'https://react.dev/reference/react/useEffect', pattern: '`useEffect` returns `undefined`'}
+  related:
+    question: In React's useEffect reference, which comparison does React use to compare each dependency with its previous value?
+    expect: ['Object\.is']
+    check: {url: 'https://react.dev/reference/react/useEffect', pattern: 'Object\.is'}
+
+- id: tsconfig
+  use_case: coding
+  question: In the TypeScript tsconfig reference, what is the default value of the strict option?
+  expect: ['true']
+  check: {url: 'https://www.typescriptlang.org/tsconfig/', pattern: 'corresponding flag will be added to disable that behavior\. \* Recommended \* Default: `true`'}
+  related:
+    question: In the TypeScript tsconfig reference, what is the default value of moduleDetection?
+    expect: ['auto']
+    check: {url: 'https://www.typescriptlang.org/tsconfig/', pattern: '`"auto"` \(default\)'}
+
+- id: npm-package-json
+  use_case: coding
+  question: In npm's package.json documentation, what does the files field default to if it is omitted?
+  expect: ['\*']
+  check: {url: 'https://docs.npmjs.com/cli/v10/configuring-npm/package-json', pattern: 'default to `\["\*"\]`'}
+  related:
+    question: In npm's package.json documentation, what does main default to if it is not set?
+    expect: ['index\.js']
+    check: {url: 'https://docs.npmjs.com/cli/v10/configuring-npm/package-json', pattern: 'it defaults to `index\.js`'}
+
+- id: git-rebase
+  use_case: coding
+  question: In the git-rebase documentation, if --onto is not specified, what is the starting point for the new commits?
+  expect: ['upstream']
+  check: {url: 'https://git-scm.com/docs/git-rebase', pattern: 'If the `--onto` option is not specified, the starting point is'}
+  related:
+    question: In the git-rebase documentation, which diff algorithm does the ort merge strategy default to?
+    expect: ['histogram']
+    check: {url: 'https://git-scm.com/docs/git-rebase', pattern: '`ort` defaults to `diff-algorithm=histogram`'}
+
+- id: gha-events
+  use_case: coding
+  question: In GitHub's "Events that trigger workflows" documentation, what is the maximum number of top-level inputs for a workflow_dispatch event?
+  expect: ['\b25\b']
+  check: {url: 'https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows', pattern: 'maximum number of top-level properties for `inputs` is 25'}
+  related:
+    question: In GitHub's "Events that trigger workflows" documentation, what is the shortest interval you can run scheduled workflows?
+    expect: ['5 minutes|five minutes']
+    check: {url: 'https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows', pattern: 'once every 5 minutes'}
+
+- id: lambda-quotas
+  use_case: coding
+  question: In the AWS Lambda quotas documentation, what is the maximum deployment package size (zipped) when uploaded through the Lambda API or SDKs?
+  expect: ['50 ?MB']
+  check: {url: 'https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html', pattern: '50 MB \(zipped, when uploaded through the Lambda API or SDKs\)'}
+  related:
+    question: In the AWS Lambda quotas documentation, what is the maximum function timeout?
+    expect: ['900 ?s|15 ?min']
+    check: {url: 'https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html', pattern: '900 seconds \(15 minutes\)'}
+
+- id: go-net-http
+  use_case: coding
+  question: In the Go net/http package docs, if HTTP2Config.MaxConcurrentStreams is zero, what does it default to?
+  expect: ['100']
+  check: {url: 'https://pkg.go.dev/net/http', pattern: 'If zero, MaxConcurrentStreams defaults to at least 100'}
+  related:
+    question: In the Go net/http package docs, what is the value of DefaultMaxHeaderBytes?
+    expect: ['1 ?<< ?20|1 ?MB|1,?048,?576']
+    check: {url: 'https://pkg.go.dev/net/http', pattern: 'DefaultMaxHeaderBytes = 1 << 20'}
+
+- id: cargo-manifest
+  use_case: coding
+  question: In the Cargo manifest reference, if the readme field is set to true, what file name is assumed?
+  expect: ['README\.md']
+  check: {url: 'https://doc.rust-lang.org/cargo/reference/manifest.html', pattern: 'a default value of `README\.md` will'}
+  related:
+    question: In the Cargo manifest reference, how many keywords can a package have at most on crates.io?
+    expect: ['\b5\b|five']
+    check: {url: 'https://doc.rust-lang.org/cargo/reference/manifest.html', pattern: 'maximum of 5 keywords'}
+
+- id: redis-set
+  use_case: coding
+  question: In the Redis SET command documentation, which option sets the expire time in milliseconds?
+  expect: ['\bPX\b']
+  check: {url: 'https://redis.io/docs/latest/commands/set/', pattern: 'PX milliseconds'}
+  related:
+    question: In the Redis SET command documentation, which option makes SET return the old string stored at the key?
+    expect: ['\bGET\b']
+    check: {url: 'https://redis.io/docs/latest/commands/set/', pattern: '`GET` Return the old string stored at the key'}
+
+- id: curl-manpage
+  use_case: coding
+  question: In the curl man page, what does --keepalive-cnt default to if unspecified?
+  expect: ['\b9\b']
+  check: {url: 'https://curl.se/docs/manpage.html', pattern: 'If unspecified, the option defaults to 9'}
+  related:
+    question: In the curl man page, what is the default maximum number of redirects curl follows with --location?
+    expect: ['\b50\b']
+    check: {url: 'https://curl.se/docs/manpage.html', pattern: 'By default the limit is set to 50 redirects'}
+
+- id: flask-config
+  use_case: coding
+  question: In the Flask configuration documentation, what is the default value of SESSION_REFRESH_EACH_REQUEST?
+  expect: ['true']
+  check: {url: 'https://flask.palletsprojects.com/en/stable/config/', pattern: 'Non-permanent sessions are not affected\. Default: `True`'}
+  related:
+    question: In the Flask configuration documentation, what is the default value of PERMANENT_SESSION_LIFETIME?
+    expect: ['31 days|2,?678,?400']
+    check: {url: 'https://flask.palletsprojects.com/en/stable/config/', pattern: '2678400'}
+
+- id: pytest-reference
+  use_case: coding
+  question: In the pytest API reference, what is the default value of the cache_dir configuration option?
+  expect: ['\.pytest_cache']
+  check: {url: 'https://docs.pytest.org/en/stable/reference/reference.html', pattern: 'confval-cache_dir\) : Type: : `str` Default: : `"\.pytest_cache"`'}
+  related:
+    question: In the pytest API reference, what is the default value of the junit_family configuration option?
+    expect: ['xunit2']
+    check: {url: 'https://docs.pytest.org/en/stable/reference/reference.html', pattern: 'Default: : `"xunit2"` Added in version 4\.2'}
+
+- id: vite-server
+  use_case: coding
+  question: In Vite's server options documentation, what is the default value of server.port?
+  expect: ['5173']
+  check: {url: 'https://vite.dev/config/server-options', pattern: 'server\.port.{0,120}Default:\*\* `5173`'}
+  related:
+    question: In Vite's server options documentation, what is the default value of server.middlewareMode?
+    expect: ['false']
+    check: {url: 'https://vite.dev/config/server-options', pattern: 'server\.middlewareMode.{0,200}Default:\*\* `false`'}
+
+- id: pandas-read-csv
+  use_case: coding
+  question: In the pandas.read_csv documentation, what is the default value of skipinitialspace?
+  expect: ['false']
+  check: {url: 'https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html', pattern: 'skipinitialspace\*\*bool, default False'}
+  related:
+    question: In the pandas.read_csv documentation, what is the default value of on_bad_lines?
+    expect: ['error']
+    check: {url: 'https://pandas.pydata.org/docs/reference/api/pandas.read_csv.html', pattern: "on\\\\_bad\\\\_lines\\*\\*.{0,60}default .error"}
+
+- id: pg-numeric
+  use_case: coding
+  question: In the PostgreSQL numeric types documentation, what is the maximum precision that can be explicitly specified for a numeric column?
+  expect: ['1,?000']
+  check: {url: 'https://www.postgresql.org/docs/current/datatype-numeric.html', pattern: 'maximum precision that can be explicitly specified in a `numeric` type declaration is 1000'}
+  related:
+    question: In the PostgreSQL numeric types documentation, what is the range of smallint?
+    expect: ['32,?768', '32,?767']
+    check: {url: 'https://www.postgresql.org/docs/current/datatype-numeric.html', pattern: '-32768 to \+32767'}

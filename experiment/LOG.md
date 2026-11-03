@@ -675,3 +675,51 @@ Verdict: no measure flips the overall picture. Breadcrumbs save on a reuse of a 
 - **Policy choice, if hard sites matter.** Rerun lean-0.1 and miss-0.5 on the 9 hard multi-fetch tasks, with new no-write runs shared by both, reps 4-6. Score them with `rescore.py`. Do this after the cross-user access-failure counts, since those decide whether hard sites are common enough to matter.
 - **Measure demand for access knowledge on hard sites.** Done on this machine (2026-11-02 above): rare and not repeated. Next, send `access_failures.py` to the developer and other users; cross-user repeats of the same failing site are what a shared registry needs.
 - **If library docs are revisited**, file cards by library rather than landing page, and write raw-source URL patterns (`raw.githubusercontent.com/<repo>/<tag>/...`) as site records. The oracle caps a route-only breadcrumb at about −12% on this workload.
+
+## 2026-11-02: head-0.1, lookup cost on popular reference pages (`tasks_head.yaml`, `out_head-0.1/`)
+
+Why: in a large shared registry, any popular page is almost surely carded already, so per-person repeats stop mattering. Savings then scale with (share of lookups on popular pages) × (share of those that take several fetches) × (saving per reuse). This measures the second term. `research/scripts/route_reuse.py` and `research/route-reuse-prompt.md` (cross-machine page and domain counts) are written but not sent: with a handful of users over 30 days, little overlap would say almost nothing.
+
+Tasks: 24 canonical reference pages of widely used technologies (Python, Node, MDN, PostgreSQL, Docker, Kubernetes, React, TypeScript, npm, git, GitHub Actions, AWS Lambda, Go, Cargo, Redis, curl, Flask, pytest, Vite, pandas), none used by `tasks.yaml`. Two facts per page, near 30% and 70% of the cleaned page where a crisp fact sat there, otherwise the nearest one; four were swapped because the cleaner drops that part of the page (k8s probe defaults table, npm `name` rules). All 48 verified. Runs: cold-nowrite and cold-nowrite-related under miss-0.7, reps 1-2, 96 runs, 96/96 correct. Cleaned sizes: 14 of 24 pages exceed one 10k-token fetch.
+
+| No registry, 96 runs | Runs | Tokens | Dollars | Median total |
+|---|---|---|---|---|
+| 1 web call | 49 (51%) | 26% | 23% | 12.1k |
+| 2 web calls | 29 (30%) | 25% | 28% | 21.1k |
+| 3+ web calls | 18 (19%) | 49% | 48% | 59.5k |
+
+- **Half of popular-page lookups take one fetch,** against 13% on the hard multi-fetch tasks (87% need 2+). Size doesn't decide it: node fs (117k tokens), go net/http (50k), the Dockerfile reference (29k) and GitHub's events page (19k) are one fetch every time, because `section=` hits a heading named after the option.
+- **Two-call runs are a missed section guess.** Flask, MDN Set-Cookie and git-rebase all guess a `section=` that isn't a heading, get the outline, then fetch the right section. A card's section map would save the first call, roughly the outline's cost.
+- **The cost sits in a few pages.** cargo manifest (5-9 calls), curl man page (4-7), pytest reference (2-7), npm package.json (2-4), k8s probes (1-6) and git-rebase (2-4): 6 of 24 pages, half the tokens. These are the hard-set pattern (option entries that aren't headings, very long pages).
+- **Searches are rare** (8 of 96 runs): the question names the docs, and agents go straight to the URL.
+
+Field data on the first term's companion, multi-call share across users: TraceLab (uw-syfi/TraceLab v0.0.2, CC BY 4.0; tool names and result sizes, no URLs) has 5,346 Claude Code web calls from 29 users. Split into lookups with GAP=3, 76% of 964 lookups take 2+ calls (per-user median 70%, range 31-92% for the 18 users with 5+ lookups), and those hold 96% of web-result chars. Web results are 1.3% of all tool-result chars (WebFetch returns a summary, so this understates pulled pages). This machine and the developer's had about 50%.
+
+Outside data on concentration (the first term): none found that ranks pages. Mintlify (Apr 2026, Cloudflare logs, ~790M requests/30 days) puts AI agents at 45% of docs traffic, 96% of it Claude Code and Cursor, with no per-page breakdown. Adyen's docs: 11.6% automated, and four targets (homepage, robots.txt, API explorer, POS release notes) take 54% of AI requests, mostly agents finding their way in. Ahrefs (137k domains, May 2026): 97% of llms.txt files got no requests. Context7 publishes no per-library counts.
+
+Verdict: on popular pages, a breadcrumb can save on about half the lookups, which carry about three quarters of the cost, but only a fifth of lookups are the hard-set kind where savings measured −32% to −44%. Applying the hard-set cuts to 3+ call runs and a guessed −15% to 2-call runs, net of the +7% fixed cost on 1-call runs, gives roughly −20% in tokens across popular pages. That's an estimate; the warm arms below measure it.
+
+### Reuse arms (`python out_head-0.1/drive.py reuse`, `out_head-0.1/report.py`)
+
+cold, then warm-same-nowrite and warm-related-nowrite on the cold registries, reps 1-2: 144 more runs, 240/240 correct, no usage limit. Pages are grouped by their no-registry cost (mean web calls over the four baseline runs). Cells are mean of per-task changes / weighted change.
+
+| | Pages | Cold stored | Write | Same, read-only | Related, read-only | Net over one reuse |
+|---|---|---|---|---|---|---|
+| All, tokens | 24 | 24/48 | +33% / +26% | −17% / −43% | −8% / −28% | +12% / +0% |
+| All, dollars | | | +38% / +8% | −7% / −36% | −9% / −23% | +6% / −7% |
+| One call, dollars | 10 | 0/20 | +31% / +31% | −7% / −7% | −8% / −7% | +9% / +9% |
+| Two calls, dollars | 10 | 16/20 | +61% / +33% | +9% / −8% | +7% / −3% | +16% / +14% |
+| Three+ calls, dollars | 4 | 8/8 | −4% / −19% | −48% / −66% | −49% / −52% | −26% / −34% |
+| Three+ calls, tokens | | | +12% / +3% | −66% / −76% | −59% / −63% | −20% / −26% |
+
+- **Where a lookup is expensive, reuse cuts it by more than half** (cargo manifest, curl, pytest reference, npm package.json): related −63% tokens, −52% dollars, larger than the hard set's −32%. The write pays for itself within the first reuse.
+- **Two-call pages get cards that don't help.** 16 of 20 cold runs stored one, at +33% dollars, and reuse saves 3-8%. The missed-section-guess call a card would save is cheap next to the run's fixed cost. These cards are the policy's main loss on this set.
+- **One-call pages store nothing** (0/20) and reuse is flat in tokens, so the fixed cost is the +8-9% net from the write-side runs.
+- **Weighted, savings come from the few expensive pages.** All 24: related −28% tokens / −23% dollars weighted, but −8% / −9% as a per-page mean. In a shared registry with many reuses per card, the write amortizes away and the related column is the long-run figure.
+
+Verdict: on popular pages breadcrumbs pay where the lookup is expensive, and that's where the cost is. Across the 24, a read-only related reuse is −23% in dollars (weighted), close to the hard set's result, at 2 reps, with 4 pages driving it. The policy wastes its writes on two-call pages: a bar of 3+ web calls, or a higher pull, would drop them.
+
+## Next
+
+- **Raise the card bar to drop two-call cards.** Score miss-0.7 with a 3-call bar on this set: rerun cold under it, or count which stored cards the bar would have refused. Two-call pages would move from +14% net to about the one-call +9%.
+- **Concentration.** Ask a docs host (Mintlify, Read the Docs) or Context7 for the share of agent requests that land on their top 1%/10% of pages, or on pages requested by 2+ distinct clients a month. No public source has it.
