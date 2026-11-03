@@ -743,7 +743,7 @@ The bar refuses 17 of 24 stored cold runs: 14 of 16 on two-call pages, and 3 of 
 - **In dollars it's a wash.** A refused two-call run's write costs $0.0085 over cold-nowrite, and $0.0039 of that is the fixed prompt cost the run pays anyway. The remaining ~$0.0046 is about what reuse of those cards saved. Which way the result tips depends on how the fixed cost scales, and the two models give opposite signs.
 - **Three+ pages barely notice.** Losing 3 of 8 cards moves related reuse from −52% to −52% in dollars, and from −63% to −62% in tokens: the other rep's card, or the page's other question, still carries the saving.
 
-Verdict: the head-0.1 prediction (two-call pages from +14% to about +9% in dollars) doesn't hold. The write call is a small part of the two-call loss in dollars. Most of it is the fixed cost of the write-side prompt, which a card bar doesn't remove. A 3-call bar is worth having for tokens and costs nothing elsewhere, but the larger dollar lever is that fixed cost.
+Verdict: the head-0.1 prediction (two-call pages from +14% to about +9% in dollars) doesn't hold. The write call is a small part of the two-call loss in dollars. Most of it is the fixed cost of the write-side prompt, which a card bar doesn't remove. A 3-call bar is worth having for tokens and costs nothing elsewhere, but the larger dollar lever is that fixed cost. (Corrected below: measured on the expensive pages, the bar costs more than it saves in dollars.)
 
 ## Next
 
@@ -769,11 +769,71 @@ Runs: cold on head-0.1's 10 two-call pages, reps 1-2, 20 runs, 20/20 correct. On
 
 - **The bar helps in every measure,** and more in dollars than either replay model gave (+21% and +13%). Tokens and output fall the most: the 14 cards the bar now refuses were what made the write runs long.
 - **What's left is the fixed cost.** 18 of 20 runs stored nothing and still cost +24% in dollars over no-registry runs. That's the write-side prompt plus the lookup, the same cost seen on one-call pages (+31%).
-- **Across all 24 pages,** swapping these runs in for the two-call pages moves the net from +0% to −6% in tokens and from −7% to −8% in dollars. That leaves the three+ pages at miss-0.7, which the replay says loses almost nothing under the bar.
+- **Across all 24 pages,** swapping these runs in for the two-call pages moves the net from +0% to −6% in tokens and from −7% to −8% in dollars. That leaves the three+ pages at miss-0.7, which the replay says loses almost nothing under the bar. Measured under the bar too (next entry), all 24 are −3% tokens and −4% dollars, worse in dollars than miss-0.7's −7%.
 
-Verdict: keep the 3-call bar. It drops the cards that don't pay, at no loss on expensive pages. The remaining loss on cheap pages is the fixed cost of the write-side prompt.
+Verdict (corrected in the next entry): on two-call pages the bar drops the cards that don't pay, and helps in every measure. The remaining loss there is the fixed cost of the write-side prompt. Whether to keep the bar depends on the expensive pages, which this entry didn't measure.
 
 ## Next
 
 - **Shrink the write-side prompt.** +24-31% in dollars on runs that store nothing is now the policy's main cost on popular pages. Try a shorter miss note, or one that's sent only once a run passes the bar.
 - **Check miss-0.8 on the three+ pages and the hard set** with a few cold runs, to confirm the bar doesn't cost cards there.
+
+## 2026-11-03: miss-0.8 on expensive pages (`python out_miss-0.8/drive.py expensive`, `out_miss-0.8/report.py`)
+
+Why: confirm the 3-call bar doesn't cost cards where they pay: head-0.1's four three+ pages (against its miss-0.7 runs) and the 9 hard multi-fetch tasks (against miss-0.5's reps 1-2, the last iteration run on them; miss-0.7 differs from it only in counting searches). Cold, reps 1-2, then read-only reuse wherever a cold run stored a card: 26 cold and 34 reuse runs.
+
+Correctness: 58/60. The two misses are sonatype-guava, where both cold runs answered 33.8.0-jre from Maven's own `maven-metadata.xml`. Guava has released since the task was written (expect is 33.7.2), so the answer key is stale and the agents were right. The expected answer is left as is, so earlier runs still score the same.
+
+| Weighted, dollars | Cards stored | Write | Same, read-only | Related, read-only | Net |
+|---|---|---|---|---|---|
+| Three+ head pages, miss-0.7 | 8/8 | −19% | −66% | −52% | −34% |
+| Three+ head pages, miss-0.8 | 6/8 | −2% | −61% | −51% | −23% |
+| Hard multi-fetch, miss-0.5 | 16/18 | +30% | −29% | −20% | +0% |
+| Hard multi-fetch, miss-0.8 | 11/18 | +46% | −19% | −16% | +9% |
+
+- **Three+ head pages keep their saving.** Related reuse is −51% against −52%. The only cards lost are npm package.json's, whose cold runs took 2 calls both times. The write column moved from −19% to −2% with no change in what was stored: 2 reps of cold runs that vary from 2 to 10 calls (pytest went 7/2 → 5/5, cargo 6/10 → 6/6).
+- **The hard set loses one site that matters: sonatype-guava.** Both cold runs took 2 fetches (the JavaScript page, then `maven-metadata.xml`), so the bar refused both cards, and related reuse went from −67% to 0%. That is most of the related column's change (−20% → −16%). Cards also went missing for bash-histsize r2, gha-matrix-max-jobs r2 and nginx-keepalive-requests r2, but each task's other rep's card wasn't affected and their related savings held (−21%, +20% and −16%, against −24%, +91% and −17%).
+- **The hard-set write column has one outlier.** git-gc-auto went +33% → +268% on a cheap baseline ($0.027) when one cold run took 6 calls, but the write cost is higher on 7 of the 9 hard tasks, not just that one. The hard set's baselines are also a week older than these runs.
+
+Across the sets, write plus one related reuse, weighted, miss-0.7/0.5 → miss-0.8:
+
+| | Tokens | Dollars |
+|---|---|---|
+| All 24 head pages | +0% → −3% | −7% → −4% |
+| Hard multi-fetch, 9 tasks | +12% → +20% | +0% → +9% |
+| Hard multi-fetch without sonatype, 8 tasks | +13% → +22% | +4% → +11% |
+
+- **Sonatype isn't the main loss.** Without it the hard set is still 7 points worse in dollars, and related reuse barely moves (−17% → −16%). The loss is in the write runs: hard-set cold runs averaged 3.6 web calls under miss-0.8, against 3.2 under miss-0.5.
+- **The cause isn't settled.** The note's new wording ("3 or more web calls") may lead agents to make an extra call to clear the bar. Or it's drift: the miss-0.5 runs and their baselines are 3-8 days older, and sites change (guava did). A same-day miss-0.7 cold control on the hard set would tell them apart. It was skipped for now.
+
+Verdict: in dollars the 3-call bar is worse overall. It helps only on two-call pages (+14% → +11%), and loses more on the expensive pages and the hard set, where the money is. miss-0.7 stays the default. The bar's measured gain is too small to be worth a second try unless the control shows the hard-set loss is drift.
+
+## Next
+
+- **Same-day control, if the bar is revisited:** the 9 hard tasks cold under miss-0.7, reps 1-2 (18 runs). If those also cost about +46% in dollars, the miss-0.8 loss is drift. If they stay near +30%, the bar's wording costs money.
+- **Shrink the write-side prompt** (from the miss-0.8 entry). +24-31% in dollars on runs that store nothing is still the policy's main cost on cheap pages, and doesn't depend on the bar.
+- **Fix sonatype-guava's expected answer** (33.7.2 → 33.8.0), with a note that runs before 2026-11-03 are scored against the old one.
+
+## 2026-11-03: concentration, an ask for docs hosts and a Wikimedia stand-in (not an iteration)
+
+Why: savings in a shared registry scale with how much of agent demand lands on pages someone else already looked up. No public source ranks agent requests by page (head-0.1 above), so this gets the records from people who have the logs.
+
+- **`research/scripts/agent_concentration.py`**, for a site owner to run on 30 days of access logs (nginx/Apache, Cloudflare Logpush JSON, CloudFront/W3C; gzip ok; Python 3.10+, standard library only). For agent traffic (Claude-User, ChatGPT-User, Perplexity-User and other named assistants), generic HTTP clients and human traffic, it prints only aggregates: the share of requests on the top 1%, 10% and 25% of pages, pages fetched by 2+ and 5+ clients, and the share of requests for a page another client of the same kind fetched earlier. That last figure is the share a registry could serve from someone else's breadcrumb. Crawlers, assets, robots.txt, non-GET and 4xx/5xx requests are left out, and `/x`, `/x/`, `/x.md` and `/x/index.html` count as one page. Checked against a hand-worked synthetic log in all three formats.
+- **`research/concentration-ask.md`**: the message, recipients (Mintlify, Read the Docs, GitBook, Context7, self-hosted open-source docs) and what to do before sending. Not sent.
+- **`research/scripts/wikimedia_concentration.py`**: the stand-in. Wikimedia's pageview_complete dumps give every article's daily views, split into user and automated traffic (bots that don't identify themselves). That's reference lookups, not docs and not AI agents, so it shows how long the tail is, not the registry's number.
+
+English Wikipedia, 2026-10-01 (one day; dumps in the session scratchpad, not kept):
+
+| | Views | Pages | Top 1% of pages | Top 10% | Top 100 pages | Views on pages viewed 2+ times |
+|---|---|---|---|---|---|---|
+| User | 206M | 9.8M | 56% | 85% | 10% | 98% |
+| Automated | 61M | 12.4M | 49% | 70% | 27% | 88% |
+
+- **Reference lookups are concentrated.** A tenth of the pages take 85% of human views in a day, and 98% of views land on a page that got at least one other view that day.
+- **Automated traffic has a longer tail and a heavier head.** 12% of its views are a page's only view that day, against 2% for users. A hundred pages take 27% of it, likely a few bots hammering the same pages. 43% of automated views are on the users' top 1% of pages.
+- **This is an upper bound for a registry.** Wikimedia counts views, not distinct clients, so a client fetching a page twice counts as a repeat. The docs-host script counts distinct clients for that reason.
+
+## Next
+
+- **Send the ask** (`research/concentration-ask.md`) once it has a sample output from a real log.
+- **If no host answers,** repeat the Wikimedia count over 30 days rather than one, and for a technical wiki subset, to see how the repeat share grows with the window.
