@@ -9,9 +9,11 @@ except ValueError:
     event = {}
 path = sys.argv[1]
 try:
-    kinds = [l.split("\t", 1)[0] for l in open(path, encoding="utf-8").read().splitlines()]
+    lines = open(path, encoding="utf-8").read().splitlines()
 except FileNotFoundError:
-    kinds = []
+    lines = []
+kinds = [l.split("\t", 1)[0] for l in lines]
+where = "the fetch result's note" if "note\tdefer" in lines else "the lookup note"  # miss-0.9
 if event.get("stop_hook_active") or "nudge" not in kinds or "stored" in kinds or "stop" in kinds:
     sys.exit(0)
 with open(path, "a", encoding="utf-8") as f:
@@ -19,5 +21,5 @@ with open(path, "a", encoding="utf-8") as f:
 fetches = sum(k in ("fetch", "render") for k in kinds)
 print(json.dumps({"decision": "block", "reason": (
     f"[breadcrumbs: this run took {fetches} fetches and stored no breadcrumbs. Before finishing, call write "
-    "with a page card for the page that held the answer, as the lookup note describes, then repeat your "
+    f"with a page card for the page that held the answer, as {where} describes, then repeat your "
     "final ANSWER line.]")}))

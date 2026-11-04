@@ -29,6 +29,10 @@ searched and then fetched once can store a card (BC_MIN_PULL still applies): fin
 the page is what such a card saves. BC_MIN_CALLS (miss-0.8) raises the bar to that many
 web calls, searches included. miss-0.2 stopped counting them for pypi's
 search-then-write loop, before miss-0.4 and miss-0.5 narrowed who writes.
+BC_DEFER=1 (miss-0.9) sends a run under the bar only a short site-record note; the
+page-card instructions come with the fetch that passes it (bc.common.CARD_NOTE).
+BC_SITE_STRICT=1 (miss-0.11) words that note to rule out site records that only say a
+plain fetch works.
 """
 import sys, pathlib, json, re, hashlib, os, sqlite3, datetime
 from urllib.parse import urlsplit
@@ -38,7 +42,8 @@ import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
 from mcp.server.mcpserver import MCPServer
-from bc.common import normalize_url, host_of, page_id, fetch_clean, tokens, card_block, call_counts, log_call, MIN_CALLS
+from bc.common import normalize_url, host_of, page_id, fetch_clean, tokens, card_block, call_counts, log_call, MIN_CALLS, \
+    DEFER, SITE_NOTE, SITE_STRICT, SITE_NOTE_STRICT
 
 ROOT = pathlib.Path(__file__).parent.parent
 DB_PATH = os.environ.get("BC_REGISTRY", str(ROOT / "out" / "registry.sqlite"))
@@ -279,6 +284,9 @@ def _miss_note() -> str:
         return MISS_NOTE.format(writer=WRITER, today=today)
     log_call("note", "miss")  # the web server says once when a card from this run would be stored
     counts = call_counts()
+    if DEFER and card_block([], [], counts) is not None:  # the card instructions come with that fetch
+        log_call("note", "defer")
+        return (SITE_NOTE_STRICT if SITE_STRICT else SITE_NOTE).format(writer=WRITER, today=today)
     n = counts["fetch"]
     note = MISSX_NOTE.replace(NOTE_BAR, NOTE_BAR + ONE_FETCH_SITE) if NOTE_SITE else MISSX_NOTE
     if SEARCHES:

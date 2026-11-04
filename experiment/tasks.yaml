@@ -285,8 +285,10 @@
   set: hard
   use_case: hard_access
   question: What is the latest version of the community.general collection on Ansible Galaxy?
-  expect: ['13\.5\.0']
-  check: {url: 'https://galaxy.ansible.com/api/v3/plugin/ansible/content/published/collections/index/community/general/', select: [highest_version.version], pattern: '"13\.5\.0"'}
+  # 13.5.0 or any later release: 14.0.0 was out by 2026-11-04. Rows from before then were
+  # graded against 13.5.0 alone and keep that grade.
+  expect: ['\b(13\.([5-9]|\d\d)\.\d+|(1[4-9]|[2-9]\d)\.\d+\.\d+)\b']
+  check: {url: 'https://galaxy.ansible.com/api/v3/plugin/ansible/content/published/collections/index/community/general/', select: [highest_version.version], pattern: '"(13\.([5-9]|\d\d)\.\d+|(1[4-9]|[2-9]\d)\.\d+\.\d+)"'}
   related:
     question: What is the latest version of the ansible.posix collection on Ansible Galaxy?
     expect: ['2\.2\.2']
@@ -318,8 +320,10 @@
   set: hard
   use_case: hard_access
   question: On Maven Central (central.sonatype.com), what is the latest version of com.google.guava:guava?
-  expect: ['33\.7\.2']
-  check: {url: 'https://central.sonatype.com/api/internal/browse/component/versions?sortField=normalizedVersion&sortDirection=desc&page=0&size=1&filter=namespace%3Acom.google.guava%2Cname%3Aguava', select: [components.0.version], pattern: '"33\.7\.2-jre"'}
+  # 33.7.2 or any later release: Guava had released 33.8.0 by 2026-11-03. Rows from before
+  # then were graded against 33.7.2 alone and keep that grade.
+  expect: ['\b(33\.7\.2|33\.([89]|\d\d)\.\d+|(3[4-9]|[4-9]\d)\.\d+\.\d+)\b']
+  check: {url: 'https://central.sonatype.com/api/internal/browse/component/versions?sortField=normalizedVersion&sortDirection=desc&page=0&size=1&filter=namespace%3Acom.google.guava%2Cname%3Aguava', select: [components.0.version], pattern: '"(33\.7\.2|33\.([89]|\d\d)\.\d+|(3[4-9]|[4-9]\d)\.\d+\.\d+)-jre"'}
   related:
     question: On Maven Central (central.sonatype.com), what is the latest version of org.apache.commons:commons-lang3?
     expect: ['3\.21\.0']

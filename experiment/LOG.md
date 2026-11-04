@@ -19,6 +19,10 @@ Each iteration is named `<approach>-0.<n>`: a new approach starts at 0.1 and eac
 | miss-0.5 | Cards need 2,000+ fetched tokens and must be filed under a looked-up site | `out_miss-0.5/` |
 | miss-0.6 | The note says again that one-fetch runs still write a site record with a URL pattern (worse: halved site records) | `out_miss-0.6_smoke/` |
 | miss-0.7 | miss-0.5, with a search counting toward the page-card bar again (a search and one fetch can earn a card) | `out_miss-0.7_probe/` |
+| miss-0.8 | miss-0.7 with a page-card bar of 3 web calls, searches included | `out_miss-0.8/` |
+| miss-0.9 | miss-0.7 with the page-card instructions deferred to the fetch that passes the bar; a miss sends only a short site-record note | `out_miss-0.9/` |
+| miss-0.10 | miss-0.9 with miss-0.8's bar of 3 web calls | `out_miss-0.10/` |
+| miss-0.11 | miss-0.10 with the site-record note ruling out records that only say a plain fetch works | `out_miss-0.11/` |
 | probe-0.1 | Not a write policy: library-docs demand, 72 versioned questions on 12 libraries, miss-0.5 arms plus memory, open and oracle | `out_probe-0.1/` |
 
 `out_rep1_oldrule/` and `out_smoke_2026-10-26/` are setup runs from before narrow-0.1.
@@ -837,3 +841,88 @@ English Wikipedia, 2026-10-01 (one day; dumps in the session scratchpad, not kep
 
 - **Send the ask** (`research/concentration-ask.md`) once it has a sample output from a real log.
 - **If no host answers,** repeat the Wikimedia count over 30 days rather than one, and for a technical wiki subset, to see how the repeat share grows with the window.
+
+## 2026-11-03: how a Pro plan meters cache reads (`out_meter-0.1/`, not an iteration)
+
+Why: the rescore entry found that results split on whether cache reads count. API users pay dollars, which discount cache reads to a twentieth of input, but plan users are metered against 5-hour and weekly caps by an unpublished formula. This measures it.
+
+Method (`out_meter-0.1/drive.py`): three synthetic batches on sonnet, each mostly one token type. **out**: 3,000-word stories, no tools (95% of dollars are output). **write**: "reply OK" under a unique ~53k-token system prompt, so the whole prompt is a cache write (100%). **read**: 25 `echo` calls under one fixed ~53k prompt, so every turn re-reads it (87% cache reads). The plan meter is the endpoint behind `/usage` (`api.anthropic.com/api/oauth/usage`), in whole percent. It lags spend by a minute or more and returns 429 if polled often, so each batch reads it once at the start and once settled at the end (two readings 90 s apart that agree). Nothing else used the account during a batch. Prices fitted from the runs' own `cost_usd` match exactly: input $2/M, cache write $4/M, cache read $0.10/M, output $10/M.
+
+| Batch (`report.py`) | Runs | Dollars | Cache write | Cache read | Output | 5-hour meter | Points per $ |
+|---|---|---|---|---|---|---|---|
+| out | 18 | $1.11 | $0.06 | $0.00 | $1.05 | +12 | 10.8 |
+| write | 6 | $1.28 | $1.28 | $0.00 | $0.00 | +9 | 7.0 |
+| read | 9 | $1.51 | $0.07 | $1.32 | $0.13 | +11 | 7.3 |
+
+Solved per token type: cache writes 7.0 points per dollar, cache reads 6.9, output 11.0.
+
+- **Cache reads are metered at their dollar price.** The read batch did 13.1M cache-read tokens. Counted like input, that's $26 and about 180 points, against the 11 seen. Per dollar, reads and writes are within a point.
+- **Output costs about 1.6× its dollar price** on the meter, relative to cache writes. In tokens: an output token meters like 3.9 cache-write tokens, and a cache read like 0.025.
+- **So for plan users the dollar column applies, with output weighted ×1.6.** Total tokens, which count cache reads in full, is the wrong measure for both plans and the API. Writes hurt a bit more on a plan than in dollars, since a write is output.
+- **Scale:** at about 7 points per dollar, a 5-hour window holds about $14 of sonnet cache traffic at API prices, or about $9 of output. The weekly meter rose 73% → 82% over about 70 five-hour points, so a week is roughly 8 windows. Both figures are coarse, given the 1-point resolution.
+
+Limits: one sample per batch, so the 1-point resolution is ±8-11% on each. The out batch's start reading (7%) came 60 s after the probe, before the settle wait was added, so it could be a point low, which would make output ×1.45. The read batch spanned the 02:00 reset because the machine slept. Six runs died in sleep (negative timeouts), and the nine that finished all fell in the new window, which opened when the machine woke, so it's read from 0%. The earlier write batch and the first read batch crashed on 429s and are kept in `meter.jsonl` but not scored. They agree with the table within a couple of points. Sonnet only, and the formula could differ for Opus or change at any time.
+
+Verdict: a Pro plan meters roughly in dollars, with output counting more. The rescore's dollar results hold for plan users, a little worse wherever a policy adds output.
+
+## Next
+
+- **Add a plan measure to `rescore.py`:** dollars with output ×1.6. Check whether any verdict that held in dollars flips. Most likely to flip are the write-side nets, since output was already the one measure where writes lost.
+- **Keep the machine awake for long batches** (`powercfg /change standby-timeout-ac 0`, or run under a keep-awake). Sleep cost two batches here.
+
+## 2026-11-03: miss-0.9 and miss-0.10, page-card instructions deferred (`out_miss-0.9/`, `out_miss-0.10/`)
+
+Why: dollars are the measure (meter-0.1 above), and the policy's main loss on popular pages is a fixed cost on runs that store nothing: +31% on one-call pages and +24% on two-call pages under the 3-call bar. Every run that misses gets the ~320-token note, whether or not it ever passes the bar.
+
+What changed (`BC_DEFER=1`): a lookup that misses now sends only a short site-record note (97 tokens): "If you learn how to get content from any page on the site (an API or raw-source URL pattern with {name} in it, Markdown versions, JavaScript needed), write a site record before answering. A fetch result will say if a page card is wanted too." The fetch that passes the bar carries the page-card instructions (203 tokens) in place of the old one-line nudge. A run that is already past the bar when it looks up gets the full note, as before. Site records stay open to every run, because one-fetch site records can pay on other pages of the site (miss-0.6: jetbrains −92%), while page cards from one-call pages don't. On head-0.1, the related question on a one-call page averaged 1.1 web calls (1.15 on miss-0.5's easy set, 1.13 on route-0.1's), and none of the 51 such pages took 3+. The Stop hook now points to "the fetch result's note". miss-0.9 has miss-0.7's bar, and miss-0.10 has miss-0.8's bar of 3 web calls.
+
+Runs: cold on head-0.1's 10 one-call and 10 two-call pages, reps 1-2, for each iteration: 80 runs, $2.34, 80/80 correct, 5-hour meter 27% → 44%, weekly 83% → 85%. Baselines are head-0.1's cold-nowrite runs from 2026-11-02, as in miss-0.8 (`out_miss-0.9/report.py`).
+
+| Cold vs no-write, weighted | One call: $ | Tokens | Output | Sites stored | Two calls: $ | Tokens | Output | Cards stored |
+|---|---|---|---|---|---|---|---|---|
+| miss-0.7 | +31% | +17% | +15% | 0 | +33% | +62% | +61% | 16/20 |
+| miss-0.9 | +24% | +15% | +17% | 4 | +24% | +51% | +61% | 16/20 |
+| miss-0.8 | | | | | +24% | +21% | +11% | 2/20 |
+| miss-0.10 | +17% | +13% | +20% | 5 | +12% | +23% | +20% | 3/20 |
+
+- **Deferring cuts about 9-12 points in dollars at either bar.** Two-call pages go from +33% to +24% (bar 2) and from +24% to +12% (bar 3), with the same cards stored. On one-call pages, runs that store nothing went from +31% to +19% and +12%. Their extra cache writes fell from 850 tokens to 650 and 420.
+- **The one-call difference between miss-0.9 and miss-0.10 is noise.** At one web call the bar never comes into play, so those runs were identical, yet they differ by 7 points (+24% vs +17%). That's the noise floor at 20 runs a cell. A fixed cost of about +12-19% remains. Only ~100 tokens of it is the new note. The rest may be drift against day-old baselines, or the write tool and miss prompt. A same-day no-write control would tell.
+- **The short note brings in junk site records.** 9 of 40 one-call runs (react-useeffect, tsconfig, vite-server) wrote site records saying "plain fetch works; the section parameter returns just that section". That describes our fetch tool, not the site, and no later agent saves anything from it. Those runs cost +43-60%, so the 9 junk writes are most of what's left on one-call pages. Under the old note, these pages stored no site records at all.
+- **Writes still slip through under the bar** (1 refused per iteration), as before.
+
+Verdict: deferring works, with 9-12 points saved in dollars on cheap pages at either bar and the same cards stored. It's a net gain once the site note stops inviting records with no pattern in them. miss-0.10 is the cheapest yet on cheap pages (+17% / +12%), but bar 3 cost cards on the hard set under miss-0.8 (sonatype-guava), so the bar still has to be decided on the expensive pages.
+
+## Next
+
+- **Tighten the site note (miss-0.11):** ask only for an API or raw-source URL pattern, Markdown versions or a JavaScript requirement, and say "not that a plain fetch works". Or have the registry refuse site records from under-bar runs that carry none of those, so the agent learns it at write time. Rerun the one-call pages (20 runs) to check that the junk records go away.
+- **Then step 2:** miss-0.9 or miss-0.10 (with the tightened note) on head-0.1's three+ pages and the 9 hard multi-fetch tasks, cold plus read-only reuse, against miss-0.7 and miss-0.8. That decides the bar. Weekly usage is at 85% and resets 2026-11-07, so step 2 waits for the reset.
+- **Same-day no-write control** on the one-call pages (20 runs), to tell drift from the fixed cost that remains.
+
+## 2026-11-04: miss-0.11, a tighter site-record note (`out_miss-0.11/`)
+
+Why: miss-0.9's short note drew site records on 9 of 40 one-call runs that only said "plain fetch works; the section parameter returns just that section", at +43-60% a run.
+
+What changed from miss-0.10 (`BC_SITE_STRICT=1`): the note now reads "Write a site record before answering only if you found something a later agent would not get from a plain fetch of the page: an API or raw-source URL pattern with {name} in it, Markdown versions of pages, or that pages need JavaScript. Not that a plain fetch or the section parameter works: that is true of most sites." It's ~150 tokens, against 97.
+
+Runs: cold on head-0.1's 10 one-call pages and the hard set's 5 one-fetch API tasks (terraform, galaxy, artifacthub, puppet, jetbrains), reps 1-2, plus same-day cold-nowrite runs on the one-call pages. 50 runs, $0.85, 50/50 correct after regrading. Both galaxy runs answered 14.0.0, which is right: the key said 13.5.0 and now accepts 13.5.0 or any later version, as guava's does. Weekly usage went from 86% to 87% (`out_miss-0.9/report.py`).
+
+| Cold vs no-write, one-call pages, weighted | Dollars | Tokens | Output | Junk site records |
+|---|---|---|---|---|
+| miss-0.7, vs 11-02 no-write | +31% | +17% | +15% | 0 |
+| miss-0.9, vs 11-02 | +24% | +15% | +17% | 4 |
+| miss-0.10, vs 11-02 | +17% | +13% | +20% | 5 |
+| miss-0.11, vs 11-02 | +26% | +8% | +4% | 0 |
+| **miss-0.11, vs same-day no-write** | **+11%** | **+3%** | **+1%** | 0 |
+
+- **The junk records are gone,** and with them the extra output and turns: miss-0.11 one-call runs take the same turns, output and cache reads as no-write runs.
+- **The old baselines had drifted.** Same-day no-write runs on these pages cost 13% more than head-0.1's from 2026-11-02, mostly cache writes (+400 tokens a run) at the same turns. Claude Code was 2.1.314 both days, so it's likely the pages. Every miss-0.8 to miss-0.10 figure above is against the 11-02 runs, so their one-call and two-call costs are overstated by an unknown amount, up to ~13 points.
+- **What's left on one-call pages is about +11% in dollars and +3% in tokens.** That's cache writes: ~390 tokens a run, of which the note is ~150. Down from +31% under miss-0.7, but drift accounts for some of that drop.
+- **API site records hold.** 8 of 10 cold runs stored one, every one with a `{placeholder}` URL pattern (terraform, galaxy, artifacthub, puppet 2/2 each). miss-0.5 got 7 of 10 on the same reps. jetbrains still gets none (0/2, as under miss-0.5), so miss-0.6's finding stands: opaque-ID patterns like `{pluginId}` aren't written. Cost matches miss-0.5 (+31% vs +31% in dollars, on miss-0.5's October baselines).
+
+Verdict: miss-0.11 is the write side to keep for cheap pages. It defers the page-card instructions, asks only for site records that carry something a fetch doesn't, and costs about +11% in dollars and +3% in tokens on one-call pages against a same-day baseline, with API site records intact. The bar (2 or 3 calls) is still open.
+
+## Next
+
+- **Step 2, after the weekly reset (2026-11-07):** miss-0.11 and a bar-2 version of it on head-0.1's three+ pages and the 9 hard multi-fetch tasks, cold plus read-only reuse, with same-day cold-nowrite runs. That decides the bar. Rerun the two-call pages under the same day's baseline too.
+- **Stale answer keys:** `run.py verify` fails on openvsx-rust-analyzer, amo-ublock-version, flathub-gimp-release and terraform-aws-provider's related question. Give them the same at-or-above patterns before any easy-set run.
+- **Always run a same-day no-write control.** Day-old baselines drifted 13% on cheap pages, which is as large as most effects being measured.

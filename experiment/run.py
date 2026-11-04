@@ -54,6 +54,12 @@ holding only the answer's sections) used an earlier prompt and can't be rerun.
                 still needed)
   miss-0.8      miss-0.7 with a bar of 3 web calls, searches included: two-call
                 runs store no page card
+  miss-0.9      miss-0.7 with the page-card instructions deferred: a lookup that
+                misses sends only a short site-record note, and the fetch that
+                passes the bar carries the card instructions
+  miss-0.10     miss-0.9 with miss-0.8's bar of 3 web calls
+  miss-0.11     miss-0.10 with the site-record note ruling out records that only
+                say a plain fetch works
 coldonly-0.1 is lean-0.1's cold registries scored with the nowrite warm arms.
 
 Each run gets its own directory under out/runs/<condition>/<task>/r<rep>/ with
@@ -133,7 +139,7 @@ ENFORCED_ROUTE_WRITE_RULE = ROUTE_WRITE_RULE.replace("   If lookup had everythin
 # Every cold card that later saved tokens came from a run that pulled 2,286+; the cards that saved
 # nothing (render, a sonatype related run) came from runs that pulled ~450-550.
 MIN_PULL = 2000
-MIN_CALLS = 3  # miss-0.8
+MIN_CALLS = 3  # miss-0.8, miss-0.10, miss-0.11
 # memory (knowledge-gap probe): no tools, so the answer shows what the model remembers.
 MEMORY_SYSTEM = """You answer questions about software libraries from what you already know. You have no tools. Today is {today}.
 
@@ -154,7 +160,8 @@ OPEN_TOOLS = ["WebSearch", "mcp__web__fetch", "mcp__web__render"]
 # miss-*: the rule itself arrives with a lookup that misses (see bc/registry_server.py).
 MISS_RULE = "3. Call write only if a lookup result asks for breadcrumbs, and then as it says."
 NOWRITE_RULE = "3. Do not call write in this session."
-MISS = ("miss-0.1", "miss-0.2", "miss-0.3", "miss-0.4", "miss-0.5", "miss-0.6", "miss-0.7", "miss-0.8")
+MISS = ("miss-0.1", "miss-0.2", "miss-0.3", "miss-0.4", "miss-0.5", "miss-0.6", "miss-0.7", "miss-0.8", "miss-0.9",
+        "miss-0.10", "miss-0.11")
 ENFORCED = ("enforced-0.1", "enforced-0.2")
 # Iteration name: (page-card style, step 3 of the prompt).
 ITERATIONS = {"map-0.1": ("map", WRITE_RULE), "route-0.1": ("route", ROUTE_WRITE_RULE),
@@ -311,7 +318,9 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
             **({"BC_MIN_PULL": str(MIN_PULL), "BC_FILE_LOOKUP": "1"} if it in MISS[4:] else {}),
             **({"BC_NOTE_SITE": "1"} if it == "miss-0.6" else {}),
             **({"BC_SEARCHES": "1"} if it in MISS[6:] else {}),
-            **({"BC_MIN_CALLS": str(MIN_CALLS)} if it == "miss-0.8" else {})} \
+            **({"BC_MIN_CALLS": str(MIN_CALLS)} if it in ("miss-0.8", "miss-0.10", "miss-0.11") else {}),
+            **({"BC_DEFER": "1"} if it in MISS[8:] else {}),
+            **({"BC_SITE_STRICT": "1"} if it == "miss-0.11" else {})} \
         if it in MISS and writes else None
     servers = {"mcpServers": {}} if cond == "memory" else mcp_config(registry, call_log, miss)
     if cond == "open":

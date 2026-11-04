@@ -141,6 +141,24 @@ CALL_LOG = os.environ.get("BC_CALL_LOG")
 MIN_PULL = int(os.environ.get("BC_MIN_PULL") or 0)
 # miss-0.8: page cards need this many web calls (fetches, renders and, if counted, searches).
 MIN_CALLS = int(os.environ.get("BC_MIN_CALLS") or 0)
+# miss-0.9: a lookup that misses sends only SITE_NOTE; the fetch that passes the card bar
+# carries CARD_NOTE, so runs that never pass it don't pay for the page-card instructions.
+DEFER = os.environ.get("BC_DEFER") == "1"
+SITE_NOTE = """
+
+[breadcrumbs: the registry has nothing for this. If you learn how to get content from any page on the site (an API or raw-source URL pattern with {{name}} in it, Markdown versions, JavaScript needed), write a site record before answering. A fetch result will say if a page card is wanted too. Use schema "0.2" and provenance {{"writer": "{writer}", "observed_at": "{today}"}}.]"""
+# miss-0.11: miss-0.9's note drew site records that only said a plain fetch works.
+SITE_STRICT = os.environ.get("BC_SITE_STRICT") == "1"
+SITE_NOTE_STRICT = """
+
+[breadcrumbs: the registry has nothing for this. Write a site record before answering only if you found something a later agent would not get from a plain fetch of the page: an API or raw-source URL pattern with {{name}} in it, Markdown versions of pages, or that pages need JavaScript. Not that a plain fetch or the section parameter works: that is true of most sites. A fetch result will say if a page card is wanted too. Use schema "0.2" and provenance {{"writer": "{writer}", "observed_at": "{today}"}}.]"""
+CARD_NOTE = """
+[breadcrumbs: this run has now taken {taken}, so write would store a page card from it: write one before answering, for the page that held the answer. A card records the cheapest way to get the page's content, not your answer:
+  - route.url: the smallest source you found with the page's content: a raw source file, an API endpoint, a Markdown version, or the page itself if nothing smaller exists.
+  - route.select, route.section, route.start: fetch arguments that worked on route.url, if you used any; route.tokens: roughly how large the result was.
+  - route.notes: what did not work and why (e.g. section= fails because entries are not headings).
+  - answers: the topics the whole page covers, not your question. No values anywhere in the card.
+Use schema "0.2" and provenance {{"writer": "{writer}", "observed_at": "{today}"}}.]"""
 PATTERN_URL = re.compile(r"https?://[^\s\"'<>()]*\{[^}]+\}[^\s\"'<>()]*")
 
 

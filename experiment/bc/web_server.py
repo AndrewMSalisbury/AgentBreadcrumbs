@@ -6,12 +6,15 @@ With BC_MISS=x (miss-0.2) calls are logged too, and only the first fetch or
 render that makes a page card storable, in a run whose lookup sent the miss note,
 says so. Each logged call records the tokens its reply returned (BC_MIN_PULL reads them).
 BC_SEARCHES=1 (miss-0.7) counts searches toward that bar, as the registry does.
+BC_DEFER=1 (miss-0.9): if the lookup sent only the site-record note, that fetch carries
+the page-card instructions (bc.common.CARD_NOTE).
 """
-import sys, pathlib, re, os
+import sys, pathlib, re, os, datetime
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 
 from mcp.server.mcpserver import MCPServer
-from bc.common import ENC, tokens, fetch_clean, render_clean, log_call, call_counts, card_block, stored_site_records
+from bc.common import ENC, tokens, fetch_clean, render_clean, log_call, call_counts, card_block, stored_site_records, \
+    DEFER, CARD_NOTE
 
 # Claude Code moves any tool result over ~50 KB into a file the agent cannot read,
 # so each reply stays under both limits and says where to continue.
@@ -94,6 +97,9 @@ def _card_note(url: str, reply: str) -> str:
         log_call("nudge", url)  # read by the miss-0.3+ Stop hook
         taken = f"{counts['fetch']} fetch{'es' if counts['fetch'] != 1 else ''}" + (
             f" and {counts['search']} search{'es' if counts['search'] != 1 else ''}" if SEARCHES and counts["search"] else "")
+        if DEFER and "note\tdefer" in _call_lines():
+            return reply + CARD_NOTE.format(taken=taken, writer=os.environ.get("BC_WRITER", "unknown"),
+                                            today=datetime.date.today().isoformat())
         return reply + (f"\n[breadcrumbs: this run has now taken {taken}, so write would store "
                         "a page card from it: write one for the page that holds the answer before answering.]")
     if not ENFORCE:
