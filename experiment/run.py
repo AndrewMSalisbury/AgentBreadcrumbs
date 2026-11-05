@@ -60,6 +60,8 @@ holding only the answer's sections) used an earlier prompt and can't be rerun.
   miss-0.10     miss-0.9 with miss-0.8's bar of 3 web calls
   miss-0.11     miss-0.10 with the site-record note ruling out records that only
                 say a plain fetch works
+  miss-0.12     miss-0.11 with miss-0.9's bar (2,000+ tokens, searches counted, no
+                call minimum)
 coldonly-0.1 is lean-0.1's cold registries scored with the nowrite warm arms.
 
 Each run gets its own directory under out/runs/<condition>/<task>/r<rep>/ with
@@ -161,7 +163,7 @@ OPEN_TOOLS = ["WebSearch", "mcp__web__fetch", "mcp__web__render"]
 MISS_RULE = "3. Call write only if a lookup result asks for breadcrumbs, and then as it says."
 NOWRITE_RULE = "3. Do not call write in this session."
 MISS = ("miss-0.1", "miss-0.2", "miss-0.3", "miss-0.4", "miss-0.5", "miss-0.6", "miss-0.7", "miss-0.8", "miss-0.9",
-        "miss-0.10", "miss-0.11")
+        "miss-0.10", "miss-0.11", "miss-0.12")
 ENFORCED = ("enforced-0.1", "enforced-0.2")
 # Iteration name: (page-card style, step 3 of the prompt).
 ITERATIONS = {"map-0.1": ("map", WRITE_RULE), "route-0.1": ("route", ROUTE_WRITE_RULE),
@@ -320,7 +322,7 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
             **({"BC_SEARCHES": "1"} if it in MISS[6:] else {}),
             **({"BC_MIN_CALLS": str(MIN_CALLS)} if it in ("miss-0.8", "miss-0.10", "miss-0.11") else {}),
             **({"BC_DEFER": "1"} if it in MISS[8:] else {}),
-            **({"BC_SITE_STRICT": "1"} if it == "miss-0.11" else {})} \
+            **({"BC_SITE_STRICT": "1"} if it in ("miss-0.11", "miss-0.12") else {})} \
         if it in MISS and writes else None
     servers = {"mcpServers": {}} if cond == "memory" else mcp_config(registry, call_log, miss)
     if cond == "open":

@@ -9,14 +9,18 @@ reps per task, each arm against the no-write run on the same question, "mean of 
 changes / weighted change". A miss-0.8 cold run that stored nothing left an empty registry,
 so its reuse runs are the baselines.
 """
-import json, pathlib, statistics
+import json, pathlib, statistics, sys
 
 HERE = pathlib.Path(__file__).parent
 EXP = HERE.parent
+sys.path.insert(0, str(EXP))
+from rescore import plan
+
 MEASURES = {"tokens": lambda r: r["usage"]["total"],
             "uncached": lambda r: r["usage"]["total"] - r["usage"]["cache_read"],
             "dollars": lambda r: r["cost_usd"],
-            "output": lambda r: r["usage"]["output"]}
+            "output": lambda r: r["usage"]["output"],
+            "plan": lambda r: r["plan"]}
 WEB = ("mcp__web__fetch", "mcp__web__render", "WebSearch")
 FALLBACK = {"warm-same-nowrite": "cold-nowrite", "warm-related-nowrite": "cold-nowrite-related"}
 REPS = (1, 2)
@@ -27,6 +31,7 @@ def load(d):
     for l in (d / "results.jsonl").read_text(encoding="utf-8").splitlines():
         if l.strip():
             r = json.loads(l)
+            r["plan"] = plan(r, d)
             out[(r["condition"], r["task"], r["rep"])] = r  # latest row wins
     return out
 

@@ -8,13 +8,17 @@ write plus one read-only related reuse. Pages are grouped by their no-registry c
 the mean web calls of their four baseline runs (both questions, reps 1-2): one call, two,
 or three and more.
 """
-import collections, json, pathlib, statistics
+import collections, json, pathlib, statistics, sys
 
 HERE = pathlib.Path(__file__).parent
+sys.path.insert(0, str(HERE.parent))
+from rescore import plan
+
 MEASURES = {"tokens": lambda r: r["usage"]["total"],
             "uncached": lambda r: r["usage"]["total"] - r["usage"]["cache_read"],
             "dollars": lambda r: r["cost_usd"],
-            "output": lambda r: r["usage"]["output"]}
+            "output": lambda r: r["usage"]["output"],
+            "plan": lambda r: r["plan"]}
 SINGLE = (("write", "cold", "cold-nowrite"), ("same", "warm-same-nowrite", "cold-nowrite"),
           ("related", "warm-related-nowrite", "cold-nowrite-related"))
 WEB = ("mcp__web__fetch", "mcp__web__render", "WebSearch")
@@ -22,6 +26,7 @@ WEB = ("mcp__web__fetch", "mcp__web__render", "WebSearch")
 rows = [json.loads(l) for l in (HERE / "results.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
 runs = collections.defaultdict(list)  # (condition, task) -> rows
 for r in rows:
+    r["plan"] = plan(r, HERE)
     runs[(r["condition"], r["task"])].append(r)
 tasks = sorted({r["task"] for r in rows})
 

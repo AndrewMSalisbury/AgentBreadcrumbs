@@ -926,3 +926,40 @@ Verdict: miss-0.11 is the write side to keep for cheap pages. It defers the page
 - **Step 2, after the weekly reset (2026-11-07):** miss-0.11 and a bar-2 version of it on head-0.1's three+ pages and the 9 hard multi-fetch tasks, cold plus read-only reuse, with same-day cold-nowrite runs. That decides the bar. Rerun the two-call pages under the same day's baseline too.
 - **Stale answer keys:** `run.py verify` fails on openvsx-rust-analyzer, amo-ublock-version, flathub-gimp-release and terraform-aws-provider's related question. Give them the same at-or-above patterns before any easy-set run.
 - **Always run a same-day no-write control.** Day-old baselines drifted 13% on cheap pages, which is as large as most effects being measured.
+
+## 2026-11-04: a plan measure, fixed answer keys and step 2's driver (not an iteration)
+
+**Plan measure.** `rescore.py` has a sixth measure, `plan`: dollars with sonnet's output weighted 1.6×, as meter-0.1 found a Pro plan counts it. Sonnet's output is read from each run's `stream.jsonl`, because runs that search also bill Haiku (WebSearch), up to ~900 output tokens a run, and the meter was only measured on sonnet. Haiku's output stays at its dollar price. `out_head-0.1`, `out_miss-0.8` and `out_miss-0.9`'s reports print it too.
+
+- **No verdict flips.** Across every iteration and group in `out_rescore.md`, plan is within 6 points of dollars (route-0.1's write, +26% → +32%), and within 4 everywhere else. The only sign change is route-0.1's read-only net, −1% → +1%. In the later reports it's within 3 points (miss-0.8 two-call write +24% → +23%, hard write +46% → +47%; miss-0.11 one-call +11% → +10% against same-day no-write). Weighting output barely moves relative changes, since the baselines' output is weighted too.
+- So dollars stays the measure to quote, with plan beside it as a check.
+
+**Answer keys.** openvsx-rust-analyzer (0.4.3103, now 0.4.3107), amo-ublock-version (1.75.0, now 1.75.4), flathub-gimp-release (3.2.6, now 3.2.8) and terraform-aws-provider's related question (8.9.0, now 8.10.0) accept their old version or any later one, as guava and galaxy do. Earlier rows keep their grade. `run.py verify` passes on both task files (gnu.org timed out once, then passed).
+
+**Step 2's driver** (`out_miss-0.12/drive.py`, `report.py`). miss-0.12 is miss-0.11 with miss-0.9's bar (no call minimum), so the two differ only in the bar. On head-0.1's two-call and three+ pages and the 9 hard multi-fetch tasks, reps 1-2, phase 1 runs same-day cold-nowrite and cold-nowrite-related (into `out_miss-0.12`) task by task beside cold under both iterations. Phase 2 runs read-only reuse on each cold run that stored a record. The driver runs `verify` on the 23 tasks first and stops if a key fails. `--dry` estimates ~300 runs and ~$17 from earlier runs at the same bar: about 117 five-hour points (a bit over one window, which the driver waits out) and ~15 weekly points. The report was checked on a stand-in layout (miss-0.8's runs as miss-0.11, head-0.1's and miss-0.5's as miss-0.12, with their old baselines) and reproduces `out_miss-0.8/report.py`'s miss-0.8 lines exactly. Its miss-0.12 reuse arms differ where a cold run stored nothing, since those count as the baseline, as miss-0.8's did.
+
+## Next
+
+- **Run step 2 after the weekly reset (2026-11-07):** `python out_miss-0.12/drive.py`, then `python out_miss-0.12/report.py`. Keep the machine awake.
+
+## 2026-11-04: a month of Wikimedia pageviews (`research/scripts/wikimedia_month.py`, not an iteration)
+
+Why: the one-day Wikimedia count (2026-11-03 above) left open how repeat demand grows when a breadcrumb outlives the day it was written. This reads October 2026's monthly pageview_complete file, whose rows carry each title's views per day, and asks: of a day's views, how many land on a page that was also viewed on an earlier day (the day before, the 7 days before, or any earlier day)? Counting by day keeps one client's burst of reloads from counting as a repeat, though a client that comes back daily still does. A second set of figures covers the 56,576 titles tagged by the Computing, Software, Computer science, Linux and Computer security WikiProjects (fetched from the PageAssessments API). The script was checked against a hand-worked synthetic dump. Dumps (15 GB) are in the session scratchpad and not kept.
+
+English Wikipedia, user (human) views, October 2026. The automated file wasn't counted: the run was stopped for low memory and is set aside for now.
+
+| | Views | Pages | Top 1% / 10% of pages | Top 1,000 pages | Viewed once in the month | Viewed the day before | In the 7 days before | Any earlier day |
+|---|---|---|---|---|---|---|---|---|
+| All | 6.1B | 49.1M | 79% / 97% | 12% | 48% of pages, 0.4% of views | 97.6% | 99.1% | 99.4% |
+| Computing WikiProjects | 89M | 56k | 45% / 80% | 53% | 0.9% of pages, 0.0% of views | 99.4% | 99.6% | 99.6% |
+
+The last three columns cover days 8-31, so the 7-day lookback is complete.
+
+- **Human reference lookups repeat almost completely over a month.** 97.6% of a day's views land on a page someone viewed the day before. The one-day figure (98% on pages viewed 2+ times that day) barely moves with a longer window, because it was already near the ceiling.
+- **Computing articles repeat even more, with a wide head:** 1,000 pages take half the views, and under 1% of tagged pages get only one view in the month. The list is of established, tagged articles, which biases it toward popular pages.
+- **This is as far as Wikimedia goes.** At ~99% the upper bound rules nothing out. What decides a registry's savings is how much of a page's demand comes from clients other than the first, and views can't separate many agents needing a page from a few clients returning to it. Only distinct-client logs answer that, so the docs-host ask (`research/concentration-ask.md`) is the remaining route.
+
+## Next
+
+- **Get a sample output for the ask:** run `research/scripts/agent_concentration.py` on any real access log, then send the ask.
+- **Run step 2 after the weekly reset (2026-11-07)**, as above.

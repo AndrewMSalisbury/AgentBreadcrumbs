@@ -9,14 +9,18 @@ out_miss-0.8/report.py: runs averaged over reps per task, "mean of per-task chan
 weighted change". Records stored are counted from each run's registry copy. An iteration
 with its own no-write runs on a group also gets a row (marked *) against those.
 """
-import json, pathlib, sqlite3, statistics
+import json, pathlib, sqlite3, statistics, sys
 
 HERE = pathlib.Path(__file__).parent
 EXP = HERE.parent
+sys.path.insert(0, str(EXP))
+from rescore import plan
+
 MEASURES = {"tokens": lambda r: r["usage"]["total"],
             "uncached": lambda r: r["usage"]["total"] - r["usage"]["cache_read"],
             "dollars": lambda r: r["cost_usd"],
-            "output": lambda r: r["usage"]["output"]}
+            "output": lambda r: r["usage"]["output"],
+            "plan": lambda r: r["plan"]}
 WEB = ("mcp__web__fetch", "mcp__web__render", "WebSearch")
 REPS = (1, 2)
 ONE_CALL = ["docker-run", "dockerfile", "gha-events", "go-net-http", "lambda-quotas", "node-child-process", "node-fs",
@@ -38,6 +42,7 @@ def load(d):
         for l in (d / "results.jsonl").read_text(encoding="utf-8").splitlines():
             if l.strip():
                 r = json.loads(l)
+                r["plan"] = plan(r, d)
                 out[(r["condition"], r["task"], r["rep"])] = r  # latest row wins
     return out
 

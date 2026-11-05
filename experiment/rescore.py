@@ -11,6 +11,9 @@ conclusions depend on the choice:
   uncached  tokens minus cache reads (fresh input, cache writes and output)
   dollars   cost_usd, at API prices
   output    output tokens
+  plan      dollars with sonnet's output weighted 1.6x: how a Pro plan's meter counts it
+            (out_meter-0.1). Sonnet's output is read from the run's stream.jsonl; Haiku's
+            (WebSearch) isn't weighted, since the meter was only measured on sonnet
   peak      largest single-call context (input + cache write + cache read), read from
             the run's stream.jsonl: how full the context window gets
 Rows and arms are as in report.py: latest row per (condition, task, rep), averaged over
@@ -36,19 +39,47 @@ SINGLE = (("write", "cold", "cold-nowrite"), ("same", "warm-same", "cold-nowrite
 NET = (("net", "warm-related"), ("net, read-only", "warm-related-nowrite"))
 LABELS = [l for l, *_ in SINGLE] + [l for l, _ in NET]
 SUMMARY = ("net", "related")  # columns of the summary table, hard/multi-fetch, weighted
+# out_meter-0.1: sonnet output at $10/M, metered at about 1.6x its dollar price relative to
+# cache writes and reads.
+SONNET_OUTPUT = 10e-6
+PLAN_OUTPUT = 1.6
 
 
-def peak(r: dict, home: pathlib.Path):
-    """Largest single-call context in the run, or None if its stream can't be found.
-    Copied baseline rows live under their own iteration's folder; result.json must match the row."""
+def stream(r: dict, home: pathlib.Path) -> list[str] | None:
+    """The run's stream.jsonl lines, or None if it can't be found. Copied baseline rows live
+    under their own iteration's folder; result.json must match the row."""
     for d in (home, ROOT / f"out_{r.get('iteration')}"):
         run = d / "runs" / r["condition"] / r["task"] / f"r{r['rep']}"
         try:
             if json.loads((run / "result.json").read_text(encoding="utf-8"))["usage"]["total"] != r["usage"]["total"]:
                 continue
-            lines = (run / "stream.jsonl").read_text(encoding="utf-8").splitlines()
+            return (run / "stream.jsonl").read_text(encoding="utf-8").splitlines()
         except (OSError, ValueError, KeyError):
             continue
+    return None
+
+
+def plan(r: dict, home: pathlib.Path):
+    """Dollars with sonnet's output weighted PLAN_OUTPUT, or None without a cost. Without a
+    stream, all output is taken as sonnet's."""
+    if r.get("cost_usd") is None:
+        return None
+    out = r["usage"]["output"]
+    for line in reversed(stream(r, home) or []):
+        try:
+            ev = json.loads(line)
+        except ValueError:
+            continue
+        if ev.get("type") == "result":
+            out = sum(m.get("outputTokens", 0) for k, m in ev.get("modelUsage", {}).items() if "sonnet" in k)
+            break
+    return r["cost_usd"] + (PLAN_OUTPUT - 1) * SONNET_OUTPUT * out
+
+
+def peak(r: dict, home: pathlib.Path):
+    """Largest single-call context in the run, or None if its stream can't be found."""
+    lines = stream(r, home)
+    if lines is not None:
         best = 0
         for line in lines:
             try:
@@ -68,6 +99,7 @@ def metrics(home: pathlib.Path) -> dict:
             "uncached": lambda r: r["usage"]["total"] - r["usage"]["cache_read"],
             "dollars": lambda r: r.get("cost_usd"),
             "output": lambda r: r["usage"]["output"],
+            "plan": lambda r: plan(r, home),
             "peak": lambda r: peak(r, home)}
 
 

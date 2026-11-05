@@ -47,8 +47,10 @@
 - id: openvsx-rust-analyzer
   use_case: hard_access
   question: What is the latest version of the rust-analyzer extension (rust-lang.rust-analyzer) on open-vsx.org?
-  expect: ['0\.4\.3103']
-  check: {url: 'https://open-vsx.org/api/rust-lang/rust-analyzer', select: [version], pattern: '"0\.4\.3103"'}
+  # 0.4.3103 or any later release: 0.4.3107 was out by 2026-11-04. Rows from before then were
+  # graded against 0.4.3103 alone and keep that grade.
+  expect: ['\b(0\.4\.(310[3-9]|31[1-9]\d|3[2-9]\d\d|[4-9]\d{3}|\d{5,})|0\.([5-9]|\d\d)\.\d+|[1-9]\d*\.\d+\.\d+)\b']
+  check: {url: 'https://open-vsx.org/api/rust-lang/rust-analyzer', select: [version], pattern: '"(0\.4\.(310[3-9]|31[1-9]\d|3[2-9]\d\d|[4-9]\d{3}|\d{5,})|0\.([5-9]|\d\d)\.\d+|[1-9]\d*\.\d+\.\d+)"'}
   related:
     question: What is the latest version of the Prettier extension (esbenp.prettier-vscode) on open-vsx.org?
     expect: ['12\.4\.0']
@@ -57,8 +59,10 @@
 - id: amo-ublock-version
   use_case: hard_access
   question: What is the current version of the uBlock Origin add-on on addons.mozilla.org?
-  expect: ['1\.75\.0']
-  check: {url: 'https://addons.mozilla.org/api/v5/addons/addon/ublock-origin/', select: [current_version.version], pattern: '"1\.75\.0"'}
+  # 1.75.0 or any later release: 1.75.4 was out by 2026-11-04. Rows from before then were
+  # graded against 1.75.0 alone and keep that grade.
+  expect: ['\b(1\.(7[5-9]|[89]\d|\d{3,})\.\d+|([2-9]|\d\d)\.\d+\.\d+)\b']
+  check: {url: 'https://addons.mozilla.org/api/v5/addons/addon/ublock-origin/', select: [current_version.version], pattern: '"(1\.(7[5-9]|[89]\d|\d{3,})\.\d+|([2-9]|\d\d)\.\d+\.\d+)"'}
   related:
     question: What is the current version of the Dark Reader add-on on addons.mozilla.org?
     expect: ['4\.9\.134']
@@ -67,8 +71,10 @@
 - id: flathub-gimp-release
   use_case: hard_access
   question: What is the latest GIMP release listed on its Flathub page (org.gimp.GIMP)?
-  expect: ['3\.2\.6']
-  check: {url: 'https://flathub.org/api/v2/appstream/org.gimp.GIMP', select: [releases.0.version], pattern: '"3\.2\.6"'}
+  # 3.2.6 or any later release: 3.2.8 was out by 2026-11-04. Rows from before then were
+  # graded against 3.2.6 alone and keep that grade.
+  expect: ['\b(3\.2\.([6-9]|\d\d)|3\.([3-9]|\d\d)\.\d+|([4-9]|\d\d)\.\d+\.\d+)\b']
+  check: {url: 'https://flathub.org/api/v2/appstream/org.gimp.GIMP', select: [releases.0.version], pattern: '"(3\.2\.([6-9]|\d\d)|3\.([3-9]|\d\d)\.\d+|([4-9]|\d\d)\.\d+\.\d+)"'}
   related:
     question: What is the latest Inkscape release listed on its Flathub page (org.inkscape.Inkscape)?
     expect: ['1\.4\.4']
@@ -278,8 +284,10 @@
   check: {url: 'https://registry.terraform.io/v1/providers/hashicorp/aws', select: [version], pattern: '"6\.71\.0"'}
   related:
     question: What is the latest version of the hashicorp/google provider on the Terraform Registry?
-    expect: ['8\.9\.0']
-    check: {url: 'https://registry.terraform.io/v1/providers/hashicorp/google', select: [version], pattern: '"8\.9\.0"'}
+    # 8.9.0 or any later release: 8.10.0 was out by 2026-11-04. Rows from before then were
+    # graded against 8.9.0 alone and keep that grade.
+    expect: ['\b(8\.(9|\d\d)\.\d+|(9|\d\d)\.\d+\.\d+)\b']
+    check: {url: 'https://registry.terraform.io/v1/providers/hashicorp/google', select: [version], pattern: '"(8\.(9|\d\d)\.\d+|(9|\d\d)\.\d+\.\d+)"'}
 
 - id: galaxy-community-general
   set: hard
