@@ -71,6 +71,7 @@ The shape of the standard is settled; scoring numbers wait for test data.
 | Read format | Compact YAML by default; JSON or Markdown on request | Proposed |
 | Fingerprints | Computed by the registry | Proposed |
 | Depth growth and L3 outline | Demand-driven depth; L3 for long or hard pages | Proposed |
+| Core of the L1 card | A route (the cheapest way to get the page's content), not a section map | Decided: section maps failed the bar in map-0.1; route cards cleared it from route-0.1 |
 | Scoring weights and decay | — | After testing |
 
 ## How it works
@@ -95,7 +96,7 @@ Three record types: one site record per domain, one page card per normalized URL
 | Tier | Contents | Budget (tokens) | When to use |
 | --- | --- | --- | --- |
 | L0 Pointer | URL, one-line answers, date checked, fingerprint | ~30 | Every page visited |
-| L1 Card | L0 + key sections with anchors, access notes, links worth following, page size | ~150 | Default for useful pages |
+| L1 Card | L0 + route (the smallest source with the page's content and the fetch arguments that worked), access notes, links worth following, page size | ~200 | Default for useful pages |
 | L2 Card + facts | L1 + 3–10 facts, each with a section and a short quote | ~400 | Facts asked for repeatedly |
 | L3 Outline (proposed) | One line per section, ~5–10% of page size | varies | Long or hard-to-reach pages |
 
@@ -103,8 +104,8 @@ How the four kinds of knowledge map onto records:
 
 | Knowledge | Lives in |
 | --- | --- |
-| Where things are | L0 and L1, site structure |
-| How to get it | Site access, L1 access notes |
+| Where things are | L0 answers, site structure |
+| How to get it | Site access, L1 route and access notes |
 | What it says | L1 answers, L2 facts, L3 outline |
 | Task routes | Site routes |
 
@@ -142,7 +143,7 @@ Any agent can write, so every record carries provenance, and the registry scores
 | writer | Agent or model ID that wrote it |
 | observed_at | When the page was checked |
 | content_hash | Page fingerprint, computed by the registry |
-| evidence | Section anchors, plus a short quote for every L2 fact |
+| evidence | The route's fetch arguments, plus a short quote for every L2 fact |
 | confirmations / disputes | Later agents re-check, then confirm or dispute |
 
 The score combines confirmations, age and whether the fingerprint still matches. Readers use it to trust a record, treat it as a hint, or ignore it. Weights and decay rates are set from test data.
@@ -231,7 +232,7 @@ Different kinds of agent work waste effort in different places, so each benefits
 | Docs fact lookup | Stripe live-mode rate limit | Searching and picking the right page and section | L1 card + route |
 | Coding agents reading docs | Python json options, SDK quickstarts | Noisy HTML, finding the .md or raw version | Site access + L1 card |
 | Deep multi-hop pages | A specific webhook event's retry rules | Wrong turns through section pages | Route |
-| Long-page research | One section of a Wikipedia article | Reading 18k tokens to use 1k | L1 sections or L3 outline |
+| Long-page research | One section of a Wikipedia article | Reading 18k tokens to use 1k | L1 route to the section, or L3 outline |
 | Repeated popular facts | The same rate limit asked thousands of times | Re-reading the page every time | L2 fact |
 | Monitoring changes | Prices, changelogs, status pages | Re-locating the value each check | L1 card + fingerprint |
 | Logged-in or transactional tasks | Booking, account pages | Personal flows | Out of scope (public pages only) |

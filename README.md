@@ -13,7 +13,7 @@ Measured on six real pages, raw HTML was 718,845 tokens, the cleaned text 37,517
 
 ## Status
 
-Phase 1 (standard) in progress. Next: a viability experiment comparing agents with L1 page cards + site access records against agents with no breadcrumbs, on about 24 public-web tasks. See [Short-term execution plan](docs/PLAN.md#short-term-execution-plan).
+Phase 1 (standard) in progress. Next: a viability experiment comparing agents with L1 route cards + site access records against agents with no breadcrumbs, on about 24 public-web tasks. See [Short-term execution plan](docs/PLAN.md#short-term-execution-plan).
 
 Experiments run through Claude Code headless mode (`claude -p --output-format json`) on a Pro plan; no API key needed.
 

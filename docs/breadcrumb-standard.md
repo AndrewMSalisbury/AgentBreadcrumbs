@@ -1,10 +1,12 @@
 # Breadcrumbs for AI Agents — Draft Standard v0.2
 
-*Status: draft · Last updated: 2026-10-26*
+*Status: draft · Last updated: 2026-11-05*
 
 This is the specification only. Why the project exists, the measurements, use cases, test plan and roadmap are in [PLAN.md](PLAN.md).
 
 **Changes since v0.1:** added the L3 outline tier (proposed), demand-driven depth rules, the MVP subset (§9), and an open-questions list aligned with the plan. Measurements and test plan moved to PLAN.md.
+
+**Revised 2026-11-05:** the L1 card's core is a `route` (§2.2), the cheapest way to get the page's content, in place of the section map. The viability experiment found section maps failed to save on related questions (map-0.1), while route cards did (route-0.1 onward). Records keep `schema: "0.2"`.
 
 ## 1. Definition
 
@@ -29,9 +31,22 @@ A **breadcrumb** is a short, structured note an AI agent leaves in a central reg
 | Tier | Contents | Budget | When to write |
 |---|---|---|---|
 | **L0 Pointer** | `url`, `answers` (one line), `observed_at`, `content_hash` | ~30 tokens | Every page visited |
-| **L1 Card** | L0 + `sections` (anchors and what each covers), `access` notes for this page, `links` worth following, `size_tokens` | ~150 tokens | Default for useful pages |
+| **L1 Card** | L0 + `route` (below), `access` notes for this page, `links` worth following, `size_tokens` | ~200 tokens | Default for useful pages |
 | **L2 Card + facts** | L1 + `facts`: 3–10 entries of `claim`, `value`, `section`, `quote` | ~400 tokens | Facts asked for repeatedly |
 | **L3 Outline** *(proposed)* | L1 + `outline`: one line per section | ~5–10% of page size | Long or hard-to-reach pages |
+
+An L1 card's `route` says how to fetch this page's content most cheaply. It is not a site route (§2.3), which says which pages to visit.
+
+| Field | Contents |
+|---|---|
+| `url` | The smallest source with the page's content: raw source file, API endpoint, Markdown version, or the page itself if nothing smaller exists |
+| `select` | JSON paths that keep only the useful fields of an API response |
+| `section` | A heading or anchor that fetches only the relevant section of `url` |
+| `start` | An offset that reaches the relevant part when `section` doesn't work |
+| `tokens` | Approximate size of what the route returns |
+| `notes` | What did not work and why, e.g. `section` fails because entries aren't headings |
+
+Only `url` is required. Measured route cards are about 800 bytes of JSON.
 
 ### 2.3 Route
 
@@ -58,7 +73,7 @@ Every record carries:
 | `writer` | Agent or model ID |
 | `observed_at` | When the page was checked (ISO date) |
 | `content_hash` | Page fingerprint, computed by the registry (§6.2) |
-| `evidence` | Section anchors; a quote for every L2 fact |
+| `evidence` | The route's fetch arguments; a quote for every L2 fact |
 | `confirmations` / `disputes` | Later agents re-check, then confirm or dispute |
 
 The registry computes a **score** from confirmations, age and fingerprint match. Readers use it to trust, treat as a hint, or ignore. Weights are set after testing.
@@ -120,9 +135,9 @@ id: page:docs.stripe.com/rate-limits
 url: https://docs.stripe.com/rate-limits
 tier: L2
 answers: "Stripe API rate and concurrency limits, 429 handling, increase requests"
-sections:
-  "#rate-limits": limits table
-  "#handle-limiting": backoff advice
+route:
+  url: https://docs.stripe.com/rate-limits.md   # the site's Markdown version keeps table values
+  section: "Rate limits"
 facts:
   - claim: Global limit, live mode
     value: 100 requests/second
@@ -134,6 +149,21 @@ facts:
     quote: "Sandbox ... 25 requests per second"
 content_hash: sha256:…
 provenance: {writer: claude-opus-5-5, observed_at: 2026-10-21, confirmations: 0}
+```
+
+A route card for a long reference page whose entries aren't headings (from the experiment):
+
+```yaml
+id: page:doc.rust-lang.org/cargo/reference/manifest.html
+url: https://doc.rust-lang.org/cargo/reference/manifest.html
+tier: L1
+answers: "Cargo.toml manifest reference: package fields, lints, hints, badges"
+route:
+  url: https://doc.rust-lang.org/cargo/reference/manifest.html
+  start: 2300
+  tokens: 4100
+  notes: "section= on 'The readme field' cuts off after the code sample; start=2300 returns the full entry"
+size_tokens: 6400
 ```
 
 Access knowledge for a JavaScript-heavy site:
@@ -159,6 +189,6 @@ access:
 
 The first experiment uses only:
 - **Site record:** `site`, `schema`, `access`, `provenance`
-- **Page card, L1:** `id`, `url`, `answers`, `sections`, `access`, `links`, `size_tokens`, `observed_at`, `provenance`
+- **Page card, L1:** `id`, `url`, `answers`, `route`, `access`, `links`, `size_tokens`, `observed_at`, `provenance` (map-0.1 tested `sections` in place of `route`)
 
 Not in the MVP: routes, L0/L2/L3, scoring, confirmations, registry-computed fingerprints (the harness hashes the cleaned page at write time instead).

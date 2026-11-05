@@ -940,7 +940,7 @@ Verdict: miss-0.11 is the write side to keep for cheap pages. It defers the page
 
 ## Next
 
-- **Run step 2 after the weekly reset (2026-11-07):** `python out_miss-0.12/drive.py`, then `python out_miss-0.12/report.py`. Keep the machine awake.
+- **Run step 2 after the weekly reset (2026-11-07):** `../.venv/Scripts/python out_miss-0.12/drive.py`, then `../.venv/Scripts/python out_miss-0.12/report.py` (the system Python lacks httpx; every verify fails under it). Keep the machine awake.
 
 ## 2026-11-04: a month of Wikimedia pageviews (`research/scripts/wikimedia_month.py`, not an iteration)
 
@@ -1008,7 +1008,7 @@ Verdict: miss-0.13 is the write side to keep. It costs nothing where breadcrumbs
 
 ## Next
 
-- **Run step 2 after the weekly reset (2026-11-07):** `python out_miss-0.12/drive.py`, then `python out_miss-0.12/report.py`, with 11 three+ pages, comparing miss-0.13 and miss-0.14. Keep the machine awake.
+- **Run step 2 after the weekly reset (2026-11-07):** `../.venv/Scripts/python out_miss-0.12/drive.py`, then `../.venv/Scripts/python out_miss-0.12/report.py` (the system Python lacks httpx; every verify fails under it), with 11 three+ pages, comparing miss-0.13 and miss-0.14. Keep the machine awake.
 - **Reuse of the new API site records** (warm-related-nowrite on miss-0.13's 10 API registries, 10 runs) shows whether the `select` hints pay. It's cheap, so add it to step 2 or run it before.
 - **Folding lookup into fetch** is the only remaining lever on cheap pages, and it's worth at most the +4% to +16% measured above.
 - **Concentration is set aside** (decided 2026-11-04, above).
