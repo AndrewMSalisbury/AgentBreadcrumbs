@@ -280,8 +280,10 @@
   set: hard
   use_case: hard_access
   question: What is the latest version of the hashicorp/aws provider on the Terraform Registry?
-  expect: ['6\.71\.0']
-  check: {url: 'https://registry.terraform.io/v1/providers/hashicorp/aws', select: [version], pattern: '"6\.71\.0"'}
+  # 6.71.0 or any later release: 6.72.0 was out by 2026-11-04. Rows from before then were
+  # graded against 6.71.0 alone and keep that grade.
+  expect: ['\b(6\.(7[1-9]|[89]\d|\d\d\d)\.\d+|([7-9]|\d\d)\.\d+\.\d+)\b']
+  check: {url: 'https://registry.terraform.io/v1/providers/hashicorp/aws', select: [version], pattern: '"(6\.(7[1-9]|[89]\d|\d\d\d)\.\d+|([7-9]|\d\d)\.\d+\.\d+)"'}
   related:
     question: What is the latest version of the hashicorp/google provider on the Terraform Registry?
     # 8.9.0 or any later release: 8.10.0 was out by 2026-11-04. Rows from before then were

@@ -33,6 +33,9 @@ BC_DEFER=1 (miss-0.9) sends a run under the bar only a short site-record note; t
 page-card instructions come with the fetch that passes it (bc.common.CARD_NOTE).
 BC_SITE_STRICT=1 (miss-0.11) words that note to rule out site records that only say a
 plain fetch works.
+BC_SITE_SIGNAL=1 (miss-0.13) sends no note at all on a miss: each lookup's site goes to the
+call log, and the web server sends the site-record note with the first result that shows an
+access route (bc.common.access_signal).
 """
 import sys, pathlib, json, re, hashlib, os, sqlite3, datetime
 from urllib.parse import urlsplit
@@ -43,7 +46,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
 from mcp.server.mcpserver import MCPServer
 from bc.common import normalize_url, host_of, page_id, fetch_clean, tokens, card_block, call_counts, log_call, MIN_CALLS, \
-    DEFER, SITE_NOTE, SITE_STRICT, SITE_NOTE_STRICT
+    DEFER, SITE_NOTE, SITE_STRICT, SITE_NOTE_STRICT, SIGNAL
 
 ROOT = pathlib.Path(__file__).parent.parent
 DB_PATH = os.environ.get("BC_REGISTRY", str(ROOT / "out" / "registry.sqlite"))
@@ -206,6 +209,7 @@ def lookup_target(target: str, fmt: str = "yaml") -> str:
     site = host_of(target)
     if site not in _looked_up:
         _looked_up.append(site)
+        log_call("lookup", site)  # miss-0.13: the web server compares fetched hosts with these
     pid = page_id(target)
     parts = urlsplit(normalize_url(target))
     if parts.path == "/" and not parts.query:  # bare domain: site-wide lookup
@@ -286,6 +290,9 @@ def _miss_note() -> str:
     counts = call_counts()
     if DEFER and card_block([], [], counts) is not None:  # the card instructions come with that fetch
         log_call("note", "defer")
+        if SIGNAL:  # the site-record note waits for a fetch that shows an access route
+            log_call("note", "signal")
+            return ""
         return (SITE_NOTE_STRICT if SITE_STRICT else SITE_NOTE).format(writer=WRITER, today=today)
     n = counts["fetch"]
     note = MISSX_NOTE.replace(NOTE_BAR, NOTE_BAR + ONE_FETCH_SITE) if NOTE_SITE else MISSX_NOTE

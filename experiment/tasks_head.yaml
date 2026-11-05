@@ -243,3 +243,117 @@
     question: In the PostgreSQL numeric types documentation, what is the range of smallint?
     expect: ['32,?768', '32,?767']
     check: {url: 'https://www.postgresql.org/docs/current/datatype-numeric.html', pattern: '-32768 to \+32767'}
+
+# Added 2026-11-04 to widen the three+ group (head-0.1 had 4 pages): long single-page references
+# where options are list entries, not headings, so a section guess can't land on them. Kept only
+# if their cold-nowrite runs take 3+ web calls on average.
+
+- id: systemd-exec
+  use_case: coding
+  question: In the systemd.exec man page, what does IOSchedulingPriority= default to for the best-effort scheduling class?
+  expect: ['\b4\b|four']
+  check: {url: 'https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html', pattern: '\(`best-effort`\) this defaults to 4'}
+  related:
+    question: In the systemd.exec man page, what does StandardInput= default to when StandardInputText= and StandardInputData= are not set?
+    expect: ['null']
+    check: {url: 'https://www.freedesktop.org/software/systemd/man/latest/systemd.exec.html', pattern: 'This setting defaults to `null`, unless'}
+
+- id: vim-options
+  use_case: coding
+  question: In Vim's options documentation (options.txt), is the 'emoji' option on or off by default?
+  expect: ['\bon\b']
+  check: {url: 'https://vimhelp.org/options.txt.html', pattern: '''emoji'' ''emo'' boolean \(default: on\)'}
+  related:
+    question: In Vim's options documentation (options.txt), what is the default value of the 'scroll' option?
+    expect: ['half']
+    check: {url: 'https://vimhelp.org/options.txt.html', pattern: '''scroll'' ''scr'' number \(default: half the window height\)'}
+
+- id: rsync-manpage
+  use_case: coding
+  question: In the rsync man page, about how large can a single memory allocation be by default (the --max-alloc limit)?
+  expect: ['1 ?G']
+  check: {url: 'https://download.samba.org/pub/rsync/rsync.1', pattern: 'rsync limits an individual malloc/realloc to about 1GB'}
+  related:
+    question: In the rsync man page, what human-readable level does rsync use for numbers in its output by default?
+    expect: ['\b1\b|one']
+    check: {url: 'https://download.samba.org/pub/rsync/rsync.1', pattern: 'The default is human-readable level 1'}
+
+- id: tmux-manpage
+  use_case: coding
+  question: In the tmux man page, what is the default repeat-time in milliseconds?
+  expect: ['\b500\b']
+  check: {url: 'https://man.openbsd.org/tmux', pattern: 'specified time milliseconds \(the default is 500\)'}
+  related:
+    question: In the tmux man page, how often is the status line updated by default (status-interval)?
+    expect: ['\b15\b']
+    check: {url: 'https://man.openbsd.org/tmux', pattern: 'updates will occur every 15 seconds'}
+
+- id: sqlite-pragma
+  use_case: coding
+  question: In SQLite's PRAGMA documentation, what is the default suggested cache_size?
+  expect: ['-2000|2048000|2,048,000']
+  check: {url: 'https://www.sqlite.org/pragma.html', pattern: 'The default suggested cache size is -2000'}
+  related:
+    question: In SQLite's PRAGMA documentation (read_uncommitted), what is SQLite's default isolation level?
+    expect: ['serializable']
+    check: {url: 'https://www.sqlite.org/pragma.html', pattern: 'The default isolation level for SQLite is SERIALIZABLE'}
+
+- id: gnu-make
+  use_case: coding
+  question: In the GNU make manual, which --output-sync type is the default?
+  expect: ['none']
+  check: {url: 'https://www.gnu.org/software/make/manual/make.html', pattern: '`none` This is the default: all output is sent directly'}
+  related:
+    question: In the GNU make manual, what is the default value of the RM variable?
+    expect: ['rm -f']
+    check: {url: 'https://www.gnu.org/software/make/manual/make.html', pattern: 'Command to remove a file; default .{0,3}rm -f'}
+
+- id: ffmpeg-options
+  use_case: coding
+  question: In the ffmpeg documentation (ffmpeg.html), what is the default value of the -max_alloc option?
+  expect: ['INT\\?_MAX']
+  check: {url: 'https://ffmpeg.org/ffmpeg.html', pattern: 'Default is INT\\_MAX'}
+  related:
+    question: In the ffmpeg documentation (ffmpeg.html), what is the default -muxing_queue_data_threshold per stream?
+    expect: ['50 ?(MB|megabyte)']
+    check: {url: 'https://ffmpeg.org/ffmpeg.html', pattern: 'Defaults to 50 megabytes per stream'}
+
+- id: kubelet-flags
+  use_case: coding
+  question: In the kubelet command-line reference, what is the default value of --event-qps?
+  expect: ['\b50\b']
+  check: {url: 'https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/', pattern: '--event-qps int32\W+Default: 50\b'}
+  related:
+    question: In the kubelet command-line reference, what is the default --node-status-update-frequency?
+    expect: ['10 ?s']
+    check: {url: 'https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/', pattern: '--node-status-update-frequency duration\W+Default: 10s'}
+
+- id: haproxy-config
+  use_case: coding
+  question: In the HAProxy 3.2 configuration manual, what is the default tune.bufsize?
+  expect: ['16 ?k|16384']
+  check: {url: 'https://docs.haproxy.org/3.2/configuration.html', pattern: 'of tune\.bufsize \(16kB by default\)'}
+  related:
+    question: In the HAProxy 3.2 configuration manual, how many bits does the sha2 converter use by default?
+    expect: ['\b256\b']
+    check: {url: 'https://docs.haproxy.org/3.2/configuration.html', pattern: 'The default value is 256\. Please note that this converter'}
+
+- id: linux-tcp7
+  use_case: coding
+  question: In the Linux tcp(7) man page, what is the default value of tcp_keepalive_time?
+  expect: ['7200|2 hours']
+  check: {url: 'https://man7.org/linux/man-pages/man7/tcp.7.html', pattern: 'tcp_keepalive_time\* \(integer; default: 7200'}
+  related:
+    question: In the Linux tcp(7) man page, what is the default value of tcp_syn_retries?
+    expect: ['\b6\b|six']
+    check: {url: 'https://man7.org/linux/man-pages/man7/tcp.7.html', pattern: 'tcp_syn_retries\* \(integer; default: 6'}
+
+- id: apache-core
+  use_case: coding
+  question: In the Apache HTTP Server 2.4 core directives documentation, what is the default LimitRequestFieldSize?
+  expect: ['8,?190']
+  check: {url: 'https://httpd.apache.org/docs/2.4/mod/core.html', pattern: '`LimitRequestFieldSize 8190`'}
+  related:
+    question: In the Apache HTTP Server 2.4 core directives documentation, what is the default MaxKeepAliveRequests?
+    expect: ['\b100\b']
+    check: {url: 'https://httpd.apache.org/docs/2.4/mod/core.html', pattern: '`MaxKeepAliveRequests 100`'}

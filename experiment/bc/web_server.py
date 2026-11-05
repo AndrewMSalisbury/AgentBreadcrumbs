@@ -8,13 +8,15 @@ says so. Each logged call records the tokens its reply returned (BC_MIN_PULL rea
 BC_SEARCHES=1 (miss-0.7) counts searches toward that bar, as the registry does.
 BC_DEFER=1 (miss-0.9): if the lookup sent only the site-record note, that fetch carries
 the page-card instructions (bc.common.CARD_NOTE).
+BC_SITE_SIGNAL=1 (miss-0.13): the lookup sent nothing, so the first fetch or render whose
+result shows an access route (bc.common.access_signal) carries the site-record note.
 """
 import sys, pathlib, re, os, datetime
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 
 from mcp.server.mcpserver import MCPServer
 from bc.common import ENC, tokens, fetch_clean, render_clean, log_call, call_counts, card_block, stored_site_records, \
-    DEFER, CARD_NOTE
+    DEFER, CARD_NOTE, SIGNAL, SIGNAL_NOTE, access_signal
 
 # Claude Code moves any tool result over ~50 KB into a file the agent cannot read,
 # so each reply stays under both limits and says where to continue.
@@ -85,9 +87,24 @@ def _respond(text: str, head: str, section: str | None, start: int) -> str:
 _nudged = False
 
 
-def _card_note(url: str, reply: str) -> str:
+def _site_note(kind: str, reply: str) -> str:
+    """miss-0.13: the site-record note, once, on a result that shows an access route."""
+    lines = _call_lines()
+    if "note\tsignal" not in lines or "note\tsite" in lines:
+        return reply
+    why = access_signal(kind, reply, [l.split("\t", 1)[1] for l in lines if l.startswith("lookup\t")])
+    if not why:
+        return reply
+    log_call("note", "site")
+    return reply + SIGNAL_NOTE.format(why=why, writer=os.environ.get("BC_WRITER", "unknown"),
+                                      today=datetime.date.today().isoformat())
+
+
+def _card_note(url: str, reply: str, kind: str = "fetch") -> str:
     global _nudged
     if MISSX:
+        if SIGNAL:
+            reply = _site_note(kind, reply)
         if _nudged or "note\tmiss" not in _call_lines():
             return reply
         counts = call_counts()
@@ -153,7 +170,7 @@ def render(url: str, section: str | None = None, start: int = 0) -> str:
     reply = _render(url, section, start)
     if LOGGED:
         log_call("render", f"{url}\t{tokens(reply)}")
-    return _card_note(url, reply)
+    return _card_note(url, reply, "render")
 
 
 def _render(url, section, start) -> str:

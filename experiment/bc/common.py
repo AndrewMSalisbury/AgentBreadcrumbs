@@ -152,6 +152,35 @@ SITE_STRICT = os.environ.get("BC_SITE_STRICT") == "1"
 SITE_NOTE_STRICT = """
 
 [breadcrumbs: the registry has nothing for this. Write a site record before answering only if you found something a later agent would not get from a plain fetch of the page: an API or raw-source URL pattern with {{name}} in it, Markdown versions of pages, or that pages need JavaScript. Not that a plain fetch or the section parameter works: that is true of most sites. A fetch result will say if a page card is wanted too. Use schema "0.2" and provenance {{"writer": "{writer}", "observed_at": "{today}"}}.]"""
+# miss-0.13: a lookup that misses sends nothing. SIGNAL_NOTE comes once, with the first fetch or
+# render that shows the run getting content some way other than a plain fetch of the site it
+# looked up, so runs that only fetch pages pay nothing for the write side.
+SIGNAL = os.environ.get("BC_SITE_SIGNAL") == "1"
+SIGNAL_NOTE = """
+[breadcrumbs: the registry had nothing for this, and this result came from {why}. If that works for other pages of the site too (an API or raw-source URL pattern with {{name}} in it, Markdown versions of pages, or that pages need JavaScript), write a site record before answering, so later agents skip the plain fetch. Use schema "0.2" and provenance {{"writer": "{writer}", "observed_at": "{today}"}}.]"""
+# Not /api/ in a path: docs live there too (nodejs.org/api/fs.html), and real APIs answer in JSON.
+RAW_PATH = re.compile(r"\.(md|txt|json|xml)$")
+
+
+def access_signal(kind: str, reply: str, looked_up: list[str]) -> str | None:
+    """Why this fetch or render looks like an access route a site record could share, or None.
+    looked_up: the sites this run's lookups asked for."""
+    if kind == "render":
+        return "rendering the page with JavaScript"
+    m = re.match(r"\[HTTP (\d+) (\S*) (\S+)", reply)
+    if not m or not m[1].startswith("2"):
+        return None
+    ctype, final = m[2], m[3].rstrip("],")
+    if re.search(r"json|xml", ctype):
+        return f"a {ctype} response"
+    host = host_of(final)
+    if looked_up and host not in looked_up:
+        return f"{host}, not the site you looked up"
+    if RAW_PATH.search(urlsplit(final).path):
+        return "a raw-source or API URL"
+    return None
+
+
 CARD_NOTE = """
 [breadcrumbs: this run has now taken {taken}, so write would store a page card from it: write one before answering, for the page that held the answer. A card records the cheapest way to get the page's content, not your answer:
   - route.url: the smallest source you found with the page's content: a raw source file, an API endpoint, a Markdown version, or the page itself if nothing smaller exists.

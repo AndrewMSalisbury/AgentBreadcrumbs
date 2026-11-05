@@ -1,5 +1,7 @@
-"""Step 2: the card bar on the pages where it matters, miss-0.11 (bar of 3 web calls) against
-miss-0.12 (miss-0.9's bar), with same-day baselines. Reps 1-2.
+"""Step 2: the card bar on the pages where it matters, miss-0.13 (bar of 3 web calls) against
+miss-0.14 (miss-0.9's bar), with same-day baselines. Reps 1-2. Both have miss-0.13's write side
+(no note on a miss; the site-record note comes with a fetch that shows an access route). Written
+for miss-0.11 and miss-0.12, which differ from them only in that write side.
 
   python out_miss-0.12/drive.py           # verify the answer keys, then run everything
   python out_miss-0.12/drive.py --dry     # list the jobs and estimate their cost; runs nothing
@@ -25,19 +27,22 @@ d = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(d)
 d.HERE = HERE  # drive.log goes here
 
-ITERATIONS = ("miss-0.11", "miss-0.12")
+ITERATIONS = ("miss-0.13", "miss-0.14")
 BASELINES = ("cold-nowrite", "cold-nowrite-related")
 WARM = ("warm-same-nowrite", "warm-related-nowrite")
 PAIR = dict(zip(WARM, BASELINES))  # --dry: a warm arm with no prior runs is costed as its baseline
 TWO_CALLS = ["flask-config", "git-rebase", "k8s-probes", "mdn-set-cookie", "pandas-read-csv",
              "pg-connections", "pg-numeric", "py-argparse", "py-subprocess", "redis-set"]
-THREE_PLUS = ["cargo-manifest", "curl-manpage", "npm-package-json", "pytest-reference"]
+THREE_PLUS = ["cargo-manifest", "curl-manpage", "npm-package-json", "pytest-reference",
+              # added 2026-11-04, screened at 3+ web calls in out_head-0.2 (rep 1)
+              "apache-core", "haproxy-config", "linux-tcp7", "rsync-manpage", "sqlite-pragma", "systemd-exec",
+              "vim-options"]
 HARD_MULTI = ["bash-histsize", "gha-matrix-max-jobs", "git-gc-auto", "heroku-daily-restart", "mdn-fetch-credentials",
               "nginx-keepalive-requests", "render-free-spindown", "rust-vec-extract-if", "sonatype-guava"]
 TASKS = {**{t: EXP / "tasks_head.yaml" for t in TWO_CALLS + THREE_PLUS}, **{t: EXP / "tasks.yaml" for t in HARD_MULTI}}
-# Earlier runs, for --dry: miss-0.8 had miss-0.11's bar, head-0.1 (miss-0.7) and miss-0.5 had miss-0.12's.
-PRIOR = {"miss-0.11": [EXP / "out_miss-0.8"], "miss-0.12": [EXP / "out_head-0.1", EXP / "out_miss-0.5"],
-         None: [EXP / "out_head-0.1", EXP / "out_miss-0.5"]}
+# Earlier runs, for --dry: miss-0.8 had miss-0.13's bar, head-0.1 (miss-0.7) and miss-0.5 had miss-0.14's.
+PRIOR = {"miss-0.13": [EXP / "out_miss-0.8"], "miss-0.14": [EXP / "out_head-0.1", EXP / "out_miss-0.5"],
+         None: [EXP / "out_head-0.1", EXP / "out_miss-0.5", EXP / "out_head-0.2"]}
 POINTS_PER_DOLLAR = 7  # 5-hour meter, out_meter-0.1; a weekly point is about 8 of these
 
 
@@ -111,7 +116,10 @@ def dry():
                     out.setdefault((r["condition"], r["task"]), []).append(r)
         return out
     prior = {k: rows(v) for k, v in PRIOR.items()}
-    cost = lambda it, c, t: statistics.mean(r["cost_usd"] for r in prior[it if c not in BASELINES else None][(c, t)])
+    # Pages added on 2026-11-04 have only screened baselines: their cold runs are costed as
+    # cold-nowrite (three+ pages wrote at about baseline cost) and assumed to store a card.
+    cost = lambda it, c, t: statistics.mean(r["cost_usd"] for r in prior[it if c not in BASELINES else None].get(
+        (c, t)) or prior[None][("cold-nowrite", t)])
     total, n = 0.0, 0
     print(f"{'':10}{'runs':>6}{'est. $':>9}")
     p1 = phase1()
@@ -121,7 +129,7 @@ def dry():
         print(f"{it or 'baselines':10}{len(js):>6}{s:>9.2f}  phase 1")
         total, n = total + s, n + len(js)
     for it in ITERATIONS:  # warm runs at the prior stored rate per task
-        colds = {t: prior[it][("cold", t)] for t in TASKS}
+        colds = {t: prior[it].get(("cold", t)) or [{"write_results": {"stored": [1]}}] for t in TASKS}
         k = sum(2 * len(d.REPS) * statistics.mean(bool(r["write_results"]["stored"]) for r in colds[t]) for t in TASKS)
         s = sum(len(d.REPS) * statistics.mean(bool(r["write_results"]["stored"]) for r in colds[t])
                 * sum(statistics.mean(r["cost_usd"] for r in prior[it].get((c, t)) or prior[None][(PAIR[c], t)])

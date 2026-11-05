@@ -961,5 +961,54 @@ The last three columns cover days 8-31, so the 7-day lookback is complete.
 
 ## Next
 
-- **Get a sample output for the ask:** run `research/scripts/agent_concentration.py` on any real access log, then send the ask.
-- **Run step 2 after the weekly reset (2026-11-07)**, as above.
+- **Concentration is set aside (decided 2026-11-04):** demand is assumed concentrated enough for a shared registry to pay, and the ask is not sent. The script and the ask stay in `research/` if it's revisited.
+
+## 2026-11-04: more expensive pages for step 2 (`tasks_head.yaml`, screen in `out_head-0.2/`, not an iteration)
+
+Why: head-0.1's three+ group is 4 pages, and two of them carry its −52% (curl −88% / −91%, cargo −41% / −61%; without curl the other three are −37%). Step 2 would add reps on the same 4 pages, not more pages.
+
+Candidates were long single-page references, checked first with the harness's own fetch for size and headings. 11 pages went into `tasks_head.yaml`, two facts each near 30% and 70% of the page, with `verify` passing on all of them. Each was screened with cold-nowrite and cold-nowrite-related, rep 1 only: 22 runs, $2.25, 22/22 correct. One ffmpeg answer was regraded: the expect pattern was wrong, not the answer.
+
+| Mean web calls, rep 1 | Pages (calls on question / related) |
+|---|---|
+| 3+, added to step 2 | apache-core (6 / 6), vim-options (7 / 4), haproxy-config (2 / 7), rsync-manpage (5 / 4), systemd-exec (3 / 3), sqlite-pragma (3 / 3), linux-tcp7 (3 / 3) |
+| 2 | tmux-manpage, kubelet-flags, ffmpeg-options |
+| 1 | gnu-make (a heading names the answer's option) |
+
+- **What predicts a 3+ page is no headings at the option level,** not size. vim options (116k tokens), rsync (61k), systemd.exec (59k) and SQLite PRAGMA (23k) have none in the cleaned page. GNU make (127k) has 85 and took one fetch.
+- **Three pages sit at exactly 3** (systemd-exec, sqlite-pragma, linux-tcp7) and may fall into the two-call group at rep 2. Step 2's same-day baselines regroup them.
+- `out_miss-0.12/drive.py` now has 11 three+ pages. `--dry` puts step 2 at 414 runs, ~$31 and ~27 weekly points. That's an overestimate: a new page's reuse runs are costed at its baseline, since none has cold runs yet.
+
+## 2026-11-04: miss-0.13, the site-record note waits for a sign of an access route; a no-registry arm (`out_miss-0.13/`)
+
+Why: on pages where breadcrumbs can't save anything, every lookup that misses still sends the site-record note (~150 tokens), and that is miss-0.11's whole +11% on one-call pages. The registry can't tell a cheap page from an API site before anything is fetched, but the web server sees each result, so the note can wait until a result shows something worth recording.
+
+What changed from miss-0.11 (`BC_SITE_SIGNAL=1`):
+- **A lookup that misses sends nothing.** It logs the site it looked up.
+- **The note comes with a result instead.** It goes once, with the first fetch or render that shows an access route (`bc.common.access_signal`): a render, a JSON or XML response, a host other than the one looked up, or a `.md`/`.txt`/`.json`/`.xml` path. A smoke run showed `/api/` paths can't count, because docs live there too (nodejs.org/api/fs.html).
+- **The card side is unchanged:** bar of 3 web calls, deferred card note.
+- **Rule 3 names fetch results too:** "Call write only if a lookup or fetch result asks for breadcrumbs". The first batch kept miss-0.11's "a lookup result", and agents refused the note: 10 of 10 API runs got it and none wrote. One said it "came from the fetch", not a lookup. Those 30 cold runs are in `out_miss-0.13/cold_lookup-rule/`, and the cold runs were redone with the new rule.
+
+New arms `noregistry` and `noregistry-related` (`run.py`): web tools only, with no registry and no lookup step in the prompt. Every earlier baseline (cold-nowrite) already makes a lookup call and carries the registry tools, so the LOG's write-side costs never included the lookup itself. Against cold-nowrite, noregistry measures it.
+
+Runs: head-0.1's 10 one-call pages and the 5 one-fetch API tasks, reps 1-2. Cold under miss-0.13, cold-nowrite and noregistry ran side by side (`out_miss-0.13/drive.py`), with the cold runs redone an hour later. 120 runs plus 3 smoke runs, $1.96, all correct after one regrade: terraform-aws-provider's key now accepts 6.71.0 or later, since 6.72.0 is out. `out_miss-0.9/report.py` prints both tables.
+
+| Dollars, mean / weighted | One-call pages | One-fetch API |
+|---|---|---|
+| miss-0.11 cold vs its same-day no-write | +15% / +11% | – |
+| **miss-0.13 cold vs same-day no-write** | **−1% / −1%** | +66% / +40% |
+| Lookup only: cold-nowrite vs noregistry | +16% / +4% | +23% / −2% |
+| Site records stored | 0 / 20 (no note sent) | **10 / 10**, all with a `{placeholder}` pattern |
+
+- **On cheap pages the write side now costs nothing.** No one-call run got a note, and cold matches no-write in every measure (tokens −3%, output −3%, plan −1%). The fixed cost that miss-0.7 to miss-0.11 cut from +31% to +11% is gone.
+- **API site records come back complete.** 10 of 10, against 8 of 10 under miss-0.11 and 7 of 10 under miss-0.5. jetbrains stored one for the first time under any miss iteration (2 of 2, `{pluginId}`), and every record names the `select` that keeps the response small, the detail miss-0.6 found missing. The note arrives with the JSON in context, which may be why. The API cold runs cost +40% in dollars because they write: that's the first-write cost, paid back by reuse, which this batch didn't run.
+- **The lookup itself costs +4% to +16% in dollars on a one-call page** compared with no registry, and about nothing on API pages. In tokens it's +68%, nearly all cache reads from the extra turn. It's now the whole floor on cheap pages, and the only way below it is folding the lookup into fetch.
+
+Verdict: miss-0.13 is the write side to keep. It costs nothing where breadcrumbs can't help, and it writes better site records where they can. Step 2 now runs it against **miss-0.14** (miss-0.13 with miss-0.12's bar, no call minimum), so the bar is decided on this write side (`out_miss-0.12/drive.py` and `report.py`; same tasks, baselines and estimate).
+
+## Next
+
+- **Run step 2 after the weekly reset (2026-11-07):** `python out_miss-0.12/drive.py`, then `python out_miss-0.12/report.py`, with 11 three+ pages, comparing miss-0.13 and miss-0.14. Keep the machine awake.
+- **Reuse of the new API site records** (warm-related-nowrite on miss-0.13's 10 API registries, 10 runs) shows whether the `select` hints pay. It's cheap, so add it to step 2 or run it before.
+- **Folding lookup into fetch** is the only remaining lever on cheap pages, and it's worth at most the +4% to +16% measured above.
+- **Concentration is set aside** (decided 2026-11-04, above).

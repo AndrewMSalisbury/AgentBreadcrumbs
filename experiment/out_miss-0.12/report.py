@@ -1,4 +1,4 @@
-"""Step 2: miss-0.11 (bar of 3 web calls) against miss-0.12 (miss-0.9's bar) on head-0.1's
+"""Step 2: miss-0.13 (bar of 3 web calls) against miss-0.14 (miss-0.9's bar) on head-0.1's
 two-call and three+ pages and the 9 hard multi-fetch tasks, against same-day baselines.
 
   python out_miss-0.12/report.py
@@ -25,14 +25,19 @@ MEASURES = {"tokens": lambda r: r["usage"]["total"],
 WEB = ("mcp__web__fetch", "mcp__web__render", "WebSearch")
 FALLBACK = {"warm-same-nowrite": "cold-nowrite", "warm-related-nowrite": "cold-nowrite-related"}
 REPS = (1, 2)
-DIRS = {"miss-0.11": EXP / "out_miss-0.11", "miss-0.12": HERE}
+DIRS = {"miss-0.13": EXP / "out_miss-0.13", "miss-0.14": EXP / "out_miss-0.14"}
 GROUPS = {"two calls": ["flask-config", "git-rebase", "k8s-probes", "mdn-set-cookie", "pandas-read-csv",
                         "pg-connections", "pg-numeric", "py-argparse", "py-subprocess", "redis-set"],
-          "three+ calls": ["cargo-manifest", "curl-manpage", "npm-package-json", "pytest-reference"],
+          "three+ calls": ["cargo-manifest", "curl-manpage", "npm-package-json", "pytest-reference",
+                           "apache-core", "haproxy-config", "linux-tcp7", "rsync-manpage", "sqlite-pragma",
+                           "systemd-exec", "vim-options"],
           "hard multi-fetch": ["bash-histsize", "gha-matrix-max-jobs", "git-gc-auto", "heroku-daily-restart",
                                "mdn-fetch-credentials", "nginx-keepalive-requests", "render-free-spindown",
                                "rust-vec-extract-if", "sonatype-guava"]}
 GROUPS["all"] = [t for ts in GROUPS.values() for t in ts]
+# head-0.1's four three+ pages on their own, comparable with its results; the rest were added 2026-11-04.
+GROUPS["three+, head-0.1's 4"] = GROUPS["three+ calls"][:4]
+GROUPS["three+, added 11-04"] = GROUPS["three+ calls"][4:]
 ARMS = (("write", ["cold"], ["cold-nowrite"]), ("same", ["warm-same-nowrite"], ["cold-nowrite"]),
         ("related", ["warm-related-nowrite"], ["cold-nowrite-related"]),
         ("net", ["cold", "warm-related-nowrite"], ["cold-nowrite", "cold-nowrite-related"]))

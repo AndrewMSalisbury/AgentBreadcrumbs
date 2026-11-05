@@ -62,6 +62,15 @@ holding only the answer's sections) used an earlier prompt and can't be rerun.
                 say a plain fetch works
   miss-0.12     miss-0.11 with miss-0.9's bar (2,000+ tokens, searches counted, no
                 call minimum)
+  miss-0.13     miss-0.11 with no note on a miss: the site-record note comes with the
+                first fetch or render that shows an access route (a render, a JSON or
+                XML response, a host other than the one looked up, or an API or
+                raw-source path); rule 3 names fetch results as well as lookups
+  miss-0.14     miss-0.13 with miss-0.12's bar (no call minimum)
+
+noregistry and noregistry-related run the question and the related question with web
+tools only: no registry, and no lookup step in the prompt. Against cold-nowrite they
+measure what the lookup itself costs.
 coldonly-0.1 is lean-0.1's cold registries scored with the nowrite warm arms.
 
 Each run gets its own directory under out/runs/<condition>/<task>/r<rep>/ with
@@ -80,7 +89,8 @@ PY = sys.executable
 TOOLS = ["WebSearch", "mcp__web__fetch", "mcp__web__render", "mcp__registry__lookup",
          "mcp__registry__write"]
 CONDITIONS = ("baseline", "cold", "cold-nowrite", "warm-same", "warm-related", "cold-nowrite-related",
-              "warm-related-nowrite", "warm-same-nowrite", "memory", "open")
+              "warm-related-nowrite", "warm-same-nowrite", "memory", "open", "noregistry", "noregistry-related")
+NOREGISTRY = ("noregistry", "noregistry-related")
 # Claude Code's own MCP output limit counts more strictly than the web server's
 # 20k-token cap; raise it so long pages reach the agent instead of a file it can't read.
 AGENT_ENV = {**os.environ, "MAX_MCP_OUTPUT_TOKENS": "60000"}
@@ -141,7 +151,7 @@ ENFORCED_ROUTE_WRITE_RULE = ROUTE_WRITE_RULE.replace("   If lookup had everythin
 # Every cold card that later saved tokens came from a run that pulled 2,286+; the cards that saved
 # nothing (render, a sonatype related run) came from runs that pulled ~450-550.
 MIN_PULL = 2000
-MIN_CALLS = 3  # miss-0.8, miss-0.10, miss-0.11
+MIN_CALLS = 3  # miss-0.8, miss-0.10, miss-0.11, miss-0.13
 # memory (knowledge-gap probe): no tools, so the answer shows what the model remembers.
 MEMORY_SYSTEM = """You answer questions about software libraries from what you already know. You have no tools. Today is {today}.
 
@@ -159,17 +169,28 @@ Tools: fetch and render get pages as Markdown; WebSearch finds pages.
 1. Use the tools when you need to check something. If you already know the answer for the version asked about, answer directly.
 2. End with one line: ANSWER: <answer> (source: <URL, or memory>)"""
 OPEN_TOOLS = ["WebSearch", "mcp__web__fetch", "mcp__web__render"]
+# noregistry: SYSTEM without the registry tools and lookup step, so against cold-nowrite it
+# measures what the lookup itself costs.
+NOREGISTRY_SYSTEM = """You answer questions about public web pages. Today is {today}.
+
+Tools: fetch and render get pages as Markdown; WebSearch finds pages.
+
+1. Answer only from pages you fetch or render in this session, not from memory.
+2. End with one line: ANSWER: <answer> (source: <URL>)"""
 # miss-*: the rule itself arrives with a lookup that misses (see bc/registry_server.py).
 MISS_RULE = "3. Call write only if a lookup result asks for breadcrumbs, and then as it says."
+# miss-0.13: the only note can come with a fetch result, which MISS_RULE told agents to ignore.
+SIGNAL_RULE = "3. Call write only if a lookup or fetch result asks for breadcrumbs, and then as it says."
 NOWRITE_RULE = "3. Do not call write in this session."
 MISS = ("miss-0.1", "miss-0.2", "miss-0.3", "miss-0.4", "miss-0.5", "miss-0.6", "miss-0.7", "miss-0.8", "miss-0.9",
-        "miss-0.10", "miss-0.11", "miss-0.12")
+        "miss-0.10", "miss-0.11", "miss-0.12", "miss-0.13", "miss-0.14")
 ENFORCED = ("enforced-0.1", "enforced-0.2")
+SIGNALED = ("miss-0.13", "miss-0.14")  # BC_SITE_SIGNAL
 # Iteration name: (page-card style, step 3 of the prompt).
 ITERATIONS = {"map-0.1": ("map", WRITE_RULE), "route-0.1": ("route", ROUTE_WRITE_RULE),
               "lean-0.1": ("route", LEAN_ROUTE_WRITE_RULE), "lean-0.2": ("route", LEAN2_ROUTE_WRITE_RULE),
               **{i: ("route", ENFORCED_ROUTE_WRITE_RULE) for i in ENFORCED},
-              **{i: ("route", MISS_RULE) for i in MISS}}
+              **{i: ("route", MISS_RULE) for i in MISS}, **{i: ("route", SIGNAL_RULE) for i in SIGNALED}}
 ITERATION = "map-0.1"  # set from --iteration
 CARDS = "map"
 TASKS = ROOT / "tasks.yaml"  # set from --tasks
@@ -306,12 +327,12 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
 
     if cond == "baseline":
         question, expect = "Reply with the word OK.", ["OK"]
-    elif cond in ("warm-related", "cold-nowrite-related", "warm-related-nowrite"):
+    elif cond in ("warm-related", "cold-nowrite-related", "warm-related-nowrite", "noregistry-related"):
         question, expect = task["related"]["question"], task["related"]["expect"]
     else:
         question, expect = task["question"], task["expect"]
 
-    writes = "nowrite" not in cond and cond not in ("baseline", "memory", "open")
+    writes = "nowrite" not in cond and cond not in ("baseline", "memory", "open") + NOREGISTRY
     it = ITERATION
     call_log = run_dir / "calls.log" if (it in ENFORCED or it in MISS[1:]) and writes else None
     cfg = run_dir / "mcp.json"
@@ -320,25 +341,27 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
             **({"BC_MIN_PULL": str(MIN_PULL), "BC_FILE_LOOKUP": "1"} if it in MISS[4:] else {}),
             **({"BC_NOTE_SITE": "1"} if it == "miss-0.6" else {}),
             **({"BC_SEARCHES": "1"} if it in MISS[6:] else {}),
-            **({"BC_MIN_CALLS": str(MIN_CALLS)} if it in ("miss-0.8", "miss-0.10", "miss-0.11") else {}),
+            **({"BC_MIN_CALLS": str(MIN_CALLS)} if it in ("miss-0.8", "miss-0.10", "miss-0.11", "miss-0.13") else {}),
             **({"BC_DEFER": "1"} if it in MISS[8:] else {}),
-            **({"BC_SITE_STRICT": "1"} if it in ("miss-0.11", "miss-0.12") else {})} \
+            **({"BC_SITE_STRICT": "1"} if it in ("miss-0.11", "miss-0.12") + SIGNALED else {}),
+            **({"BC_SITE_SIGNAL": "1"} if it in SIGNALED else {})} \
         if it in MISS and writes else None
     servers = {"mcpServers": {}} if cond == "memory" else mcp_config(registry, call_log, miss)
-    if cond == "open":
+    if cond == "open" or cond in NOREGISTRY:
         del servers["mcpServers"]["registry"]
     cfg.write_text(json.dumps(servers, indent=2), encoding="utf-8")
     today = datetime.date.today().isoformat()
     write_rule = ITERATIONS[it][1]
     rule = NOWRITE_RULE if "nowrite" in cond else write_rule.format(today=today, model=model)
     system = MEMORY_SYSTEM.format(today=today) if cond == "memory" else OPEN_SYSTEM.format(today=today) \
-        if cond == "open" else SYSTEM.format(today=today, write_rule=rule)
+        if cond == "open" else NOREGISTRY_SYSTEM.format(today=today) if cond in NOREGISTRY \
+        else SYSTEM.format(today=today, write_rule=rule)
     cmd = ["claude", "-p", question, "--model", model, "--system-prompt", system,
            "--output-format", "stream-json", "--verbose", "--setting-sources", "",
            "--strict-mcp-config", "--mcp-config", str(cfg), "--no-session-persistence",
            "--permission-mode", "dontAsk"]
     cmd += ["--tools", "", "--allowedTools", ""] if cond in ("baseline", "memory") else \
-           ["--tools", "WebSearch", "--allowedTools", ",".join(OPEN_TOOLS if cond == "open" else TOOLS)]
+           ["--tools", "WebSearch", "--allowedTools", ",".join(OPEN_TOOLS if cond in ("open",) + NOREGISTRY else TOOLS)]
     if it in ENFORCED and call_log:
         cmd += ["--settings", search_hook(call_log)]
     elif it in MISS[2:] and call_log:

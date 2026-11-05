@@ -31,7 +31,7 @@ TWO_CALLS = ["flask-config", "git-rebase", "k8s-probes", "mdn-set-cookie", "pand
              "pg-connections", "pg-numeric", "py-argparse", "py-subprocess", "redis-set"]
 DIRS = {"miss-0.7": EXP / "out_head-0.1", "miss-0.8": EXP / "out_miss-0.8",
         "miss-0.9": EXP / "out_miss-0.9", "miss-0.10": EXP / "out_miss-0.10", "miss-0.11": EXP / "out_miss-0.11",
-        "miss-0.5": EXP / "out_miss-0.5"}
+        "miss-0.13": EXP / "out_miss-0.13", "miss-0.5": EXP / "out_miss-0.5"}
 web = lambda r: sum(v for k, v in r["tool_calls"].items() if k in WEB)
 pct = lambda x: f"{100 * x:+.0f}%"
 
@@ -84,3 +84,30 @@ for group, tasks, base in (("one call", ONE_CALL, runs["miss-0.7"]), ("two calls
     nw = [base[("cold-nowrite", t, p)] for t in tasks for p in REPS]
     print(f"{'no-write':10}{'':60}{statistics.mean(map(web, nw)):>11.2f}")
 print("\n* against the iteration's own same-day no-write runs")
+
+# miss-0.13 ran noregistry beside its cold and cold-nowrite runs: web tools only, no lookup step.
+# cold-nowrite against it is what the lookup costs; cold against it is the whole registry's cost.
+m13, d13 = runs["miss-0.13"], DIRS["miss-0.13"]
+print("\nmiss-0.13: against noregistry (no registry, no lookup), same day")
+for group, tasks in (("one call", ONE_CALL), ("one-fetch API", API)):
+    if not all((c, t, p) in m13 for c in ("cold", "cold-nowrite", "noregistry") for t in tasks for p in REPS):
+        continue
+    print(f"\n{group} ({len(tasks)} pages)")
+    print(f"{'':14}" + "".join(f"{m:>15}" for m in MEASURES) + f"{'web calls':>11}")
+    for cond, label in (("cold-nowrite", "lookup only"), ("cold", "lookup + write")):
+        cells = []
+        for f in MEASURES.values():
+            a = {t: statistics.mean(f(m13[(cond, t, p)]) for p in REPS) for t in tasks}
+            b = {t: statistics.mean(f(m13[("noregistry", t, p)]) for p in REPS) for t in tasks}
+            m, w = statistics.mean(a[t] / b[t] - 1 for t in tasks), sum(a.values()) / sum(b.values()) - 1
+            cells.append(f"{pct(m)} / {pct(w)}")
+        print(f"{label:14}" + "".join(f"{c:>15}" for c in cells)
+              + f"{statistics.mean(web(m13[(cond, t, p)]) for t in tasks for p in REPS):>11.2f}")
+    print(f"{'noregistry':14}{'':75}{statistics.mean(web(m13[('noregistry', t, p)]) for t in tasks for p in REPS):>11.2f}")
+    # which cold runs got the site-record note, and what they stored (site records, page cards)
+    for t in tasks:
+        for p in REPS:
+            log = d13 / "runs" / "cold" / t / f"r{p}" / "calls.log"
+            lines = log.read_text(encoding="utf-8").splitlines() if log.exists() else []
+            if "note\tsite" in lines:
+                print(f"  site note: {t} r{p}, records stored {stored(d13, t, p)}")
