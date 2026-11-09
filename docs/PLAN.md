@@ -69,10 +69,12 @@ The shape of the standard is settled; scoring numbers wait for test data.
 | Storage format | JSON validated by JSON Schema | Proposed |
 | Write format | JSON through an API or MCP tool call | Proposed |
 | Read format | Compact YAML by default; JSON or Markdown on request | Proposed |
-| Fingerprints | Computed by the registry | Proposed |
+| Fingerprints | Computed by the registry from its own fetch; re-fetched on demand (a dispute or a failed route step), not on a timer | Decided (2026-11-05) |
 | Depth growth and L3 outline | Demand-driven depth; L3 for long or hard pages | Proposed |
 | Core of the L1 card | A route (the cheapest way to get the page's content), not a section map | Decided: section maps failed the bar in map-0.1; route cards cleared it from route-0.1 |
 | Scoring weights and decay | — | After testing |
+| Business model | Tiered subscription: each tier grants token credits spent on breadcrumb reads; agents earn credits by contributing and confirming breadcrumbs | Decided (2026-11-05); prices and earn rates later |
+| Site-owner role | Minimal, if any: no owner-verified records and no owner-written content | Decided (2026-11-05) |
 
 ## How it works
 
@@ -164,6 +166,7 @@ On any signal the record is marked **suspect**, and the next visiting agent is a
 3. **Public pages only.** Nothing from logged-in, personalized or paid pages.
 4. **Write while the page is in context.** No separate pass over the page.
 5. **Tier by value.** L2 and L3 only for pages that are long, hard to reach or full of facts.
+6. **Pointer-only where sites opt out.** On paths that robots.txt or an AI opt-out signal disallows, records hold only routes, access notes and section anchors: no answers, facts or quotes. The registry never fetches those pages itself.
 
 ## Format and schema
 
@@ -310,7 +313,7 @@ The two risks that could sink the project are poisoned records and a large incum
 | Poisoned or injected breadcrumbs | Agents misled or hijacked | Schema field limits, imperative-text filter, scoring, poisoning trial before launch |
 | Firecrawl or an AI provider builds this | Loss of differentiation | Stay neutral and open; focus on paths and the long tail; ship the standard early |
 | Stale breadcrumbs look current | Wrong answers delivered confidently | Registry fingerprints, staleness signals, fact expiry |
-| Copyright or terms-of-service complaints | Legal exposure, hostile site owners | Pointers and facts only, quote limits, public pages only, owner opt-out |
+| Copyright or terms-of-service complaints | Legal exposure, hostile site owners | Pointers and facts only, quote limits, public pages only, pointer-only records on paths that opt out via robots.txt or AI opt-out signals, no other owner role |
 | Providers will not contribute | Registry stays empty | MCP distribution; show token savings; free reads |
 | Savings smaller than measured | Weak value proposition | Fair test before building the registry; stop or reshape if criteria fail |
 | Writer spam or abuse | Low-quality records | Writer identity, rate limits, reputation per writer |
@@ -318,12 +321,12 @@ The two risks that could sink the project are poisoned records and a large incum
 ## Open questions
 
 - [ ] Scoring weights: how fast trust decays, and how many confirmations make a fact reliable (after testing)
-- [ ] Route handling when a step page moves or its fingerprint changes
+- [ ] Route handling when a step page moves or its fingerprint changes: to test in the staleness trial (default: mark the route suspect; the next agent re-walks it and replaces the step)
 - [ ] Writer identity: how agents and providers authenticate, and how abuse is rate-limited
-- [ ] Tier selection: rules for when an agent writes L0, L1, L2 or L3
-- [ ] Confirm registry-computed fingerprints, and how often the registry re-fetches
-- [ ] Business model: free reads, paid bulk access, or a nonprofit standard body
-- [ ] Site-owner role: opt-out, verified owner records, or both
+- [ ] Tier selection: for now agents write only site records (once a fetch shows an access route) and L1 route cards (past a web-call bar, set by step 2 on 2026-11-07); L0, L2 and L3 are considered after that
+- [x] Confirm registry-computed fingerprints, and how often the registry re-fetches: decided, on demand (see Decisions)
+- [x] Business model: decided, a tiered subscription with token credits (see Decisions)
+- [x] Site-owner role: decided, minimal if any (see Decisions)
 
 ## Sources
 

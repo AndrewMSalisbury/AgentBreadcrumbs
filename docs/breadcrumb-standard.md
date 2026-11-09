@@ -95,6 +95,7 @@ The next agent to visit is asked to re-check a suspect record.
 3. **Public pages only.** Nothing from logged-in, personalized or paid pages.
 4. **Write while the page is in context.** No separate pass over the page.
 5. **Tier by value.** L2 and L3 only for pages that are long, hard to reach or full of facts.
+6. **Pointer-only where sites opt out.** On paths that robots.txt or an AI opt-out signal disallows, records hold only routes, access notes and section anchors: no answers, facts or quotes. The registry never fetches those pages itself.
 
 ## 6. Format
 
