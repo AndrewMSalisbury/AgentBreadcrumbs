@@ -67,6 +67,8 @@ holding only the answer's sections) used an earlier prompt and can't be rerun.
                 XML response, a host other than the one looked up, or an API or
                 raw-source path); rule 3 names fetch results as well as lookups
   miss-0.14     miss-0.13 with miss-0.12's bar (no call minimum)
+  trace-0.2     miss-0.13's site-record note only: write refuses every page card and no
+                card note is sent; out_trace-0.2 adds a card built from the run's trace
 
 noregistry and noregistry-related run the question and the related question with web
 tools only: no registry, and no lookup step in the prompt. Against cold-nowrite they
@@ -183,9 +185,12 @@ MISS_RULE = "3. Call write only if a lookup result asks for breadcrumbs, and the
 SIGNAL_RULE = "3. Call write only if a lookup or fetch result asks for breadcrumbs, and then as it says."
 NOWRITE_RULE = "3. Do not call write in this session."
 MISS = ("miss-0.1", "miss-0.2", "miss-0.3", "miss-0.4", "miss-0.5", "miss-0.6", "miss-0.7", "miss-0.8", "miss-0.9",
-        "miss-0.10", "miss-0.11", "miss-0.12", "miss-0.13", "miss-0.14")
+        "miss-0.10", "miss-0.11", "miss-0.12", "miss-0.13", "miss-0.14", "trace-0.2")
 ENFORCED = ("enforced-0.1", "enforced-0.2")
-SIGNALED = ("miss-0.13", "miss-0.14")  # BC_SITE_SIGNAL
+SIGNALED = ("miss-0.13", "miss-0.14", "trace-0.2")  # BC_SITE_SIGNAL
+# trace-0.2: agents write site records only; page cards come from the run's trace (out_trace-0.2),
+# so the page-card bar is set out of reach and no card note is ever sent.
+NO_CARDS = 1000
 # Iteration name: (page-card style, step 3 of the prompt).
 ITERATIONS = {"map-0.1": ("map", WRITE_RULE), "route-0.1": ("route", ROUTE_WRITE_RULE),
               "lean-0.1": ("route", LEAN_ROUTE_WRITE_RULE), "lean-0.2": ("route", LEAN2_ROUTE_WRITE_RULE),
@@ -342,6 +347,7 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
             **({"BC_NOTE_SITE": "1"} if it == "miss-0.6" else {}),
             **({"BC_SEARCHES": "1"} if it in MISS[6:] else {}),
             **({"BC_MIN_CALLS": str(MIN_CALLS)} if it in ("miss-0.8", "miss-0.10", "miss-0.11", "miss-0.13") else {}),
+            **({"BC_MIN_CALLS": str(NO_CARDS)} if it == "trace-0.2" else {}),
             **({"BC_DEFER": "1"} if it in MISS[8:] else {}),
             **({"BC_SITE_STRICT": "1"} if it in ("miss-0.11", "miss-0.12") + SIGNALED else {}),
             **({"BC_SITE_SIGNAL": "1"} if it in SIGNALED else {})} \

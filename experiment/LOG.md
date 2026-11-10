@@ -24,6 +24,9 @@ Each iteration is named `<approach>-0.<n>`: a new approach starts at 0.1 and eac
 | miss-0.10 | miss-0.9 with miss-0.8's bar of 3 web calls | `out_miss-0.10/` |
 | miss-0.11 | miss-0.10 with the site-record note ruling out records that only say a plain fetch works | `out_miss-0.11/` |
 | probe-0.1 | Not a write policy: library-docs demand, 72 versioned questions on 12 libraries, miss-0.5 arms plus memory, open and oracle | `out_probe-0.1/` |
+| miss-0.13 | miss-0.11 with no note on a miss: the site-record note comes with the first result that shows an access route | `out_miss-0.13/` |
+| miss-0.14 | miss-0.13 without the 3-call minimum (bar 3 is read off its runs by `out_miss-0.12/bar3.py`) | `out_miss-0.14/` |
+| trace-0.1 | No agent writes: route cards built from a no-write run's trace (`out_trace-0.1/build.py`) | `out_trace-0.1/` |
 
 `out_rep1_oldrule/` and `out_smoke_2026-10-26/` are setup runs from before narrow-0.1.
 
@@ -1012,3 +1015,77 @@ Verdict: miss-0.13 is the write side to keep. It costs nothing where breadcrumbs
 - **Reuse of the new API site records** (warm-related-nowrite on miss-0.13's 10 API registries, 10 runs) shows whether the `select` hints pay. It's cheap, so add it to step 2 or run it before.
 - **Folding lookup into fetch** is the only remaining lever on cheap pages, and it's worth at most the +4% to +16% measured above.
 - **Concentration is set aside** (decided 2026-11-04, above).
+
+## 2026-11-08: step 2, paired: the card bar and trace-built cards (`out_miss-0.12/drive.py`, `report.py`, `report.md`)
+
+Why: the planned step 2 ran miss-0.13 (bar 3) and miss-0.14 (bar 2) as two cold arms, 414 runs, scored as write plus one reuse. Two problems. Under miss-0.13 and miss-0.14 nothing mentions the bar until a fetch passes it, so both run alike up to the second web call, and two separate cold arms mostly measure rep noise. And in a shared registry a write is paid once and read many times, so the question is how many reuses pay a write back, not one. The rewrite runs cold under miss-0.14 only and reads bar 3 off each run's call log (`bar3.py`: a page card stored within 2 web calls is refused; its cold cost becomes the same-day cold-nowrite run, its reuse the no-registry run). It adds a trace arm: `out_trace-0.1/build.py` builds a route card from each cold-nowrite run's trace with no agent writing. The card holds the call that held the answer, with its arguments and size, plus the attempts that failed, and is filed under the page the run looked up. It has no site records and no URL patterns. That is what a registry serving the fetch tool could store on its own. `bar3.py` reproduces the 2026-11-03 offline replay on head-0.1 exactly (17 of 24 refused).
+
+Agreed before running: bar 2 unless two-call cards fail to make reads cheaper; trace cards become the default if their related reuse is within ~5 points of agent-written cards.
+
+Runs: 30 tasks (head-0.1's 10 two-call and 11 three+ pages, the 9 hard multi-fetch tasks), reps 1-2, rep 3 on the 8 tasks where bar 3 refuses a card. Same-day cold-nowrite, cold-nowrite-related and miss-0.14 cold; noregistry-related at rep 1; warm-related-nowrite on every stored registry and every trace registry; the 10 API site records from miss-0.13 with same-day related baselines. 380 runs, 379 correct. warm-same was dropped. Before the run, sonatype-guava's two answer checks moved to Maven Central's `maven-metadata.xml`: central.sonatype.com's internal API returns a security-service block to this machine. Questions and grading are unchanged. The lid closed overnight and paused the run about 8 hours; three runs timed out after answering, with complete usage.
+
+Dollars, weighted change against same-day no-write (mean of per-task changes in `report.md`). Write is the cold run; related is one read-only related reuse; 10 reuses is write plus 10 related reuses; break-even is reuses to pay back the write.
+
+| | Write | Related | 1 reuse | 10 reuses | Break-even |
+|---|---|---|---|---|---|
+| Two calls, bar 2 | +29% | −2% | +13% | +1% | 14 |
+| Two calls, bar 3 | +14% | −0% | +7% | +1% | ~690 |
+| Two calls, trace | 0 | −7% | −4% | −7% | 0 |
+| Three+, bar 2 | −3% | −16% | −9% | −15% | 0 |
+| Three+, bar 3 | −4% | −11% | −7% | −10% | 0 |
+| Three+, trace | 0 | −1% | −0% | −1% | 0 |
+| Hard, bar 2 = bar 3 | +24% | −21% | −2% | −18% | 0.8 |
+| Hard, trace | 0 | −41% | −24% | −38% | 0 |
+| **All 30, bar 2** | +8% | **−15%** | −4% | **−13%** | 0.5 |
+| **All 30, bar 3** | +5% | **−12%** | −3% | **−10%** | 0.4 |
+| **All 30, trace** | 0 | **−14%** | −7% | **−13%** | 0 |
+
+Plan (output ×1.6) is within 3 points of dollars everywhere. In tokens, trace is weaker (all-30 related −10% against −24% for bar 2), because trace reuse runs read more cache. Dollars stays the measure.
+
+- **The bar: bar 2 (miss-0.14) wins overall, though the rule's condition is met.** Cards on two-call pages don't make reads cheaper (−2% weighted, +12% mean per page on the runs that stored one), and they take 14 reuses to pay back. That's the condition the rule set for bar 3. But bar 3 also refuses cards from 2-call runs on expensive pages (haproxy-config r1 and r3). Those carry the three+ gap, −16% against −11%. Across all 30 pages bar 2 is 3 points better at 10 reuses. That's well inside the noise: the same arm varies a median 16% between reps on a single task. Bar 3 refused 22 of 55 page cards: 20 of 23 on two-call pages, 2 of 21 on three+ pages, none on the hard set. Either bar is defensible; the gap is too small to matter next to trace cards.
+- **Trace cards match agent-written cards with no write cost,** which meets the agreed rule. Related reuse across all 30 is −14% against −15%, and on the runs where miss-0.14 stored a page card the two tie (−10% / −10%). With nothing to write, trace is best at one reuse (−7% against −4%) and ties at 10 (−13%).
+- **Trace cards win the hard set and lose where an agent generalizes.** Hard set: −41% against −21%. sonatype-guava is −78% against −6%, because a trace card filed under central.sonatype.com points straight at `maven-metadata.xml`, while agents' cards took 2 calls and were often refused. rust-vec-extract-if −29% against +63%, nginx −59% against −38%. Three+ pages: −1% against −16%. curl-manpage is −88% with the agent's card, which names the pattern `cmdline-opts/{option}.md`. With the trace card it's −4%: that card holds the start offset that answered a different option. systemd-exec (+88%), vim-options (+40%) and sqlite-pragma (+19%) also lose with trace cards, which send readers to an offset or section specific to another question.
+- **Accuracy:** 125/126 reuse runs correct. The miss was an agent-written card: py-subprocess's card routes to `#popen-constructor`, and the reader answered from that section without reaching the priority-class constants. Trace cards: 0 wrong.
+- **API site records don't pay on related reuse:** −1% weighted over 10 runs (terraform, galaxy and artifacthub −7% to −8%, puppet +2%, jetbrains +10%). These tasks already take one fetch, so the `select` hints have nothing left to save.
+- **The lookup itself**, related question at rep 1 against noregistry-related, has a median of +5%. The +45% mean comes from two runs on the hard set (bash-histsize +395%, git-gc-auto +494%) with nearly the same web calls: run-to-run variance, not the lookup. This matches miss-0.13's +4% to +16%.
+
+Verdict: the bar question is settled for the write-side policy, at bar 2 (miss-0.14), by a margin inside the noise. The larger result is that a card built from the trace, with no agent writing and no write cost, saves as much on reuse as an agent-written one: −14% against −15% related, −13% each at 10 reuses. It wins on hard-access sites and loses where the saving is a URL pattern only an agent would write. The viability bar (30% on related) is still not met on popular pages: −13% to −15% here.
+
+## Next
+
+- **Trace cards plus agent-written patterns (trace-0.2):** keep the trace card as the default and drop question-specific `start` offsets and sections from it, which misdirected systemd, vim and sqlite. Keep miss-0.13's site-record note, which asks agents only for URL patterns, the curl/cargo kind of saving. Rerun the three+ pages and the hard set the same way, with new same-day baselines.
+- **The product shape this points to:** a registry that serves fetch builds cards with no agent writing and folds the lookup into fetch. That removes the write cost (this entry) and the lookup step (+4% to +16%, miss-0.13). Worth sketching in PLAN.md before more write-policy iterations.
+- **Close the lid-sleep gap:** set the lid action to do nothing on AC for long batches, or run them on a machine that stays up.
+
+## 2026-11-09: trace-0.2, trace cards without start offsets, and agent-written site records (`out_trace-0.2/drive.py`, `report.py`, `report.md`)
+
+Why: step 2's trace cards lost on systemd, vim and sqlite, apparently because the card's `start` offset found the first question's answer and sent the related question to the wrong part of the page. They also lost on curl, where an agent-written card names the pattern `cmdline-opts/{option}.md`. trace-0.2 tests both fixes. Three registries, all built with no agent writing a page card:
+
+- **v1:** step 2's trace card (`out_trace-0.1/build.py`), from each same-day cold-nowrite run.
+- **v2:** the same card, lean: no `start` offset, and when the route is the whole page with no section, the whole page's size rather than the slice that answered. Same source run as v1.
+- **trace-0.2:** a cold run under the new trace-0.2 iteration (miss-0.13's site-record note only; `run.py` sets the page-card bar out of reach, so no card note is sent), with a lean card from that run's trace merged into its registry next to any site record the agent wrote.
+
+Runs: step 2's 30 tasks, reps 1-2. Phase 1: same-day cold-nowrite, cold-nowrite-related, trace-0.2 cold. Phase 2: warm-related-nowrite on all three registries. 360 runs, $24.90. The first launch at 09:39 hit the 5-hour limit, then the machine slept and lost power at 18:06 (an unclean shutdown) without running anything. Its 12 failed rows are kept in `out_trace-0.2_aborted-1109/`. The relaunch ran 18:33 to 23:34, paused 20:28 to 23:10 by the usage limit.
+
+Dollars, weighted change against same-day no-write (mean / weighted per group in `report.md`):
+
+| | Write | Related | 10 reuses |
+|---|---|---|---|
+| Two calls, v1 / v2 / trace-0.2 | 0 / 0 / +5% | −4% / −10% / −8% | −4% / −9% / −7% |
+| Three+, v1 / v2 / trace-0.2 | 0 / 0 / −7% | −33% / −8% / −12% | −29% / −7% / −11% |
+| Hard, v1 / v2 / trace-0.2 | 0 / 0 / +18% | −14% / −16% / −9% | −13% / −15% / −7% |
+| **All 30, v1 / v2 / trace-0.2** | 0 / 0 / +0% | **−23% / −11% / −11%** | **−21% / −10% / −10%** |
+
+- **The v1/v2 gap is rep noise, not the offset.** Only 20 of 59 card pairs differ at all; the other 39 are byte-identical, because those runs used no offset. On the 20 that differ, related reuse costs $1.70 under v1 and $1.70 under v2. On the 39 identical pairs (40 runs) v2 costs 32% more: the same card, two reuse runs, a 32% gap. haproxy-config is −80% under v1 and +8% under v2 with identical cards. Dropping the offset neither fixed systemd, vim and sqlite nor hurt anything.
+- **The noise floor is about 30%** on 2 reps of a related reuse, on these pages. Step 2's arm gaps (bar 2 against bar 3, 3 points; trace against agent cards, 1 point) and this entry's are all under it, so none of them separates arms.
+- **Agent-written site records don't pay yet.** They were stored in 11 of 60 cold runs (curl, npm, rsync, systemd, vim, git-gc-auto, sonatype-guava), all with a URL pattern; none on two-call pages. curl's related reuse is −42% with a site record next to a lean card, against −90% / −87% on v1 / v2, whose card already routes to `cmdline-opts/keepalive-cnt.md`. The trace-0.2 cold run costs nothing extra across all 30 (+0% weighted) but +18% on the hard set.
+- **Accuracy:** cold 60/60, no-write 120/120, reuse 179/180. The miss is py-subprocess r2 on v2, the same `#popen-constructor` card that missed in step 2.
+
+Verdict: no change to the card. Without the offset the card is no better and no worse, and site records add little at this sample size. The larger finding is the noise: identical cards differ 32% across 40 reuse runs, so comparisons between card variants need more reps per task, or a paired design that measures the same card twice to estimate the floor.
+
+## Next
+
+- **Measure the noise floor before more card variants:** rerun the same registry several times per task (warm-related-nowrite, reps 3+ on one card) to get the per-task spread, then size reps so a 10-point gap between arms shows.
+- **Then rerun v1 against the agent's site records** at those reps, on the three+ pages and the hard set, where the saving is.
+- **Folding lookup into fetch** and the product sketch in PLAN.md still stand (2026-11-08).
+- **Close the lid-sleep gap** (2026-11-08): this batch lost a morning to it.

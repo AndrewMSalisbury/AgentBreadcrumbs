@@ -1,24 +1,31 @@
-"""Step 2: the card bar on the pages where it matters, miss-0.13 (bar of 3 web calls) against
-miss-0.14 (miss-0.9's bar), with same-day baselines. Reps 1-2. Both have miss-0.13's write side
-(no note on a miss; the site-record note comes with a fetch that shows an access route). Written
-for miss-0.11 and miss-0.12, which differ from them only in that write side.
+"""Step 2, paired: the card bar and trace-built cards, on the pages where they matter.
 
   python out_miss-0.12/drive.py           # verify the answer keys, then run everything
   python out_miss-0.12/drive.py --dry     # list the jobs and estimate their cost; runs nothing
-  python out_miss-0.12/drive.py --rebuild # only rebuild both folders' results.jsonl
+  python out_miss-0.12/drive.py --rebuild # only rebuild every folder's results.jsonl
 
-Tasks: head-0.1's two-call and three+ pages and the hard set's 9 multi-fetch tasks (as in
-miss-0.8). Phase 1 runs, task by task, cold-nowrite and cold-nowrite-related (into
-out_miss-0.12; they don't depend on the iteration) beside cold under each iteration (into its
-own folder), so both iterations and their baselines share the same hours. Phase 2 runs
-warm-same-nowrite and warm-related-nowrite on each cold run that stored a record; one that
-stored nothing left an empty registry, so its reuse runs would be the baselines. Two runs at a
-time, finished runs are skipped so rerunning resumes, and a run that hits the usage limit is
-retried every 15 minutes (head-0.1's driver). Windows is kept from sleeping while it runs.
+Rewritten 2026-11-08 from the two-arm design (miss-0.13 against miss-0.14 cold, 414 runs). Under
+miss-0.13 and miss-0.14 nothing mentions the bar until a fetch passes it, so the two run alike up
+to the second web call, and bar 3 can be read off each miss-0.14 cold run (bar3.py) instead of
+run as a second cold arm. Each run is then compared with its own counterfactual.
+
+Tasks: head-0.1's two-call and three+ pages and the hard set's 9 multi-fetch tasks.
+Phase 1, reps 1-2, task by task: same-day cold-nowrite and cold-nowrite-related (here), cold under
+  miss-0.14 (out_miss-0.14), and noregistry-related at rep 1 (here), the related question's cost
+  with no registry at all.
+Build: a trace card from each cold-nowrite run (out_trace-0.1/build.py, into out_trace-0.1), and,
+  for each miss-0.14 cold run whose page card bar 3 refuses but which also stored a site record,
+  its registry without the page cards (out_miss-0.14_bar3).
+Phase 2: warm-related-nowrite on every miss-0.14 cold run that stored a record, on each stripped
+  registry and on every trace registry; plus the API site records miss-0.13 stored on the 5
+  one-fetch API tasks (out_miss-0.13), with same-day cold-nowrite-related runs beside them.
+Phase 3: rep 3 of all of the above on the tasks where the bar bites (a rep stored a page card
+  that bar 3 refuses).
+warm-same is left out: the same question is the caching ceiling and decides nothing here. Two
+runs at a time, finished runs are skipped so rerunning resumes, and a run that hits the usage
+limit is retried every 15 minutes (head-0.1's driver). Windows is kept from sleeping.
 """
-import ctypes, importlib.util, json, pathlib, statistics, subprocess, sys
-
-import yaml
+import ctypes, importlib.util, json, pathlib, shutil, sqlite3, statistics, subprocess, sys
 
 HERE = pathlib.Path(__file__).parent
 EXP = HERE.parent
@@ -26,11 +33,12 @@ spec = importlib.util.spec_from_file_location("drive", EXP / "out_head-0.1" / "d
 d = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(d)
 d.HERE = HERE  # drive.log goes here
+sys.path.insert(0, str(HERE))
+from bar3 import classify
 
-ITERATIONS = ("miss-0.13", "miss-0.14")
-BASELINES = ("cold-nowrite", "cold-nowrite-related")
-WARM = ("warm-same-nowrite", "warm-related-nowrite")
-PAIR = dict(zip(WARM, BASELINES))  # --dry: a warm arm with no prior runs is costed as its baseline
+IT = "miss-0.14"
+DIRS = {"base": HERE, "card": EXP / "out_miss-0.14", "bar3": EXP / "out_miss-0.14_bar3",
+        "trace": EXP / "out_trace-0.1", "api": EXP / "out_miss-0.13"}
 TWO_CALLS = ["flask-config", "git-rebase", "k8s-probes", "mdn-set-cookie", "pandas-read-csv",
              "pg-connections", "pg-numeric", "py-argparse", "py-subprocess", "redis-set"]
 THREE_PLUS = ["cargo-manifest", "curl-manpage", "npm-package-json", "pytest-reference",
@@ -39,41 +47,42 @@ THREE_PLUS = ["cargo-manifest", "curl-manpage", "npm-package-json", "pytest-refe
               "vim-options"]
 HARD_MULTI = ["bash-histsize", "gha-matrix-max-jobs", "git-gc-auto", "heroku-daily-restart", "mdn-fetch-credentials",
               "nginx-keepalive-requests", "render-free-spindown", "rust-vec-extract-if", "sonatype-guava"]
-TASKS = {**{t: EXP / "tasks_head.yaml" for t in TWO_CALLS + THREE_PLUS}, **{t: EXP / "tasks.yaml" for t in HARD_MULTI}}
-# Earlier runs, for --dry: miss-0.8 had miss-0.13's bar, head-0.1 (miss-0.7) and miss-0.5 had miss-0.14's.
-PRIOR = {"miss-0.13": [EXP / "out_miss-0.8"], "miss-0.14": [EXP / "out_head-0.1", EXP / "out_miss-0.5"],
-         None: [EXP / "out_head-0.1", EXP / "out_miss-0.5", EXP / "out_head-0.2"]}
+API = ["terraform-aws-provider", "galaxy-community-general", "artifacthub-cert-manager", "puppet-stdlib",
+       "jetbrains-rainbow-brackets"]
+TASKS = {**{t: EXP / "tasks_head.yaml" for t in TWO_CALLS + THREE_PLUS}, **{t: EXP / "tasks.yaml" for t in HARD_MULTI + API}}
+STEP = TWO_CALLS + THREE_PLUS + HARD_MULTI
+REPS = (1, 2)
 POINTS_PER_DOLLAR = 7  # 5-hour meter, out_meter-0.1; a weekly point is about 8 of these
 
 
-def folder(it, cond):
-    return HERE if cond in BASELINES else EXP / f"out_{it}"
+def run_dir(where, cond, task, rep):
+    return DIRS[where] / "runs" / cond / task / f"r{rep}"
 
 
-def result(it, cond, task, rep):
+def result(where, cond, task, rep):
     try:
-        return json.loads((folder(it, cond) / "runs" / cond / task / f"r{rep}" / "result.json").read_text(encoding="utf-8"))
+        return json.loads((run_dir(where, cond, task, rep) / "result.json").read_text(encoding="utf-8"))
     except (FileNotFoundError, ValueError):
         return None
 
 
 def stream(name, jobs):
-    """head-0.1's stream, with each job's iteration, folder and task file."""
-    for it, cond, task, rep in jobs:
-        r = result(it, cond, task, rep)
+    """head-0.1's stream, with each job's folder and task file."""
+    for where, cond, task, rep in jobs:
+        r = result(where, cond, task, rep)
         while r is None or d.limited(r):
             subprocess.run([d.PY, "run.py", cond, "--task", task, "--rep", str(rep), "--tasks", str(TASKS[task]),
-                            "--iteration", it, "--out", str(folder(it, cond))], cwd=EXP,
-                           stdin=subprocess.DEVNULL, capture_output=True)
-            r = result(it, cond, task, rep)
+                            "--iteration", IT if where != "api" else "miss-0.13", "--out", str(DIRS[where])],
+                           cwd=EXP, stdin=subprocess.DEVNULL, capture_output=True)
+            r = result(where, cond, task, rep)
             if r is None:
-                d.log(f"{name}: {it} {cond} {task} r{rep} left no result.json; retrying in 60 s")
+                d.log(f"{name}: {where} {cond} {task} r{rep} left no result.json; retrying in 60 s")
                 d.time.sleep(60)
             elif d.limited(r):
-                d.log(f"{name}: usage limit at {it} {cond} {task} r{rep} ({r['answer'][:70]}); retrying in 15 min")
+                d.log(f"{name}: usage limit at {where} {cond} {task} r{rep} ({r['answer'][:70]}); retrying in 15 min")
                 d.time.sleep(d.WAIT)
             else:
-                d.log(f"{name}: {it:9} {cond:22} {task:24} r{rep}  {'OK ' if r['correct'] else 'BAD'} "
+                d.log(f"{name}: {where:5} {cond:22} {task:26} r{rep}  {'OK ' if r['correct'] else 'BAD'} "
                       f"{r['usage']['total']:>7}  ${r['cost_usd'] or 0:.3f}")
 
 
@@ -86,71 +95,101 @@ def phase(jobs):
         t.join()
 
 
-def phase1():
+def phase1(tasks, reps):
     jobs = []
-    for r in d.REPS:
-        for t in TASKS:
-            jobs += [(ITERATIONS[-1], c, t, r) for c in BASELINES] + [(it, "cold", t, r) for it in ITERATIONS]
+    for r in reps:
+        for t in tasks:
+            jobs += [("base", "cold-nowrite", t, r), ("base", "cold-nowrite-related", t, r), ("card", "cold", t, r)]
+            if r == 1 and t in STEP:
+                jobs.append(("base", "noregistry-related", t, r))
     return jobs
 
 
-def phase2():
-    return [(it, c, t, r) for it in ITERATIONS for r in d.REPS for t in TASKS
-            if (cold := result(it, "cold", t, r)) and cold["write_results"]["stored"] for c in WARM]
+def build(tasks, reps):
+    """Trace registries from cold-nowrite runs; stripped registries where bar 3 refuses a card."""
+    sys.path.insert(0, str(DIRS["trace"]))
+    from build import build as trace
+    for r in reps:
+        for t in tasks:
+            reg = run_dir("trace", "cold", t, r) / "registry.sqlite"
+            src = run_dir("base", "cold-nowrite", t, r) / "stream.jsonl"
+            if src.exists() and not reg.exists():
+                d.log(f"trace {t} r{r}: {trace(src, reg)}")
+            c = classify(run_dir("card", "cold", t, r))
+            if c and c["bar3"] == "refused" and c["sites"]:
+                dst = run_dir("bar3", "cold", t, r)
+                if not (dst / "registry.sqlite").exists():
+                    dst.mkdir(parents=True, exist_ok=True)
+                    shutil.copy(run_dir("card", "cold", t, r) / "registry.sqlite", dst / "registry.sqlite")
+                    with sqlite3.connect(dst / "registry.sqlite") as db:
+                        db.execute("DELETE FROM pages")
+                    d.log(f"bar3 {t} r{r}: site record kept, page cards removed")
+
+
+def phase2(tasks, reps):
+    jobs = []
+    for r in reps:
+        for t in tasks:
+            cold = result("card", "cold", t, r)
+            if cold and cold["write_results"]["stored"]:
+                jobs.append(("card", "warm-related-nowrite", t, r))
+            if (run_dir("bar3", "cold", t, r) / "registry.sqlite").exists():
+                jobs.append(("bar3", "warm-related-nowrite", t, r))
+            if (run_dir("trace", "cold", t, r) / "registry.sqlite").exists():
+                jobs.append(("trace", "warm-related-nowrite", t, r))
+    return jobs
+
+
+def api_jobs():
+    return [("api", c, t, r) for r in REPS for t in API for c in ("cold-nowrite-related", "warm-related-nowrite")
+            if c != "warm-related-nowrite" or (run_dir("api", "cold", t, r) / "registry.sqlite").exists()]
+
+
+def bites():
+    return [t for t in STEP if any((c := classify(run_dir("card", "cold", t, r))) and c["bar3"] == "refused"
+                                   for r in REPS)]
 
 
 def rebuild():
-    for f in [HERE] + [EXP / f"out_{it}" for it in ITERATIONS]:
-        d.HERE = f
-        d.rebuild()
+    for f in DIRS.values():
+        if (f / "runs").exists():
+            d.HERE = f
+            d.rebuild()
     d.HERE = HERE
 
 
 def dry():
-    """Each job at the mean cost of the same (condition, task) in earlier runs at the same bar."""
-    def rows(dirs):
-        out = {}
-        for p in dirs:
-            for l in (p / "results.jsonl").read_text(encoding="utf-8").splitlines():
-                if l.strip() and (r := json.loads(l))["task"] in TASKS and r.get("cost_usd") is not None:
-                    out.setdefault((r["condition"], r["task"]), []).append(r)
-        return out
-    prior = {k: rows(v) for k, v in PRIOR.items()}
-    # Pages added on 2026-11-04 have only screened baselines: their cold runs are costed as
-    # cold-nowrite (three+ pages wrote at about baseline cost) and assumed to store a card.
-    cost = lambda it, c, t: statistics.mean(r["cost_usd"] for r in prior[it if c not in BASELINES else None].get(
-        (c, t)) or prior[None][("cold-nowrite", t)])
+    """Each job at the mean cost of the same (condition, task) in earlier runs, else of the condition."""
+    prior = {}
+    for p in ("out_head-0.1", "out_head-0.2", "out_miss-0.5", "out_miss-0.8", "out_miss-0.13"):
+        for l in (EXP / p / "results.jsonl").read_text(encoding="utf-8").splitlines():
+            if l.strip() and (r := json.loads(l)).get("cost_usd") is not None:
+                prior.setdefault((r["condition"], r["task"]), []).append(r["cost_usd"])
+    by_cond = {}
+    for (c, _), v in prior.items():
+        by_cond.setdefault(c, []).extend(v)
+    cost = lambda c, t: statistics.mean(prior.get((c, t)) or prior.get(("cold-nowrite-related" if "related" in c
+                                        else "cold-nowrite", t)) or by_cond[c])
+    p1 = phase1(STEP, REPS)
+    p2 = [(w, "warm-related-nowrite", t, r) for r in REPS for t in STEP for w in ("card", "trace")] + api_jobs()
+    p3 = phase1(STEP[:8], (3,)) + [(w, "warm-related-nowrite", t, 3) for t in STEP[:8] for w in ("card", "trace")]
     total, n = 0.0, 0
-    print(f"{'':10}{'runs':>6}{'est. $':>9}")
-    p1 = phase1()
-    for it in (None,) + ITERATIONS:
-        js = [j for j in p1 if (j[1] in BASELINES) == (it is None) and (it is None or j[0] == it)]
-        s = sum(cost(it, c, t) for _, c, t, _ in js)
-        print(f"{it or 'baselines':10}{len(js):>6}{s:>9.2f}  phase 1")
+    for name, js in (("phase 1", p1), ("phase 2 (at most)", p2), ("phase 3 (~8 tasks)", p3)):
+        s = sum(cost(c, t) for _, c, t, _ in js)
+        print(f"{name:20}{len(js):>5} runs  ${s:6.2f}")
         total, n = total + s, n + len(js)
-    for it in ITERATIONS:  # warm runs at the prior stored rate per task
-        colds = {t: prior[it].get(("cold", t)) or [{"write_results": {"stored": [1]}}] for t in TASKS}
-        k = sum(2 * len(d.REPS) * statistics.mean(bool(r["write_results"]["stored"]) for r in colds[t]) for t in TASKS)
-        s = sum(len(d.REPS) * statistics.mean(bool(r["write_results"]["stored"]) for r in colds[t])
-                * sum(statistics.mean(r["cost_usd"] for r in prior[it].get((c, t)) or prior[None][(PAIR[c], t)])
-                      for c in WARM) for t in TASKS)
-        print(f"{it:10}{k:>6.0f}{s:>9.2f}  phase 2 (expected)")
-        total, n = total + s, n + k
-    print(f"{'total':10}{n:>6.0f}{total:>9.2f}  ~{total * POINTS_PER_DOLLAR:.0f} five-hour points, "
+    print(f"{'total':20}{n:>5} runs  ${total:6.2f}  ~{total * POINTS_PER_DOLLAR:.0f} five-hour points, "
           f"~{total * POINTS_PER_DOLLAR / 8:.0f} weekly points")
-
 
 
 def verify():
     ok = True
-    for f in sorted(set(TASKS.values())):
-        ids = [t for t in TASKS if TASKS[t] == f]
-        for t in ids:
-            p = subprocess.run([d.PY, "run.py", "verify", "--task", t, "--tasks", str(f)], cwd=EXP,
-                               capture_output=True, encoding="utf-8", errors="replace")
-            if p.returncode:
-                print(p.stdout.strip())
-                ok = False
+    for t, f in TASKS.items():
+        p = subprocess.run([d.PY, "run.py", "verify", "--task", t, "--tasks", str(f)], cwd=EXP,
+                           capture_output=True, encoding="utf-8", errors="replace")
+        if p.returncode:
+            print(p.stdout.strip())
+            ok = False
     return ok
 
 
@@ -162,12 +201,18 @@ def main():
         if not verify():
             sys.exit("answer keys failed verify (above); fix them, or rerun if a fetch only timed out")
         ctypes.windll.kernel32.SetThreadExecutionState(0x80000001)  # ES_CONTINUOUS | ES_SYSTEM_REQUIRED
-        jobs = phase1()
-        d.log(f"start phase 1: {len(TASKS)} tasks, {', '.join(ITERATIONS)}, reps {d.REPS}: {len(jobs)} runs")
+        jobs = phase1(STEP, REPS)
+        d.log(f"start phase 1: {len(STEP)} tasks, {IT}, reps {REPS}: {len(jobs)} runs")
         phase(jobs)
-        jobs = phase2()
-        d.log(f"start phase 2: {len(jobs)} reuse runs on cold runs that stored a record")
+        build(STEP, REPS)
+        jobs = phase2(STEP, REPS) + api_jobs()
+        d.log(f"start phase 2: {len(jobs)} reuse runs")
         phase(jobs)
+        b = bites()
+        d.log(f"start phase 3: rep 3 on {len(b)} tasks where bar 3 refuses a card: {', '.join(b)}")
+        phase(phase1(b, (3,)))
+        build(b, (3,))
+        phase(phase2(b, (3,)))
     rebuild()
 
 

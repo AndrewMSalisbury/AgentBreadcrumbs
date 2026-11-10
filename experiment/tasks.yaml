@@ -333,11 +333,11 @@
   # 33.7.2 or any later release: Guava had released 33.8.0 by 2026-11-03. Rows from before
   # then were graded against 33.7.2 alone and keep that grade.
   expect: ['\b(33\.7\.2|33\.([89]|\d\d)\.\d+|(3[4-9]|[4-9]\d)\.\d+\.\d+)\b']
-  check: {url: 'https://central.sonatype.com/api/internal/browse/component/versions?sortField=normalizedVersion&sortDirection=desc&page=0&size=1&filter=namespace%3Acom.google.guava%2Cname%3Aguava', select: [components.0.version], pattern: '"(33\.7\.2|33\.([89]|\d\d)\.\d+|(3[4-9]|[4-9]\d)\.\d+\.\d+)-jre"'}
+  check: {url: 'https://repo1.maven.org/maven2/com/google/guava/guava/maven-metadata.xml', pattern: '<release>(33\.7\.2|33\.([89]|\d\d)\.\d+|(3[4-9]|[4-9]\d)\.\d+\.\d+)-jre</release>'}
   related:
     question: On Maven Central (central.sonatype.com), what is the latest version of org.apache.commons:commons-lang3?
     expect: ['3\.21\.0']
-    check: {url: 'https://central.sonatype.com/api/internal/browse/component/versions?sortField=normalizedVersion&sortDirection=desc&page=0&size=1&filter=namespace%3Aorg.apache.commons%2Cname%3Acommons-lang3', select: [components.0.version], pattern: '"3\.21\.0"'}
+    check: {url: 'https://repo1.maven.org/maven2/org/apache/commons/commons-lang3/maven-metadata.xml', pattern: '<release>3\.21\.0</release>'}
 
 - id: jetbrains-rainbow-brackets
   set: hard
