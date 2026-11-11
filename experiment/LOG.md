@@ -1331,9 +1331,46 @@ Verdict: on Firecrawl a served section is worth about half a task when it holds 
 
 Verdict: card-0.4 keeps mdn's saving and does no harm on gha, but these runs didn't exercise the skip itself. Only the offline and `_serve` tests show it. Matching gha's alias URL would exercise it, and would add nothing there: the skip forwards the agent's `query`, the same call stock makes, plus 1 credit.
 
+## 2026-11-11: rust third, reps 2-3 of each arm (`out_card-0.4/drive_rust.py`)
+
+Why: third-0.1's one card-arm rust run took 8 turns and 21 credits after the note naming ExtractIf.html.
+
+- 4 runs after a warm-up baseline, 40 credits, all correct. Over 3 reps: card $0.085, $0.035, $0.040 (8, 4, 4 turns); stock $0.019, $0.007, $0.065 (3, 2, 6). Means $0.053 against $0.030.
+- **The long runs come from Firecrawl's `query`, not the note.** Every agent opens with a `query` on Vec.html#method.retain_mut. On the short prompt "Since which Rust version is Vec::retain_mut stable?", Firecrawl's model answers **1.16.0** (the right answer is 1.61.0), and the agent then spends turns checking: all 3 card runs, and stock r3, which ran 6 turns. Stock r2's prompt quoted "the '1.61.0' style stability note" and got 1.61.0 in one call; stock r1's prompt got a quote of the heading. The card arm's agents happened to write the short prompt each time. The note is in the same reply but doesn't change the prompt, which is written before it.
+- So rust's gap is the agent's prompt wording against an unreliable `query` on a 31k-token page, in both arms. The named-URL note stays as is.
+
+## 2026-11-11: hitrate-0.1, hit rate from real questions (`hitrate/`, `out_hitrate-0.1/`)
+
+Why: every task so far was written per card, so none of them could say how often a card is hit. The PLAN's Firecrawl-or-local decision turns on that.
+
+**Questions** (`hitrate/collect.py`): the top-voted Stack Overflow answers that link to four docs sites, through the Stack Exchange API's body search (no key): gha (docs.github.com/en/actions), mdn (developer.mozilla.org/en-US/docs/Web), git (git-scm.com/docs) and nginx (nginx.org/en/docs). 398 rows, each a question someone asked, with the docs page its answer links to and, where the link has one, the anchor. Nothing is written by us. Popular pages come up as often as people ask about them: on nginx, ngx_http_core_module is 26 of 100 and the proxy module 12; on gha, expressions, workflow syntax and contexts take about a third; MDN is a long tail (91 pages in 100).
+
+**Pages** (`hitrate/pages.py`): each docs URL is followed through its redirects (gha's renamed paths, http/https) to 189 canonical pages, with heading trees from the local fetch. Anchors are usable on gha (59 of 99 name a heading); on git, MDN and nginx most links carry no anchor, or one inside a long section (nginx directives sit under "Directives"), so section results only mean something on gha.
+
+**Start pages** (`hitrate/start.py`): a card is keyed by the page an agent first scrapes. A stock run per question would cost about 5 credits each, so the agent's model (sonnet, no tools) was asked for the URL it would scrape first. On the 18 known questions (9 related, 9 third) the guess matched stock's actual first scrape on 83% of runs; the misses were gha's alias URL and heroku's dyno-shutdown.
+
+**Curve** (`hitrate/curve.py`): per site, 300 random orders; the first k questions become cards as trace cards are built (start page → answer page and the heading holding the anchor), and each later question is scored. Bounds: deep or top-level sections, literal or redirect-followed start pages, one card per page or every seed's section pooled into it. At k = 75, pooled, deep sections, start pages after redirects:
+
+| site | miss | right section, same page | right section, other page | wrong section | card routes to the answer page |
+|---|---|---|---|---|---|
+| gha | 41% | 8% | 2% | 37% | 13% |
+| git | 53% | 0% | 0% | 4% | 0% |
+| mdn | 95% | 0% | 0% | 1% | 0% |
+| nginx | 50% | 2% | 0% | 27% | 2% |
+
+- **Pages are hit; sections mostly aren't.** On gha a card exists for the start page of 59% of later questions, but the stored section holds the answer for 10%. One card per page (the registry as it is) gives 2-3%. A popular page draws questions about many sections, so a card that keeps one section is wrong for most of them; pooling every section helps, and keeps rising with k.
+- **Routing hits are rare too:** a card on the start page points at the question's actual answer page for 13% of gha questions and 0-2% elsewhere. The model guesses the right page itself for 9% (gha), 42% (git), 19% (mdn), 43% (nginx) of questions.
+- **Following redirects** adds about 7 points of card coverage on gha (literal 49% miss at k = 75 against 42%) and nothing elsewhere.
+
+**Live check, gha** (`hitrate/validate.py`, 11 runs, card-0.4, 24 credits): one order (seed 7), 50 seeds → 37 cards (21 with a section); 11 held-out questions picked across the predictions (3 right, 4 wrong, 2 named, 2 miss); the question is the Stack Overflow title.
+
+- **The prediction failed on all 11, because the start-page guess did.** 10 of 11 agents opened with WebSearch, and their first scrape was Stack Overflow itself (the question's own page, twice), a blog, or a GitHub community discussion; 2 answered from search results without scraping. Only 3 scraped docs.github.com at all. The one card served was on a question predicted to miss (composite actions: the agent went to the docs on its own, reached a carded page, and was served).
+- **The start-page check was biased:** its 18 questions all named their source ("According to MDN…", "In the git-config documentation…"), which sends the agent to the docs. Real questions don't, and the agent goes where search leads, mostly not to the docs.
+
+Verdict: on real questions, docs-page cards are rarely reached. Agents search first and read whatever search ranks, often the Stack Overflow thread itself. When they do reach a carded docs page, its single stored section holds the answer for a small share of questions (2-3% on gha with the registry as it is, 10% pooled, near zero elsewhere). This applies to cards in general, not only on Firecrawl: the local fetch keys cards the same way. The tasks used so far (named source, a fact on one page) are the case where cards do best.
+
 ## Next
 
-- **The rust named-URL note:** 2 more reps of rust third, to see whether the note causes long runs.
-- **Hit rate:** decide how to estimate it (questions sampled per site, not written per card) before the Firecrawl-or-local decision (PLAN).
+- **The decision (PLAN):** hit rate is low on real questions on either backend. What would change it: cards keyed by what agents actually reach (search results, Stack Overflow threads, blogs), and pooled sections per page. Deciding which, if either, to test belongs to the plan.
 - **A truly cold baseline per setup:** this batch's card baseline was cold and had to be replaced; run a throwaway warm-up first.
 - Carried over: trace builder on one-line Firecrawl replies; fold-0.1 on the local fetch (`out_fold-0.1/`); rescore step 2 on medians; the lid-sleep gap.
