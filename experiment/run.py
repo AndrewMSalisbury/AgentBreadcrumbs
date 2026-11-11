@@ -76,6 +76,10 @@ holding only the answer's sections) used an earlier prompt and can't be rerun.
                 registry themselves and serve a page's route card (bc/web_server.py)
   fold-0.2      fold-0.1 with noregistry's prompt plus a line on breadcrumbs: no step that
                 says to fetch before searching
+  worth-0.1q    fold-0.2's prompt on pooled section cards: fetch takes the agent's question and
+                serves the stored section that answers it (bc.section_match.best), else the page
+  worth-0.1o    the same cards served as an outline: the page's headings and stored sections
+                with the questions they answered, in place of the page
 
 noregistry and noregistry-related run the question and the related question with web
 tools only: no registry, and no lookup step in the prompt. Against cold-nowrite they
@@ -205,7 +209,10 @@ Tools: fetch and render get pages as Markdown; their results may carry breadcrum
 
 1. Answer only from pages you fetch or render in this session, not from memory.
 2. End with one line: ANSWER: <answer> (source: <URL>)"""
-FOLDS = {"fold-0.1": FOLD_SYSTEM, "fold-0.2": FOLD2_SYSTEM}
+# worth-0.1: fold-0.2's prompt on pooled section cards, served by the agent's question or as an outline
+# (bc/web_server.py BC_FOLD=question|outline; out_worth-0.1).
+PICKS = {"worth-0.1q": "question", "worth-0.1o": "outline"}
+FOLDS = {"fold-0.1": FOLD_SYSTEM, "fold-0.2": FOLD2_SYSTEM, **{i: FOLD2_SYSTEM for i in PICKS}}
 # --backend firecrawl-mcp may call only these: crawl and agent can spend hundreds of credits in a call.
 # All 30 definitions still load (their ~42k tokens are the arm's fixed overhead; see baseline).
 FIRECRAWL_MCP_TOOLS = ["WebSearch", "mcp__firecrawl__firecrawl_scrape", "mcp__firecrawl__firecrawl_search",
@@ -421,7 +428,7 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
     if cond == "open" or cond in NOREGISTRY or it in FOLDS:
         del servers["mcpServers"]["registry"]
     if it in FOLDS:
-        servers["mcpServers"]["web"]["env"] = {"BC_FOLD": "1", "BC_REGISTRY": str(registry),
+        servers["mcpServers"]["web"]["env"] = {"BC_FOLD": PICKS.get(it, "1"), "BC_REGISTRY": str(registry),
                                                "BC_CALL_LOG": str(run_dir / "calls.log")}
     if BACKEND == "firecrawl-mcp":
         if cond not in NOREGISTRY + ("baseline",):

@@ -70,16 +70,30 @@ def rank(text: str, prompt: str, k1: float = 1.2, b: float = 0.75) -> list[tuple
 NEAR = 0.8  # the section's best window must score at least this share of the page's best
 
 
-def serves(text: str, section: str, prompt: str) -> tuple[bool, str]:
-    """Whether the stored section holds (nearly) the page's best window for the prompt, and why.
+def ratio(text: str, section: str, prompt: str) -> tuple[float | None, str]:
+    """The section's best window score over the page's best for the prompt (None if unscorable), and why.
     A window counts as the section's when at least half of it lies inside the section."""
     span = section_span(text, section)
     if not span:
-        return False, "section not found"
+        return None, "section not found"
     r = rank(text, prompt)
     if not r or r[0][0] == 0:
-        return False, "no prompt term on the page"
+        return None, "no prompt term on the page"
     inside = [x for x in r if min(x[2], span[1]) - max(x[1], span[0]) >= (x[2] - x[1]) / 2]
     sec = inside[0][0] if inside else 0.0
-    ratio = sec / r[0][0]
-    return ratio >= NEAR, f"section's best {sec:.1f} / page's best {r[0][0]:.1f} (line {r[0][1]}) = {ratio:.2f}"
+    return sec / r[0][0], f"section's best {sec:.1f} / page's best {r[0][0]:.1f} (line {r[0][1]}) = {sec / r[0][0]:.2f}"
+
+
+def serves(text: str, section: str, prompt: str) -> tuple[bool, str]:
+    """Whether the stored section holds (nearly) the page's best window for the prompt, and why."""
+    x, why = ratio(text, section, prompt)
+    return x is not None and x >= NEAR, why
+
+
+def best(text: str, sections: list[str], prompt: str) -> tuple[str | None, str]:
+    """worth-0.1: of several stored sections (pooled cards), the one that best serves the prompt, if any does."""
+    scored = [(ratio(text, s, prompt), s) for s in sections]
+    ok = sorted(((x, s, why) for (x, why), s in scored if x is not None and x >= NEAR), reverse=True)
+    if ok:
+        return ok[0][1], ok[0][2]
+    return None, "; ".join(f"{s}: {why}" for (_, why), s in scored)

@@ -1,0 +1,33 @@
+{
+ "warmup": "t01c7bb94",
+ "tasks": {
+  "t1a1dd707": "right",
+  "t1d471615": "right",
+  "t1f8a27bf": "right",
+  "t32a1e6a1": "right",
+  "t512f2792": "right",
+  "t5c5ba1ab": "right",
+  "t5c5fecaa": "right",
+  "t7e2e8302": "right",
+  "t7f2b7c07": "right",
+  "t90df3474": "right",
+  "tb4cf3727": "right",
+  "tc5b37d14": "right",
+  "td138fc49": "right",
+  "tdce58692": "right",
+  "tc6b29116": "wrong",
+  "td0edad55": "wrong",
+  "t1c903c58": "wrong",
+  "t606a3a20": "wrong",
+  "ta2b250a6": "wrong",
+  "t935bf71f": "wrong",
+  "t66d0b9ae": "wrong",
+  "td683e37d": "wrong",
+  "tf6bc94a2": "wrong",
+  "t6342f74d": "wrong",
+  "ta7257f41": "miss",
+  "t4222e2cb": "miss",
+  "t943ae03c": "miss",
+  "t359db76d": "miss"
+ }
+}

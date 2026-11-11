@@ -1414,3 +1414,30 @@ Verdict: on real gha questions, after 75 earlier ones, a pooled card serves the 
 - **Merge alias URLs** (redirects) in card keys.
 - **A truly cold baseline per setup:** this batch's card baseline was cold and had to be replaced; run a throwaway warm-up first.
 - Carried over: trace builder on one-line Firecrawl replies; fold-0.1 on the local fetch (`out_fold-0.1/`); rescore step 2 on medians; the lid-sleep gap.
+
+## 2026-11-11: worth-0.1, what a pooled section is worth on the local fetch (`out_worth-0.1/`)
+
+Why: curve-0.1 found a pooled card serves the right section to 12% of gha questions after 75. This prices a hit, with the section picked per question two ways.
+
+- **Arms** (reps 1-2, local fetch, no credits, $5.36 in all): **stock** (noregistry); **question** (`worth-0.1q`, `BC_FOLD=question`: fetch takes the agent's question, and `bc.section_match.best` picks among the page's stored sections, else the page); **outline** (`worth-0.1o`, `BC_FOLD=outline`: a carded page returns its headings and stored sections with the questions they answered, not the page). Both card arms use fold-0.2's prompt. A throwaway warm-up run per arm went first.
+- **Registries and tasks:** each question's registry pools the trace cards of the other 98 curve-0.1 runs (leave-one-out), every seed's section route kept. Under it, `score.outcome` predicts 14 right, 18 wrong, 12 pass, 55 miss. A random 24 would hold about 3 right, so the run takes all 14 right, 10 wrong (seeded sample) and 4 misses: 28 questions, 168 runs.
+
+| predicted | runs per arm | stock | question | outline |
+|---|---|---|---|---|
+| right | 28 | $0.771 | $0.930 (+21%) | $0.683 (−11%) |
+| wrong | 20 | $0.599 | $0.649 (+8%) | $0.648 (+8%) |
+| miss | 8 | $0.292 | $0.413 | $0.378 |
+| all | 56 | $1.662 | $1.992 (+20%) | $1.709 (+3%) |
+
+- **Cards were rarely served:** question 5 of 48 right-or-wrong runs (4 served, 1 declined), outline 3. The reason: **the agent asks for the section itself on its first fetch** (question 30 of 48, outline 32), and a card applies only to a plain fetch. Other runs fetched an uncarded page first (11, 9) or didn't fetch.
+- **That undoes most of curve-0.1's "right".** 13 of the 14 predicted-right questions were right because their own trace asked for the section the card holds, and the agent does that again unaided. curve-0.1's scorer counted those as hits; they are worth nothing. In curve-0.1, 39 of 86 first fetches already ask for a section. Counting only runs that read the page whole, leave-one-out right is **1 in 99**.
+- **That one real hit** (t1a1dd707, "Complete list of github actions contexts", contexts page, 16k tokens) saves about half where served: outline $0.035 and $0.033, question $0.039 and $0.089 (r2 read on past the section), against stock's $0.068 and $0.067. The 2 other question hits were on runs that would have done fine anyway (level to +$0.003). Outline's one wrong hit cost an extra turn ($0.055 against $0.028-0.031).
+- **The card arms' extra cost where nothing was served** (question +21% on predicted-right, misses +29-41% on $0.29) is behaviour and noise at 2 reps on cheap runs, not served cards. The question arm's tool text and prompt line aren't free, but this run can't size them.
+
+Verdict: on gha with the local fetch, a pooled section card is worth about half a run where the agent would read a big page whole, and that happens about once in 99 questions; most questions either go straight to the right anchor, which the agent knows, or land on another page. Between the two ways of serving, outline was the cheaper (+3% overall against +20%), but neither is a net gain. curve-0.1's 12% is mostly redundant hits; its scorer should count a hit only where the run read more than the section.
+
+## Next
+
+- **Fix curve-0.1's scorer:** a hit counts only where the run read more than the served section; rescore the other sites (MDN, git, nginx) from real traces before deciding whether section cards stay a track.
+- **PLAN:** curve-0.1 and worth-0.1 go into the plan doc (the mirror `docs/PLAN.md` is behind the doc).
+- Carried over: merge alias URLs; trace builder on one-line Firecrawl replies; fold-0.1 on the local fetch (`out_fold-0.1/`); rescore step 2 on medians; the lid-sleep gap.

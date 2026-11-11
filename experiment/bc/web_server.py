@@ -10,6 +10,13 @@ BC_DEFER=1 (miss-0.9): if the lookup sent only the site-record note, that fetch 
 the page-card instructions (bc.common.CARD_NOTE).
 BC_SITE_SIGNAL=1 (miss-0.13): the lookup sent nothing, so the first fetch or render whose
 result shows an access route (bc.common.access_signal) carries the site-record note.
+BC_FOLD=question or outline (worth-0.1): pooled cards, sections only. A plain fetch of a page that
+earlier agents answered from one or more sections (any card on the site whose route is a section of
+this page; a card's "routes" holds every seed's route) is served by section. question: fetch takes a
+`question`, and the stored section that bc.section_match.best ranks as answering it is returned in
+place of the page; if none does, the page as usual. outline: the reply is the page's headings and
+the stored sections with the questions they answered, in place of the page; the agent then asks for
+a section or as_is=true. No other breadcrumbs (no named routes, no other pages listed).
 BC_FOLD=1 (fold-0.1): no lookup tool; fetch and render read the registry (BC_REGISTRY) themselves.
 A plain call for a page with a route card returns the route's content (its url, select and
 section; start found an earlier question's answer, so it is only named) under a line saying so,
@@ -32,6 +39,7 @@ ENFORCE = os.environ.get("BC_ENFORCE") == "1"
 MISSX = os.environ.get("BC_MISS") == "x"
 SEARCHES = os.environ.get("BC_SEARCHES") == "1"
 FOLD = os.environ.get("BC_FOLD") == "1"
+PICK = os.environ.get("BC_FOLD") if os.environ.get("BC_FOLD") in ("question", "outline") else None
 LOGGED = ENFORCE or MISSX
 HEADING = re.compile(r"^(#{1,6})\s+(.+)$")
 mcp = MCPServer("web")
@@ -169,8 +177,92 @@ def fetch_folded(url: str, select: list[str] | None = None, section: str | None 
     return _others(url, _named(url, _fetch(url, select, section, start)))
 
 
+QUESTION_DOC = """ Pass `question`, the question you are answering in a few words:
+    when earlier agents answered questions from sections of this page, a plain fetch returns the
+    section that answers yours instead and says so; pass as_is=true for the page itself."""
+OUTLINE_DOC = """ When earlier agents answered questions from sections of a page, a
+    plain fetch returns the page's headings and those sections, with the questions they answered,
+    instead of the page; then fetch the section you need, or pass as_is=true for the page itself."""
+
+
+def _stored_sections(url: str) -> list[tuple[str, str]]:
+    """worth-0.1: (section, the question it answered) for every stored section route on this page."""
+    out, seen = [], set()
+    for c in _cards(host_of(url)):
+        for r in c.get("routes") or ([c["route"]] if c.get("route") else []):
+            if r.get("section") and page_id(r["url"]) == page_id(url) and r["section"].lower() not in seen:
+                seen.add(r["section"].lower())
+                out.append((r["section"], r.get("for", "")))
+    return out
+
+
+def _distinct(text: str, stored: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    """The stored sections found on the page, one per section ('github context' and '#github-context' are one)."""
+    out, seen = [], set()
+    for s, q in stored:
+        part = _section(text, s)[0]
+        if part is not None and part[:300] not in seen:
+            seen.add(part[:300])
+            out.append((s, q))
+    return out
+
+
+def _page(url: str) -> tuple[str, str] | None:
+    try:
+        text, m = fetch_clean(url)
+    except Exception:
+        return None
+    return (text, f"HTTP {m['status']} {m['content_type']} {m['final_url']}") if text.strip() else None
+
+
+def fetch_question(url: str, question: str | None = None, select: list[str] | None = None,
+                   section: str | None = None, start: int = 0, as_is: bool = False) -> str:
+    if not section and "#" in url:
+        url, section = url.split("#", 1)
+    if not (as_is or select or section or start) and page_id(url) not in _named_pages \
+            and (stored := _stored_sections(url)) and (got := _page(url)):
+        from bc.section_match import best
+        text, head = got
+        _named_pages.add(page_id(url))
+        pick, why = best(text, [s for s, _ in _distinct(text, stored)] or [s for s, _ in stored], question or "")
+        if pick:
+            reply = _respond(text, head, pick, 0)
+            if not _bad(reply):
+                log_call("fold", f"{url}\t{pick}\t{tokens(reply)}\t{why}")
+                return (f"[breadcrumbs: earlier agents answered questions from sections of this page; this is the "
+                        f"section {pick!r}, chosen as the one that answers your question. fetch with as_is=true "
+                        f"for the whole page.]\n{reply}")
+        log_call("fold-declined", f"{url}\t{len(stored)}\t{why[:300]}")
+        return _respond(text, head, None, 0)
+    return _fetch(url, select, section, start)
+
+
+def fetch_outline(url: str, select: list[str] | None = None, section: str | None = None, start: int = 0,
+                  as_is: bool = False) -> str:
+    if not section and "#" in url:
+        url, section = url.split("#", 1)
+    if not (as_is or select or section or start) and page_id(url) not in _named_pages \
+            and (stored := _stored_sections(url)) and (got := _page(url)):
+        text, head = got
+        _named_pages.add(page_id(url))
+        heads = _headings(text.splitlines())
+        ok = _distinct(text, stored)
+        if ok:
+            lines = "\n".join(f"- section={s!r}" + (f" answered: {q[:120]}" if q else "") for s, q in ok)
+            reply = (f"[{head}, {tokens(text)} tokens; not shown]\n[breadcrumbs: earlier agents answered "
+                     f"questions from these sections of this page:\n{lines}\nfetch with section=<heading or #anchor> "
+                     f"for the part you need, or as_is=true for the whole page. Headings: {_outline(heads)}]")
+            log_call("fold", f"{url}\toutline\t{tokens(reply)}\t{len(ok)}")
+            return reply
+        log_call("fold-declined", f"{url}\t{len(stored)}\tsections not found")
+        return _respond(text, head, None, 0)
+    return _fetch(url, select, section, start)
+
+
 fetch.__doc__, fetch_folded.__doc__ = FETCH_DOC, FETCH_DOC + FOLD_DOC
-fetch = mcp.tool(name="fetch", structured_output=False)(fetch_folded if FOLD else fetch)
+fetch_question.__doc__, fetch_outline.__doc__ = FETCH_DOC + QUESTION_DOC, FETCH_DOC + OUTLINE_DOC
+fetch = mcp.tool(name="fetch", structured_output=False)(
+    fetch_question if PICK == "question" else fetch_outline if PICK == "outline" else fetch_folded if FOLD else fetch)
 
 
 _seen_sites: set[str] = set()

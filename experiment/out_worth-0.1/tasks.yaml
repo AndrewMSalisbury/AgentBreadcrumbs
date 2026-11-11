@@ -1,0 +1,179 @@
+- id: t1a1dd707
+  set: curve
+  use_case: docs
+  question: Complete list of github actions contexts
+  expect:
+  - .
+- id: t1c903c58
+  set: curve
+  use_case: docs
+  question: Only run job on specific branch with GitHub Actions
+  expect:
+  - .
+- id: t1d471615
+  set: curve
+  use_case: docs
+  question: Why my github action's cron is not working?
+  expect:
+  - .
+- id: t1f8a27bf
+  set: curve
+  use_case: docs
+  question: GitHub Actions - run step only if job was triggered by specific "on" trigger
+  expect:
+  - .
+- id: t32a1e6a1
+  set: curve
+  use_case: docs
+  question: How having schedule AND push/pull_request events in a GitHub workflow?
+  expect:
+  - .
+- id: t359db76d
+  set: curve
+  use_case: docs
+  question: Can we directly write Python code under "run | " section in action.yml
+    file
+  expect:
+  - .
+- id: t4222e2cb
+  set: curve
+  use_case: docs
+  question: Read JSON file in GitHub Actions
+  expect:
+  - .
+- id: t512f2792
+  set: curve
+  use_case: docs
+  question: .github/workflows files are branch specific?
+  expect:
+  - .
+- id: t5c5ba1ab
+  set: curve
+  use_case: docs
+  question: Only run job on specific branch with GitHub Actions
+  expect:
+  - .
+- id: t5c5fecaa
+  set: curve
+  use_case: docs
+  question: In GitHub Actions, how to get the type of a trigger event as a variable?
+  expect:
+  - .
+- id: t606a3a20
+  set: curve
+  use_case: docs
+  question: GitHub Actions Multiple action in a single repo
+  expect:
+  - .
+- id: t6342f74d
+  set: curve
+  use_case: docs
+  question: Get current job name in Github Actions workflow
+  expect:
+  - .
+- id: t66d0b9ae
+  set: curve
+  use_case: docs
+  question: Auto commit from GitHub actions on push using "[skip ci]" in comment also
+    skips workflow trigger on tag release
+  expect:
+  - .
+- id: t7e2e8302
+  set: curve
+  use_case: docs
+  question: 'github actions: how to check if current push has new tag (is new release)?'
+  expect:
+  - .
+- id: t7f2b7c07
+  set: curve
+  use_case: docs
+  question: How do I trigger a scheduled action on a specific branch?
+  expect:
+  - .
+- id: t90df3474
+  set: curve
+  use_case: docs
+  question: GitHub Actions Ignore Certain Files Inside a Directory
+  expect:
+  - .
+- id: t935bf71f
+  set: curve
+  use_case: docs
+  question: How to pass the output of a bash command to Github Action parameter
+  expect:
+  - .
+- id: t943ae03c
+  set: curve
+  use_case: docs
+  question: Error "Waiting for a runner to pick up this job" using GitHub Actions
+  expect:
+  - .
+- id: ta2b250a6
+  set: curve
+  use_case: docs
+  question: Github actions run only on feature branches
+  expect:
+  - .
+- id: ta7257f41
+  set: curve
+  use_case: docs
+  question: How to set workflow env variables depending on branch
+  expect:
+  - .
+- id: tb4cf3727
+  set: curve
+  use_case: docs
+  question: How to get the title of a Pull Request with Github Actions
+  expect:
+  - .
+- id: tc5b37d14
+  set: curve
+  use_case: docs
+  question: Trigger Github Action only on new tags?
+  expect:
+  - .
+- id: tc6b29116
+  set: curve
+  use_case: docs
+  question: Github Actions - trigger another action after one action is completed
+  expect:
+  - .
+- id: td0edad55
+  set: curve
+  use_case: docs
+  question: How to perform string manipulation while declaring env vars in GitHub
+    Actions
+  expect:
+  - .
+- id: td138fc49
+  set: curve
+  use_case: docs
+  question: Github action works on push but not scheduled
+  expect:
+  - .
+- id: td683e37d
+  set: curve
+  use_case: docs
+  question: How to run a github-actions step, even if the previous step fails, while
+    still failing the job
+  expect:
+  - .
+- id: tdce58692
+  set: curve
+  use_case: docs
+  question: 'GIthub action : Trigger a job only when there is a change in particular
+    directory'
+  expect:
+  - .
+- id: tf6bc94a2
+  set: curve
+  use_case: docs
+  question: How to run a github actions job on workflow failure?
+  expect:
+  - .
+- id: t01c7bb94
+  set: curve
+  use_case: docs
+  question: Trigger Github Actions only when PR is merged
+  expect:
+  - .
