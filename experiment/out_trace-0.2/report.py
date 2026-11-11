@@ -9,6 +9,9 @@
 v1 and v2 cost nothing to write (a registry that serves fetch builds them); trace-0.2's write is
 its cold run against cold-nowrite. Same definitions as out_miss-0.12/report.py: runs averaged over
 reps per task, "mean of per-task changes / weighted change", break-even in related reuses.
+The weighted change follows a few expensive runs, so each group also prints the median per-task
+change on related reuse. Last, the v1 and v2 cards that came out identical give two reuse runs of
+one card each: the run-to-run spread on the same card.
 """
 import json, pathlib, sqlite3, statistics, sys
 
@@ -103,6 +106,10 @@ def table(name, tasks):
             save = sum(v[3] - v[1] for v in s.values())
             be = "none" if extra <= 0 else f"{extra / save:.1f}" if save > 0 else "never"
             print(f"{m + ' ' + arm:20}" + "".join(f"{pct(x) + ' / ' + pct(y):>15}" for x, y in cols) + f"{be:>12}")
+    f = MEASURES["dollars"]
+    b0 = {t: statistics.mean(f(B[("cold-nowrite-related", t, p)]) for p in REPS) for t in tasks}
+    med = lambda a: statistics.median(statistics.mean(f(pair(a, t, p)[1]) for p in REPS) / b0[t] - 1 for t in tasks)
+    print("related $, median per-task change: " + " / ".join(f"{a} {pct(med(a))}" for a in ARMS))
     st = [sites(t, p) for t in tasks for p in REPS]
     print(f"trace-0.2 site records: {sum(n for n, _ in st)} in {sum(n > 0 for n, _ in st)}/{len(st)} cold runs, "
           f"{sum(k for _, k in st)} with a URL pattern")
@@ -131,3 +138,21 @@ for name, tasks in GROUPS.items():
               f"{', '.join(t for t in tasks if t not in done)}")
     if done:
         table(name, done)
+
+
+def records(w, t, p):
+    with sqlite3.connect(DIRS[w] / "runs" / "cold" / t / f"r{p}" / "registry.sqlite") as c:
+        return sorted(r for tb in ("pages", "sites") for (r,) in c.execute(f"SELECT record FROM {tb}"))
+
+
+f = MEASURES["dollars"]
+both = [(t, p) for t in GROUPS["all"] for p in REPS if all(("warm-related-nowrite", t, p) in rows[w] for w in ("v1", "v2"))]
+same = sorted(((f(rows["v1"][("warm-related-nowrite", t, p)]), f(rows["v2"][("warm-related-nowrite", t, p)]), t, p)
+               for t, p in both if records("v1", t, p) == records("v2", t, p)), key=lambda x: -abs(x[1] - x[0]))
+if same:
+    gap = lambda s: sum(b for _, b, _, _ in s) / sum(a for a, _, _, _ in s) - 1
+    a, b, t, p = same[0]
+    print(f"\nidentical v1 and v2 cards: {len(same)} of {len(both)} pairs, related $ v1 {sum(x[0] for x in same):.2f}"
+          f" / v2 {sum(x[1] for x in same):.2f} ({pct(gap(same))}); median pair differs "
+          f"{statistics.median(abs(y - x) / ((x + y) / 2) for x, y, _, _ in same):.0%}")
+    print(f"  largest: {t} r{p} ${a:.3f} / ${b:.3f}; without it {pct(gap(same[1:]))}, without the top 3 {pct(gap(same[3:]))}")

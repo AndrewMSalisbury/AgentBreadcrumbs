@@ -46,12 +46,15 @@ Nobody yet runs a public, agent-written registry of paths through websites; the 
 | Project | What it does | How breadcrumbs differ |
 | --- | --- | --- |
 | [Firecrawl Alexandria](https://firecrawl.dev/howiai) | Curated, paid data library for agents; launched 2026-09-22 with a $75M Series B; in ChatGPT and Codex | Agent-contributed, path-level, long-tail, neutral; strongest company in the space and could add this |
+| [Firecrawl /agent](https://docs.firecrawl.dev/features/agent) | Firecrawl's own web agent (`spark-2`): takes a prompt, searches and navigates on Firecrawl's side, returns an answer and sources; priced in credits by its token use | Its search loop is closed to outside routes; breadcrumbs cut the calling agent's searching, which `/agent` moves inside Firecrawl |
 | [llms.txt](https://llmstxt.org/) | Site-owner-written Markdown map of a site | Written by agents as they work and kept current by them |
 | [Aicorn](https://www.claudepluginhub.com/plugins/telepenin-aicorn-plugin) | Claude Code plugin; shared cache so each page is converted once | Stores judgments and routes, not page copies |
 | [agentsweb.org](https://chromewebstore.google.com/detail/bjdgnbanmhhlicnhclicblekglephipg) | People share pages as Markdown into a public cache | Automatic, and no content redistribution |
 | [AnswersEngine Global Pages](https://answersengine.readthedocs.io/en/latest/fetch_doc.html) | Shared fetched-page cache for scraping customers | Open across providers, not one platform |
 | [webnav](https://socket.dev/npm/package/@dikshanty94/webnav) | Per-user site maps for browsing agents | Shared between all agents |
 | [Web Speed](https://aiindigo.com/tutorials/getting-started-with-web-speed-accelerate-ai-agent-web-navigation) | Described as a shared web-map registry; operator unverified | Closest concept; needs checking |
+| [Unbrowse](https://arxiv.org/abs/2604.00694) | Research system (arXiv, 2026-04): a shared route graph of web apps' internal APIs, learned passively from browsing traffic; cached routes ran 3.6x faster than browser automation on 94 domains | Reading tasks on docs and reference pages, measured in cost; the closest prior art to trace-built cards |
+| [Stagehand](https://github.com/browserbase/stagehand) act caching | Browserbase's browser-agent framework caches a script's actions and replays them on later runs | Shared between agents and keyed by page, not by script |
 
 Lessons from Alexandria: free discovery with paid retrieval, distribution through MCP from day one, agreements with data owners, and a measured quality claim.
 
@@ -72,6 +75,8 @@ The shape of the standard is settled; scoring numbers wait for test data.
 | Fingerprints | Computed by the registry from its own fetch; re-fetched on demand (a dispute or a failed route step), not on a timer | Decided (2026-11-05) |
 | Depth growth and L3 outline | Demand-driven depth; L3 for long or hard pages | Proposed |
 | Core of the L1 card | A route (the cheapest way to get the page's content), not a section map | Decided: section maps failed the bar in map-0.1; route cards cleared it from route-0.1 |
+| Card source | L1 route cards are built by the registry from one run's fetch trace, not written by agents; agents write site records only (not yet shown to pay) | Decided (2026-11-10): trace cards match agent cards with no write cost; pooling traces didn't change them (trace-0.3) |
+| Fetch tools | Any: cards are built from and served to whatever tool the agent fetches with; Firecrawl is the first adapter after the local fetch tool | Proposed (2026-11-10); on Firecrawl, cards save what they save locally but only tie a stock Firecrawl agent (firecrawl-0.1) |
 | Scoring weights and decay | — | After testing |
 | Business model | Tiered subscription: each tier grants token credits spent on breadcrumb reads; agents earn credits by contributing and confirming breadcrumbs | Decided (2026-11-05); prices and earn rates later |
 | Site-owner role | Minimal, if any: no owner-verified records and no owner-written content | Decided (2026-11-05) |
@@ -298,6 +303,24 @@ Both arms use the same fetch and cleaning pipeline, so any saving comes from bre
 
 An API key is only needed if the limits block progress.
 
+**Card source: trace-built, from one run (decided 2026-11-10).** Step 2 and trace-0.2 (LOG, 2026-11-08 and 2026-11-09) found that a route card built from a no-write run's trace saves about as much on related reuse as an agent-written card, with no write cost: about −6% to −8% median. A v3 that pooled several traces per page, kept the cheapest route and templated question-specific paths was checked offline and not run (LOG, 2026-11-10, trace-0.3): only 15 of 60 cards changed, mostly in start offsets, because every pooled trace answered the same question. So card iteration stops here. Pooling traces from different questions on a page is the version worth testing later, once the task set has a third question per page.
+
+**Next: fold the lookup into fetch.** The registry lookup costs about +5% median, close to the whole typical card saving. A fetch that checks the registry itself and returns the route's content removes that step; sketch it here, then measure it against trace-0.2's v1 runs.
+
+**Later: a Firecrawl adapter (proposed 2026-11-10).** Cards should come from, and go to, whatever tool the agent fetches with, so that no single fetch provider holds all the routes. Pooling traces across providers is what one provider can't copy from its own logs. Firecrawl is the first adapter after the local fetch tool:
+
+1. **Read Firecrawl traces:** `build.py` recognizes only `mcp__web__fetch` and `mcp__web__render`, judges success from the `[HTTP 200 ...]` header and reads page size from `tokens a-b of N`. The adapter adds `firecrawl-mcp`'s scrape calls, takes success from the reply's status code and size from the returned Markdown, and keeps the scrape options that held the answer (formats, main-content-only, include and exclude tags, waits and actions).
+2. **Serve routes Firecrawl can follow:** a card's `section` and `start` are arguments of the local fetch tool. A reader on Firecrawl gets the route's URL and scrape options; a route recorded on one tool is offered on another only as a URL.
+3. **Test it:** rerun step 2's 30 tasks with Firecrawl as the agent's fetch tool, build trace cards from those runs, and check that related reuse saves as much as it does on the local fetch.
+
+Firecrawl's scrape returns whole pages (the redis SET page is about 14k tokens, against the card's 557-token section on the local fetch), so the adapter slices sections itself, and part of any Firecrawl saving will come from that slicing rather than the cards; the test separates the two with a no-registry arm on the sliced tool. It starts as a Firecrawl backend for the fold fetch tool (fold-0.1), so it is measured alongside the folded lookup rather than after it.
+
+**First Firecrawl result: break-even against stock (firecrawl-0.1, LOG 2026-11-10).** On the 9 hard tasks at 1 rep, all correct, three arms on the related question, net of each setup's no-question baseline with credits at the Hobby price: stock `firecrawl-mcp` $0.542, our fetch tool on Firecrawl's pages without cards $0.876, fold with cards built from Firecrawl traces $0.541. Cards alone (fold against the tool) save −9% median, as on the local fetch, so the card's effect doesn't depend on the backend. But the stock agent mostly scrapes a URL it already knows with Firecrawl's `query` format (Firecrawl's model answers the question, 5 credits) and reads only the answer, which does most of what a section route does; it searched first on only 2 of 9 tasks. Fold wins where stock reads whole pages or searches, stock where one query is enough, and in Claude dollars alone stock is cheaper; fold's edge is credits (20 against 41), so at the Standard credit price stock leads by about 12%. The stock server's 30 tool definitions (about 42k tokens a turn) are its own overhead and are kept out of the comparison.
+
+**Next: a card in front of `query`.** A wrapper with the stock `firecrawl_scrape` schema that serves a carded page from its route (a 1-credit section slice, or a raw source over plain HTTP for free) in place of a 5-credit query, measured against the stock agent directly. That is the version a Firecrawl user would run. If it can't beat `query`, a card on Firecrawl is worth a few credits per hit and little else, and the case for breadcrumbs rests on agents that read pages themselves.
+
+**Firecrawl `/agent` is out of scope (2026-11-10).** `/agent` runs its own search loop on Firecrawl's side, so the calling agent makes one call with or without breadcrumbs. A probe on two related questions (LOG, 2026-11-10) found a card hit routes around it, one 1-credit scrape against 6-8 credits and 11-37 s per run, but that only restates Firecrawl's own advice to scrape known URLs, and the questions were far easier than the deep tasks `/agent` is built for. Passing a card's URLs as `urls` narrows that search to a route recorded for another question, which on deep tasks risks confident wrong answers. Breadcrumbs could reach `/agent` only if Firecrawl used them itself.
+
 ## Roadmap
 
 ![The registry is built only after the fair test proves savings](img/roadmap.png)
@@ -311,7 +334,7 @@ The two risks that could sink the project are poisoned records and a large incum
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
 | Poisoned or injected breadcrumbs | Agents misled or hijacked | Schema field limits, imperative-text filter, scoring, poisoning trial before launch |
-| Firecrawl or an AI provider builds this | Loss of differentiation | Stay neutral and open; focus on paths and the long tail; ship the standard early |
+| Firecrawl, an AI provider or Unbrowse builds this | Loss of differentiation; trace-built cards need no agent to write, so any fetch provider could build them from its own logs. Firecrawl's `/agent` already runs the whole search loop where only Firecrawl sees the routes | Stay neutral and open; focus on paths and the long tail; ship the standard early |
 | Stale breadcrumbs look current | Wrong answers delivered confidently | Registry fingerprints, staleness signals, fact expiry |
 | Copyright or terms-of-service complaints | Legal exposure, hostile site owners | Pointers and facts only, quote limits, public pages only, pointer-only records on paths that opt out via robots.txt or AI opt-out signals, no other owner role |
 | Providers will not contribute | Registry stays empty | MCP distribution; show token savings; free reads |
@@ -336,6 +359,8 @@ The two risks that could sink the project are poisoned records and a large incum
 - [The /llms.txt proposal](https://llmstxt.org/)
 - [Aicorn plugin](https://www.claudepluginhub.com/plugins/telepenin-aicorn-plugin)
 - [agentsweb.org — Cache for AI](https://chromewebstore.google.com/detail/bjdgnbanmhhlicnhclicblekglephipg)
+- [Internal APIs Are All You Need (Unbrowse), arXiv 2604.00694](https://arxiv.org/abs/2604.00694)
+- [Stagehand act caching, releases digest 2026-06-15](https://releases.sh/collections/browser-automation/digest/2026-06-15)
 - [AnswersEngine fetch docs](https://answersengine.readthedocs.io/en/latest/fetch_doc.html)
 - [webnav](https://socket.dev/npm/package/@dikshanty94/webnav)
 - [Web Speed tutorial](https://aiindigo.com/tutorials/getting-started-with-web-speed-accelerate-ai-agent-web-navigation)

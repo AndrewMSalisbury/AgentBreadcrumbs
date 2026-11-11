@@ -27,6 +27,9 @@ Each iteration is named `<approach>-0.<n>`: a new approach starts at 0.1 and eac
 | miss-0.13 | miss-0.11 with no note on a miss: the site-record note comes with the first result that shows an access route | `out_miss-0.13/` |
 | miss-0.14 | miss-0.13 without the 3-call minimum (bar 3 is read off its runs by `out_miss-0.12/bar3.py`) | `out_miss-0.14/` |
 | trace-0.1 | No agent writes: route cards built from a no-write run's trace (`out_trace-0.1/build.py`) | `out_trace-0.1/` |
+| trace-0.2 | Lean trace cards (no `start` offset), and a cold arm under miss-0.13's site-record note only, its card built from its own trace | `out_trace-0.2/` |
+| trace-0.3 | Not run: an offline check of trace cards built from the cheapest of several traces (`out_trace-0.3/check.py`) | `out_trace-0.3/` |
+| firecrawl-0.1 | fold-0.1 and noregistry with pages from Firecrawl's scrape (`--backend firecrawl`), against an agent on the stock `firecrawl-mcp` server (`--backend firecrawl-mcp`); cards built from the Firecrawl-backed noregistry run | `out_firecrawl-0.1/` |
 
 `out_rep1_oldrule/` and `out_smoke_2026-10-26/` are setup runs from before narrow-0.1.
 
@@ -1076,16 +1079,132 @@ Dollars, weighted change against same-day no-write (mean / weighted per group in
 | Hard, v1 / v2 / trace-0.2 | 0 / 0 / +18% | −14% / −16% / −9% | −13% / −15% / −7% |
 | **All 30, v1 / v2 / trace-0.2** | 0 / 0 / +0% | **−23% / −11% / −11%** | **−21% / −10% / −10%** |
 
-- **The v1/v2 gap is rep noise, not the offset.** Only 20 of 59 card pairs differ at all; the other 39 are byte-identical, because those runs used no offset. On the 20 that differ, related reuse costs $1.70 under v1 and $1.70 under v2. On the 39 identical pairs (40 runs) v2 costs 32% more: the same card, two reuse runs, a 32% gap. haproxy-config is −80% under v1 and +8% under v2 with identical cards. Dropping the offset neither fixed systemd, vim and sqlite nor hurt anything.
-- **The noise floor is about 30%** on 2 reps of a related reuse, on these pages. Step 2's arm gaps (bar 2 against bar 3, 3 points; trace against agent cards, 1 point) and this entry's are all under it, so none of them separates arms.
-- **Agent-written site records don't pay yet.** They were stored in 11 of 60 cold runs (curl, npm, rsync, systemd, vim, git-gc-auto, sonatype-guava), all with a URL pattern; none on two-call pages. curl's related reuse is −42% with a site record next to a lean card, against −90% / −87% on v1 / v2, whose card already routes to `cmdline-opts/keepalive-cnt.md`. The trace-0.2 cold run costs nothing extra across all 30 (+0% weighted) but +18% on the hard set.
+The median per-task change on related reuse (added to `report.md` 2026-11-10) is −6% / −8% / −6% across all 30: a tie. The weighted change follows a few expensive runs, and on these 60 pairs one run makes most of the v1/v2 gap.
+
+- **The v1/v2 gap is one run, not the offset.** Only 20 of 60 card pairs differ at all; the other 40 are byte-identical (one of them empty), because those runs used no offset. On the 20 that differ, related reuse costs $1.70 under v1 and $1.70 under v2. On the 40 identical pairs v2 costs 32% more in total ($2.31 against $1.74), but the median pair differs 4%. The gap is haproxy-config r1: with the same card, the v1 reader took 4 web calls ($0.05) and the v2 reader asked for a section `sha2([<avalanche>])` that doesn't exist, then paged through the manual by offset (11 web calls, $0.41, above no-write's $0.29). Without that pair the gap is +12%, without the top three −2%. That run is also haproxy's −80% / +8% in `report.md`. Dropping the offset neither fixed systemd, vim and sqlite nor hurt anything.
+- **Run-to-run noise is a heavy tail, not a floor** (corrected 2026-11-10; this entry first read the 32% as a ~30% noise floor). Most reuse runs on the same card repeat within a few percent; now and then a reader misses the card's route and wanders, and on an expensive page one such run moves a weighted group figure by 10 points or more. So group gaps on the weighted measure don't separate arms at 2 reps: step 2's (bar 2 against bar 3, 3 points; trace against agent cards, 1 point) and this entry's. Medians are steadier but still move with a few tasks (three+: v1 −13%, v2 −2%; hard: v1 −8%, v2 −22%).
+- **Agent-written site records don't pay yet.** They were stored in 11 of 60 cold runs (curl, npm, rsync, systemd, vim, git-gc-auto, sonatype-guava), all with a URL pattern; none on two-call pages. curl's −42% under trace-0.2 against −90% / −87% on v1 / v2 isn't the site record: in r1 the trace-0.2 cold run wrote no site record and its card routes to the whole man page, so reuse costs what no-write does ($0.095 against $0.094). In r2, with a site record and a card to `cmdline-opts/keepalive-cnt.md`, it costs $0.013, level with v1 and v2. The trace-0.2 cold run costs nothing extra across all 30 (+0% weighted) but +18% on the hard set.
 - **Accuracy:** cold 60/60, no-write 120/120, reuse 179/180. The miss is py-subprocess r2 on v2, the same `#popen-constructor` card that missed in step 2.
 
-Verdict: no change to the card. Without the offset the card is no better and no worse, and site records add little at this sample size. The larger finding is the noise: identical cards differ 32% across 40 reuse runs, so comparisons between card variants need more reps per task, or a paired design that measures the same card twice to estimate the floor.
+Verdict: no change to the card. Without the offset the card is no better and no worse (median −6% against −8%), and site records add little at this sample size. The larger finding is the shape of the noise: identical cards repeat within a median 4%, and the 32% gap between them is one reader that missed the route. Card variants now differ less than such runs move a group, so the typical trace card saves about 6-8% on related reuse, and what decides the headline is how often a reader wanders.
 
 ## Next
 
-- **Measure the noise floor before more card variants:** rerun the same registry several times per task (warm-related-nowrite, reps 3+ on one card) to get the per-task spread, then size reps so a 10-point gap between arms shows.
-- **Then rerun v1 against the agent's site records** at those reps, on the three+ pages and the hard set, where the saving is.
+- **Rescore step 2 on medians** (`out_miss-0.12/report.py`): its bar 2 / bar 3 and trace / agent-card gaps were read on the weighted measure.
+- **Read the runs that wander, not more card variants:** haproxy v2 r1, rust-vec-extract-if (+160% to +266% on every arm), py-subprocess, vim-options. Do readers ignore the card, guess section names, or page by offset? A card that fixes that (say, the page's real heading form) is worth more than offset or section tweaks.
+- **More reps only where a rescored gap is still close:** the 40 identical-card pairs here already measure the same card twice, so a separate floor batch isn't needed.
 - **Folding lookup into fetch** and the product sketch in PLAN.md still stand (2026-11-08).
 - **Close the lid-sleep gap** (2026-11-08): this batch lost a morning to it.
+
+## 2026-11-10: trace-0.3, checked offline and not run: the cheapest of several traces (`out_trace-0.3/check.py`)
+
+Why: a trace card is only as good as the route its one source run found. curl's was −4% in step 2, built from a run that answered from the man page, and −90% in trace-0.2, built from runs that found `cmdline-opts/keepalive-cnt.md`. The proposal (PLAN.md, 2026-11-10) was a v3 registry that pools every cold-nowrite trace on a page, keeps the route returning the fewest tokens, and turns a question term in the route's path into a `{placeholder}` in its notes, as the agent's curl card did. Before spending the ~$3.75 on 60 reuse runs, `check.py` built each v3 card from step 2's and trace-0.2's cold-nowrite traces (4-5 per task) and compared it with trace-0.2's v1 cards.
+
+- **15 of 60 cards differ from v1.** 6 differ only in the start offset, changing the slice by 1-5% (apache, bash, linux-tcp7, sqlite, systemd r2, vim). 4 are likely worse for a different question: render-free-spindown's original question's own 142-token section (`Spinning down on idle`), rsync r1's Debian man page from a 10-call run, haproxy's `#3.2` for the named section (3 tokens smaller) and k8s r1 dropping its section (13 tokens smaller). 3 look better: npm r2 (no card before), gha r2 and pytest r1 (a named section for an offset). systemd r1's change of site is a toss-up.
+- **Templating has nothing to do.** It applies only to curl, and trace-0.2's v1 curl cards already route to `cmdline-opts/keepalive-cnt.md` (−90%).
+- **The pool is too uniform.** Every trace answers the same original question with the same fetch tool, whose slices cap near 10k tokens, so the cheapest route differs from the latest one mostly in offsets. A real registry pools traces from different questions on a page; testing that needs a third question per page, so the related question scored isn't also a source.
+
+Verdict: v3 isn't run. With 3 likely improvements in 60 cards and the noise above, a null result is the expected outcome and wouldn't tell a small effect from none. On this task set a single-trace card is already near what pooling gives, so card iteration stops here. The default stays the trace card (v1), at about −6% to −8% median on related reuse with no write cost.
+
+## Next
+
+- **Folding lookup into fetch:** the lookup costs about +5% median (miss-0.13; step 2), close to the whole typical card saving. A fetch that checks the registry itself and returns the route's content removes that step. Sketch it in PLAN.md, then measure it against trace-0.2's v1 runs.
+- **Rescore step 2 on medians** (`out_miss-0.12/report.py`), so the record of agent cards against trace cards rests on the steadier measure.
+- **Close the lid-sleep gap** (2026-11-08) before the next long batch.
+
+## 2026-11-10: Firecrawl /agent on two related questions (not an iteration)
+
+Why: if a fetch provider's own agent does the searching, the calling agent makes one call either way and a breadcrumb has nothing left to cut there. Firecrawl's `/agent` (v2, model `spark-2`) takes a prompt, optional `urls` and an `effort`, and returns an answer with its sources. Probe on the related questions of redis-set and curl-manpage: (A) `/agent` with the prompt only; (B) `/agent` with the v1 card's page and route URLs and `effort: "low"`; (C) a `/scrape` of the page the v1 reader answered from. Script and results are outside the repo (session scratchpad).
+
+| | A: prompt only | B: card URLs, low effort | C: scrape |
+| --- | --- | --- | --- |
+| curl, time (free run) | 21.1 s | 10.6 s | 0.4 s, 1 credit, 558 chars |
+| redis, time (free runs) | 17.3 s | 10.7 s | 0.4 s, 1 credit, 57,691 chars |
+| redis, paid run | 8 credits, 36.9 s | 6 credits, 10.8 s | |
+
+- **All seven `/agent` runs were correct.** The first five of a day are free and report `creditsUsed: 0` (a fifth, redis prompt-only, took 21.2 s), so prices come only from the two paid redis runs: 8 credits ($0.030 on Hobby, $0.008 on Standard) with the prompt, 6 with the card's URL.
+- **A card hit routes around `/agent`:** one scrape (1 credit, under a second) against 6-8 credits and 11-37 s. Firecrawl's own docs say the same: for a known URL, scrape (or its JSON mode) is cheaper; `/agent` is for when the URLs are unknown. So this mostly confirms their guidance and adds nothing about `/agent` itself.
+- **Firecrawl's scrape returns the whole page:** redis is 57,691 chars (about 14k tokens) against the 557-token section the local fetch serves from the same card. On Firecrawl, section slicing is where much of a card's saving would come from.
+- **Not a fair test of `/agent`.** Both questions are answered in one or two calls; `/agent` is built for deep tasks across many pages. Passing a card's URLs as `urls` narrows its search to a route recorded for another question, and on a deep task that risks a confident wrong answer, which this task set (one answer, one page) can't catch.
+
+Verdict: `/agent` is dropped from the test plan. Its search loop runs on Firecrawl's side, where breadcrumbs could enter only if Firecrawl used them. The Firecrawl question that matters is the scrape and search path (`firecrawl-mcp`), where the calling agent still pays for wrong pages and whole-page reads: next is a Firecrawl backend for the fold fetch tool.
+
+## Next
+
+- **Firecrawl backend for fold-0.1** (`BC_BACKEND=firecrawl` in `bc/web_server.py`): the same fetch tool with pages from Firecrawl's scrape, sliced locally. Arms: noregistry on stock `firecrawl-mcp`, noregistry on the Firecrawl-backed tool (to separate the tool's slicing from the cards), and fold on the Firecrawl-backed tool with cards built from its own cold runs.
+- **Measure fold-0.1 on the local fetch** against trace-0.2's v1 runs, as planned, so the Firecrawl result has a local one to compare with.
+- **Rescore step 2 on medians** (`out_miss-0.12/report.py`).
+- **Close the lid-sleep gap** (2026-11-08) before the next long batch.
+
+## 2026-11-10: firecrawl-0.1 on redis-set, and a no-question baseline per server (`out_firecrawl-0.1/`)
+
+Why: whether cards still save when pages come from Firecrawl, the question the `/agent` probe set aside. The Firecrawl-backed fetch tool differs from a stock Firecrawl setup in two ways at once (it slices pages, and fold serves cards), so three arms separate them, all on the related question, 1 rep:
+
+- **1, stock:** `noregistry-related` on the stock `firecrawl-mcp` server (3.39.0, launched by `bc/firecrawl_mcp.py`): what a Firecrawl user pays today.
+- **2, tool:** `noregistry-related` on our fetch tool with `--backend firecrawl`: Firecrawl's pages, our slicing, no cards.
+- **3, fold:** `warm-related-nowrite --iteration fold-0.1 --backend firecrawl`, its card built (`out_trace-0.1/build.py`, v1) from arm 2's run on the original question, since a trace doesn't depend on whether the run had a registry. Cards are built from Firecrawl traces, not reused from local ones: Firecrawl's Markdown has its own headings and sizes.
+
+`baseline` ("Reply with the word OK") ran once per setup with only that arm's servers. The tool definitions load even though baseline allows no tools.
+
+| | Claude $ | Baseline | Net | Credits | Net + credits (Hobby) | Calls |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1, stock | $0.196 | $0.167 (30 tools, 41,776 tokens) | $0.029 | 6 | $0.052 | 2 scrapes |
+| 2, tool | $0.067 | $0.010 (2 tools, 2,420 tokens) | $0.057 | 1 | $0.061 | 1 fetch, whole page (~15k tokens) |
+| 3, fold | $0.012 | $0.010 | $0.002 | 1 | $0.006 | 1 fetch, the card's section (618 tokens) |
+| source run (arm 2, original question) | $0.020 | | | 2 | | 2 fetches |
+
+All correct. A credit is $0.0038 on Hobby.
+
+- **Cards save as much on Firecrawl as locally:** fold against the tool is −83% in Claude dollars, against −85% on the local fetch (noregistry-related $0.066, fold-0.1 $0.008-0.010). The Firecrawl-built card worked unchanged.
+- **Slicing alone doesn't pay here.** Net of each baseline, stock and tool cost about the same ($0.052 and $0.061). The stock agent's first scrape (63 KB) passed Claude Code's tool-output limit and was saved to a file it couldn't read, so it re-scraped with Firecrawl's `query` format, which answers on Firecrawl's side: fewer Claude tokens, about 5 more credits. So on this page the whole saving is the card's, not the tool's.
+- **The stock server's overhead is per turn.** Its 30 tool definitions (`crawl`, `agent`, `monitor_*`, `interact` and others) are about 42k tokens, written once and re-read from cache on every later turn. Arm 1 took 3 turns against the baseline's 1, so part of its $0.029 net is still definitions. That is Firecrawl's packaging, not something cards fix, and it is kept out of the card comparison; runs with many turns should report cost per turn too.
+- **Section names carry Firecrawl's Markdown:** the card's section is `Optional arguments  Copy link to clipboard`, the docs' anchor text kept in the heading. It works on the Firecrawl backend but wouldn't on the local one, so a route moves between fetch tools only as a URL (PLAN.md).
+
+Verdict: on one task near the best case (redis was −72% locally; the median card saves 6-8%), the card's saving survives the move to Firecrawl, and the tool's slicing adds nothing that Firecrawl's `query` format doesn't. The hard set at 1 rep tests whether that holds where runs take several calls.
+
+## Next
+
+- **firecrawl-0.1 on the hard set** (9 tasks, 1 rep; `out_firecrawl-0.1/drive.py`), all four runs per task, with each arm's baseline subtracted. The stock arm may use only scrape, search and map (and WebSearch): `crawl` and `agent` can spend hundreds of credits in one call. Its definitions still load, so its overhead is unchanged; on redis it used only scrape.
+- **Measure fold-0.1 on the local fetch** against trace-0.2's v1 runs (`out_fold-0.1/` has the runs; no LOG entry yet).
+- **Rescore step 2 on medians** (`out_miss-0.12/report.py`).
+- **Close the lid-sleep gap** (2026-11-08) before the next long batch.
+
+## 2026-11-10: firecrawl-0.1 on the hard set (`out_firecrawl-0.1/drive.py`, `report.py`)
+
+Why: the redis entry above is one task near the best case. This runs the 9 hard multi-fetch tasks the same way, 1 rep: source run, tool, fold and stock (scrape, search and map only), 36 runs and 110 credits.
+
+The redis baselines were cold: the prompt cache was empty, so the tool definitions were written fresh. Back-to-back runs read them from cache, and the first stock run here cost $0.021, under the $0.167 cold baseline. Warm baselines, run right after a cold one, are $0.010 (stock) and $0.002 (tool); `report.py` subtracts the cold or warm one according to whether a run's first turn read the definitions from cache. Credits are exact: ours from each run's `calls.log`, stock's from its scrapes (1 each, 5 with the `query` format, which matched the balance in every job but one where it lagged).
+
+Net per task (Claude dollars less baseline, plus credits at the Hobby price), related question:
+
+| Task | Stock | Tool | Fold | Stock's calls |
+| --- | --- | --- | --- | --- |
+| bash-histsize | $0.030 | $0.082 | $0.063 | 1 query scrape |
+| gha-matrix-max-jobs | $0.080 | $0.385 | $0.043 | 2 searches, 1 query scrape |
+| git-gc-auto | $0.029 | $0.035 | $0.037 | 1 query scrape |
+| heroku-daily-restart | $0.066 | $0.056 | $0.048 | search, query + Markdown scrape |
+| mdn-fetch-credentials | $0.146 | $0.063 | $0.057 | query + 2 Markdown scrapes |
+| nginx-keepalive-requests | $0.030 | $0.073 | $0.141 | 1 query scrape |
+| render-free-spindown | $0.035 | $0.026 | $0.026 | 1 Markdown scrape |
+| rust-vec-extract-if | $0.030 | $0.081 | $0.053 | 1 query scrape |
+| sonatype-guava | $0.096 | $0.074 | $0.074 | 2 Markdown scrapes |
+| **Total** | **$0.542** | **$0.876** | **$0.541** | |
+
+All 27 correct. Credits: stock 41, tool 30, fold 20.
+
+- **Cards alone (fold against tool): median −9%, total −38%.** The median matches the local fetch's (v1 on the hard set, −8% median in trace-0.2). The total is mostly gha, where the tool run wandered (10 turns, 7 fetches, $0.385) and the fold run didn't. nginx went the other way (+93%). So the card's effect doesn't depend on the fetch backend.
+- **The stock agent answers on Firecrawl's side.** It used `query` (a question answered by Firecrawl's model, 5 credits) on 7 of 9 tasks, and on 4 (bash, git-gc, nginx, rust) a single query scrape of a URL it knew was the whole run: 2 turns, $0.030. The tool arm reads the page itself: median +21% against stock, total +62%.
+- **Fold against stock: a tie.** Totals $0.541 and $0.542; fold is cheaper on 5 tasks and stock on 4 (median −23%, which is that coin flip). Stock wins where one query on a guessed URL is enough (bash, git-gc, nginx, rust); fold wins where stock read whole Markdown pages or searched (mdn, sonatype, heroku, gha). In Claude dollars alone stock is cheaper ($0.386 against $0.464), and fold's edge is credits (20 against 41). At the Standard price ($0.001 a credit) stock leads by about 12%.
+- **The card's "skip the search" value is small here:** these are popular docs, and the stock agent guessed the right URL without a search in 7 of 9 tasks.
+- **sonatype got no card:** Firecrawl flattens the Maven XML into one line, which the trace builder doesn't count as a successful fetch. gha's fold run answered from WebSearch results alone, against the prompt's rule; it was correct.
+
+Verdict: on the hard set, cards save on Firecrawl about what they save locally, but Firecrawl's `query` format already does most of what a section route does, so against a stock Firecrawl agent, breadcrumbs plus our tool break even. A card adds something over `query` only when it gets to the answer more cheaply than a 5-credit query on a URL the agent can already guess. One rep, 9 tasks: the tie is within the noise either way.
+
+## Next
+
+- **A card in front of `query`:** wrap the stock `firecrawl_scrape` (same schema) so that a call on a carded page is served from the card's route: a 1-credit section slice, or a raw source fetched over plain HTTP for free, in place of a 5-credit query. That is the version of fold a Firecrawl user would actually run, compared against stock directly.
+- **Report Claude dollars and credits separately:** which arm wins depends on the credit price (Hobby $0.0038, Standard $0.001).
+- **Trace builder on Firecrawl output:** count a one-line reply (flattened XML or JSON) as a successful fetch.
+- **Measure fold-0.1 on the local fetch** against trace-0.2's v1 runs (`out_fold-0.1/`; no LOG entry yet).
+- **Rescore step 2 on medians** (`out_miss-0.12/report.py`).
+- **Close the lid-sleep gap** (2026-11-08) before the next long batch.

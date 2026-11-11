@@ -3,7 +3,7 @@
 Both experiment arms get pages through these functions, so any saving comes
 from breadcrumbs, not from better cleanup.
 """
-import json, os, re, subprocess, tempfile
+import json, os, re, subprocess, tempfile, time
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
 import httpx, tiktoken, trafilatura
@@ -95,9 +95,50 @@ def http_get(url: str) -> httpx.Response:
         return c.get(url)
 
 
+# BC_BACKEND=firecrawl: pages come from Firecrawl's /v2/scrape (Markdown, main content only)
+# instead of http_get + clean_html, and render is the same scrape, since Firecrawl runs
+# JavaScript anyway. The tools above it (section, start, slicing, fold) are unchanged. The key
+# is FIRECRAWL_API_KEY, else the file BC_FIRECRAWL_KEY_FILE (default ~/.firecrawl_key), so
+# it never lands in a run's mcp.json. Each scrape logs a "firecrawl" line with its credits.
+FIRECRAWL = os.environ.get("BC_BACKEND") == "firecrawl"
+FIRECRAWL_API = "https://api.firecrawl.dev/v2"
+
+
+def _firecrawl_key() -> str:
+    if key := os.environ.get("FIRECRAWL_API_KEY"):
+        return key
+    path = os.environ.get("BC_FIRECRAWL_KEY_FILE") or os.path.join(os.path.expanduser("~"), ".firecrawl_key")
+    with open(path, encoding="utf-8") as f:
+        return f.read().strip()
+
+
+def firecrawl_scrape(url: str, wait_ms: int = 0) -> tuple[str, dict]:
+    """(markdown, meta) from Firecrawl, with meta shaped like fetch_clean's. Retries rate limits."""
+    body = {"url": url, "formats": ["markdown"], "onlyMainContent": True, **({"waitFor": wait_ms} if wait_ms else {})}
+    for attempt in range(5):
+        r = httpx.post(f"{FIRECRAWL_API}/scrape", json=body, timeout=120,
+                       headers={"Authorization": f"Bearer {_firecrawl_key()}"})
+        if r.status_code != 429 or attempt == 4:
+            break
+        time.sleep(float(r.json().get("retry_after_seconds") or 30) + 1)
+    if r.status_code != 200:
+        raise RuntimeError(f"firecrawl HTTP {r.status_code}: {r.text[:300]}")
+    data = r.json().get("data") or {}
+    md, m = data.get("markdown") or "", data.get("metadata") or {}
+    ctype = (m.get("contentType") or "text/markdown").split(";")[0].strip()
+    meta = {"status": m.get("statusCode", 200), "final_url": m.get("url") or m.get("sourceURL") or url,
+            "content_type": ctype, "raw_tokens": tokens(md), "credits": m.get("creditsUsed")}
+    log_call("firecrawl", f"{url}\t{meta['credits']}")
+    return md, meta
+
+
 def fetch_clean(url: str, select: list[str] | None = None) -> tuple[str, dict]:
     """Fetch a URL and return (text, meta). HTML is cleaned to Markdown; JSON and
-    plain text/Markdown pass through (JSON optionally reduced to `select` paths)."""
+    plain text/Markdown pass through (JSON optionally reduced to `select` paths).
+    BC_BACKEND=firecrawl: Firecrawl's scrape, except with `select`, which reduces a JSON
+    API reply and so stays a plain request."""
+    if FIRECRAWL and not select:
+        return firecrawl_scrape(url)
     r = http_get(url)
     ctype = r.headers.get("content-type", "").split(";")[0].strip()
     meta = {"status": r.status_code, "final_url": str(r.url), "content_type": ctype,
@@ -116,7 +157,11 @@ def fetch_clean(url: str, select: list[str] | None = None) -> tuple[str, dict]:
 
 
 def render_clean(url: str, wait_ms: int = 10000) -> tuple[str, dict]:
-    """Render with headless Chrome, then clean like fetch_clean."""
+    """Render with headless Chrome, then clean like fetch_clean (BC_BACKEND=firecrawl: a
+    Firecrawl scrape that waits up to 5 s for the page's scripts)."""
+    if FIRECRAWL:
+        text, _ = firecrawl_scrape(url, wait_ms=min(wait_ms, 5000))
+        return text, {"rendered_tokens": tokens(text)}
     with tempfile.TemporaryDirectory() as profile:
         p = subprocess.run(
             [CHROME, "--headless=new", "--disable-gpu", "--no-first-run",

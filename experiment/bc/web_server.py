@@ -10,12 +10,18 @@ BC_DEFER=1 (miss-0.9): if the lookup sent only the site-record note, that fetch 
 the page-card instructions (bc.common.CARD_NOTE).
 BC_SITE_SIGNAL=1 (miss-0.13): the lookup sent nothing, so the first fetch or render whose
 result shows an access route (bc.common.access_signal) carries the site-record note.
+BC_FOLD=1 (fold-0.1): no lookup tool; fetch and render read the registry (BC_REGISTRY) themselves.
+A plain call for a page with a route card returns the route's content (its url, select and
+section; start found an earlier question's answer, so it is only named) under a line saying so,
+and as_is=true gets the page itself; a call with its own arguments gets what it asked for, with the
+card's route named once per page above it. The first call to a site that has cards, but none for this
+page, lists them after the reply. Each hit is logged as a "fold" line to BC_CALL_LOG.
 """
-import sys, pathlib, re, os, datetime
+import sys, pathlib, re, os, datetime, json
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent))
 
 from mcp.server.mcpserver import MCPServer
-from bc.common import ENC, tokens, fetch_clean, render_clean, log_call, call_counts, card_block, stored_site_records, \
+from bc.common import ENC, page_id, host_of, tokens, fetch_clean, render_clean, log_call, call_counts, card_block, stored_site_records, \
     DEFER, CARD_NOTE, SIGNAL, SIGNAL_NOTE, access_signal
 
 # Claude Code moves any tool result over ~50 KB into a file the agent cannot read,
@@ -25,6 +31,7 @@ MAX_CHARS = 36000
 ENFORCE = os.environ.get("BC_ENFORCE") == "1"
 MISSX = os.environ.get("BC_MISS") == "x"
 SEARCHES = os.environ.get("BC_SEARCHES") == "1"
+FOLD = os.environ.get("BC_FOLD") == "1"
 LOGGED = ENFORCE or MISSX
 HEADING = re.compile(r"^(#{1,6})\s+(.+)$")
 mcp = MCPServer("web")
@@ -133,20 +140,107 @@ def _call_lines() -> list[str]:
         return []
 
 
-@mcp.tool(structured_output=False)
-def fetch(url: str, select: list[str] | None = None, section: str | None = None, start: int = 0) -> str:
-    """Fetch a URL without running JavaScript. HTML is returned as cleaned Markdown;
+FETCH_DOC = """Fetch a URL without running JavaScript. HTML is returned as cleaned Markdown;
     JSON, Markdown and plain text are returned as-is. For JSON, `select` keeps only
     the given dotted paths (e.g. ["crate.name", "versions.0.num"]). `section` (heading
     text or #anchor; a #fragment in the URL works too) returns only that section.
     Output is at most 10,000 tokens per call; longer results say which `start` to
     pass for the next part and list the page's headings."""
+FOLD_DOC = """ When an earlier agent found a cheaper route to
+    a page (a raw source, an API, a section), a plain fetch of the page returns that route's
+    content instead and says so; pass as_is=true for the page itself."""
+
+
+def fetch(url: str, select: list[str] | None = None, section: str | None = None, start: int = 0) -> str:
     if not section and "#" in url:
         url, section = url.split("#", 1)
     reply = _fetch(url, select, section, start)
     if LOGGED:
         log_call("fetch", f"{url}\t{tokens(reply)}")
     return _card_note(url, reply)
+
+
+def fetch_folded(url: str, select: list[str] | None = None, section: str | None = None, start: int = 0,
+                 as_is: bool = False) -> str:
+    if not section and "#" in url:
+        url, section = url.split("#", 1)
+    if not (as_is or select or section or start) and (hit := _folded(url, "fetch")):
+        return hit
+    return _others(url, _named(url, _fetch(url, select, section, start)))
+
+
+fetch.__doc__, fetch_folded.__doc__ = FETCH_DOC, FETCH_DOC + FOLD_DOC
+fetch = mcp.tool(name="fetch", structured_output=False)(fetch_folded if FOLD else fetch)
+
+
+_seen_sites: set[str] = set()
+_named_pages: set[str] = set()
+
+
+def _cards(site: str) -> list[dict]:
+    import sqlite3
+    try:
+        with sqlite3.connect(os.environ["BC_REGISTRY"]) as db:
+            return [json.loads(r) for (r,) in db.execute("SELECT record FROM pages WHERE site = ?", (site,))]
+    except (KeyError, sqlite3.Error):
+        return []
+
+
+def _bad(reply: str) -> bool:
+    head = reply[:400]
+    return head.startswith(("[fetch failed", "[render failed")) or "not found. Headings" in head \
+        or "(no text content" in head or not re.match(r"\[(HTTP 2|rendered )", head)
+
+
+def _card(url: str) -> dict | None:
+    return next((c for c in _cards(host_of(url)) if c.get("id") == page_id(url) and c.get("route")), None)
+
+
+def _route_line(url: str, r: dict) -> str:
+    args = "".join(f", {k}={r[k]!r}" for k in ("select", "section") if r.get(k))
+    extra = "".join(f"; {k}: {r[k]}" for k in ("start", "notes") if r.get(k))
+    return f"[breadcrumbs: an earlier agent's route for {url}: fetch({r['url']!r}{args}){extra}."
+
+
+def _named(url: str, reply: str) -> str:
+    """fold-0.1: a call with its own arguments on a carded page; the route is named once per page."""
+    if not FOLD or page_id(url) in _named_pages or not (card := _card(url)):
+        return reply
+    _named_pages.add(page_id(url))
+    _seen_sites.add(host_of(url))
+    log_call("fold-named", url)
+    return f"{_route_line(url, card['route'])}]\n{reply}"
+
+
+def _folded(url: str, kind: str) -> str | None:
+    """fold-0.1: the route's content for a page with a route card, or None to fetch as asked."""
+    if not (card := _card(url)):
+        return None
+    r = card["route"]
+    if page_id(r["url"]) == page_id(url) and not (r.get("section") or r.get("select")):
+        return None  # the route is the page as fetched; _named still names it
+    _seen_sites.add(host_of(url))
+    reply = _fetch(r["url"], r.get("select"), r.get("section"), 0) if kind == "fetch" or r["url"] != url \
+        else _render(r["url"], r.get("section"), 0)
+    if _bad(reply):
+        return None
+    _named_pages.add(page_id(url))
+    log_call("fold", f"{url}\t{r['url']}\t{tokens(reply)}")
+    return f"{_route_line(url, r)} This is the route's content; {kind} with as_is=true for the page itself.]\n{reply}"
+
+
+def _others(url: str, reply: str) -> str:
+    """fold-0.1: once per site, the carded pages there, if this page has no card."""
+    site = host_of(url)
+    if not FOLD or site in _seen_sites:
+        return reply
+    _seen_sites.add(site)
+    cards = [c for c in _cards(site) if c.get("id") != page_id(url) and c.get("route")]
+    if not cards:
+        return reply
+    log_call("fold-others", site)
+    lines = "; ".join(f"{c['url']} ({c.get('answers', '')[:80]}) -> {c['route']['url']}" for c in cards[:10])
+    return reply + f"\n[breadcrumbs: earlier agents found routes for other pages on {site}: {lines}]"
 
 
 def _fetch(url, select, section, start) -> str:
@@ -160,17 +254,30 @@ def _fetch(url, select, section, start) -> str:
     return _respond(text, head, section, start)
 
 
-@mcp.tool(structured_output=False)
-def render(url: str, section: str | None = None, start: int = 0) -> str:
-    """Load a URL in headless Chrome (runs JavaScript, ~10-20 s), then return the
+RENDER_DOC = """Load a URL in headless Chrome (runs JavaScript, ~10-20 s), then return the
     cleaned Markdown. Use for pages that fetch returns empty. `section` and `start`
     work as in fetch; output is at most 10,000 tokens per call."""
+
+
+def render(url: str, section: str | None = None, start: int = 0) -> str:
     if not section and "#" in url:
         url, section = url.split("#", 1)
     reply = _render(url, section, start)
     if LOGGED:
         log_call("render", f"{url}\t{tokens(reply)}")
     return _card_note(url, reply, "render")
+
+
+def render_folded(url: str, section: str | None = None, start: int = 0, as_is: bool = False) -> str:
+    if not section and "#" in url:
+        url, section = url.split("#", 1)
+    if not (as_is or section or start) and (hit := _folded(url, "render")):
+        return hit
+    return _others(url, _named(url, _render(url, section, start)))
+
+
+render.__doc__, render_folded.__doc__ = RENDER_DOC, RENDER_DOC + " as_is works as in fetch."
+render = mcp.tool(name="render", structured_output=False)(render_folded if FOLD else render)
 
 
 def _render(url, section, start) -> str:
