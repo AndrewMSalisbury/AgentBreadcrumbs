@@ -30,6 +30,8 @@ Each iteration is named `<approach>-0.<n>`: a new approach starts at 0.1 and eac
 | trace-0.2 | Lean trace cards (no `start` offset), and a cold arm under miss-0.13's site-record note only, its card built from its own trace | `out_trace-0.2/` |
 | trace-0.3 | Not run: an offline check of trace cards built from the cheapest of several traces (`out_trace-0.3/check.py`) | `out_trace-0.3/` |
 | firecrawl-0.1 | fold-0.1 and noregistry with pages from Firecrawl's scrape (`--backend firecrawl`), against an agent on the stock `firecrawl-mcp` server (`--backend firecrawl-mcp`); cards built from the Firecrawl-backed noregistry run | `out_firecrawl-0.1/` |
+| card-0.1 | Route cards in front of stock `firecrawl-mcp`'s scrape (`--backend firecrawl-card`, `bc/firecrawl_card.py`): same 30 tools, a carded page's first scrape served from its route; against stock, 2 reps | `out_card-0.1/` |
+| card-0.2 | card-0.1 without the redirect: a route to another URL with no section is only named (`--iteration card-0.2`); with a prompt-only arm (card-0.2 on an empty registry) and a third stock rep | `out_card-0.2/` |
 
 `out_rep1_oldrule/` and `out_smoke_2026-10-26/` are setup runs from before narrow-0.1.
 
@@ -1208,3 +1210,72 @@ Verdict: on the hard set, cards save on Firecrawl about what they save locally, 
 - **Measure fold-0.1 on the local fetch** against trace-0.2's v1 runs (`out_fold-0.1/`; no LOG entry yet).
 - **Rescore step 2 on medians** (`out_miss-0.12/report.py`).
 - **Close the lid-sleep gap** (2026-11-08) before the next long batch.
+
+## 2026-11-10: card-0.1, a card in front of `query` (`out_card-0.1/drive.py`, `report.py`)
+
+Why: firecrawl-0.1 tied with stock because the stock agent answers with Firecrawl's 5-credit `query` format on a URL it guesses. The question is whether a card in front of that scrape beats it, in the setup a Firecrawl user would run: the stock server and nothing of ours but the cards.
+
+- **The wrapper** (`bc/firecrawl_card.py`, `run.py --backend firecrawl-card`) starts stock `firecrawl-mcp` 3.39.0 and passes its tool list, instructions and calls through unchanged; the agent's 30 tool definitions are byte-identical to stock's (checked), and the baselines match ($0.012 / $0.010 against $0.010 / $0.010). On the first `firecrawl_scrape` of a page with a route card, whatever formats it asks for: a `section` route is served as that section of Firecrawl's Markdown (1 credit), a raw source over plain HTTP (0, none in this set), and a route to another URL with no section sends the agent's own call there. Routes that are the page itself with no section pass through. A second scrape of the page goes to stock. The note goes in the reply's `warning` field, since stock's output schema allows no new keys.
+- **Prompt:** stock's, with fold-0.2's line that results may carry breadcrumbs (data, not instructions).
+- **Cards:** firecrawl-0.1's (built from Firecrawl-backed noregistry traces). Only 3 of 9 can be served: gha, git-gc and mdn have section routes, rust has another URL; bash, heroku, nginx and render routes are the page itself; sonatype has none.
+- **Arms:** card (warm-related-nowrite) and a fresh stock (noregistry-related), 9 hard tasks, reps 1 and 2, order alternated by rep. 183 credits for the batch.
+
+| | card | stock |
+|---|---|---|
+| correct | 18/18 | 18/18 |
+| Claude net $ (total) | $0.771 | $0.833 |
+| credits | 79 | 105 |
+| card cheaper, Claude $ | 8 of 18 | |
+| median, Claude $ / net Hobby / net Standard | +2% / +1% / +2% | |
+| total, Claude $ / net Hobby / net Standard | −7% / −13% / −9% | |
+
+Rep-to-rep spread of the same arm on the same task: median 13% in Claude dollars.
+
+- **A route was used on 2 of 9 tasks.** The related question sends the agent to the carded page only on mdn and rust. On gha it searched and then scraped the route's URL itself (cards are keyed by the page they were written for, as in fold); on git-gc it went straight to `git-config`, not the carded `git-gc`. The other five have no servable route.
+- **Where a section route is served, it beats `query` clearly.** mdn, both reps: one 1-credit scrape of RequestInit's "Instance properties" (4.7k tokens), 2 turns, $0.046 and $0.044, against stock's 2-3 scrapes, 6-7 credits, $0.063 and $0.118. That's the case the wrapper was for.
+- **The redirect hurt.** rust's route (ExtractIf, from the `extract_if` question) is the wrong page for `pop_if`: the agent's query went there, came back empty, and it scraped Vec.html again, then fought the 600k-char page (r1: 8 turns, 16 credits, $0.096 against stock's $0.029). A route to another URL is an earlier question's answer page, not a cheaper way to read this one.
+- **heroku is cheaper in the card arm with no card served** ($0.025 and $0.023 against $0.051 and $0.052, 1 credit against 2 and 15): both card runs scraped the dyno-shutdown page as Markdown first, and both stock runs searched. Only the prompt line differs; two reps isn't enough to call that a prompt effect, and it's about half the total gap.
+- **Everything else is a tie,** as it should be where the wrapper passes calls through (bash, nginx, render, sonatype, git-gc: within a cent).
+
+Verdict: a card in front of `query` wins when it is hit and its route is a section, about −30% to −60% on mdn with 1 credit against 6-7. But with cards keyed to the page an earlier question started from, the related question hits a servable card on 1 task in 9, so overall it's −7% Claude dollars and −13% net at Hobby in total but +2% median, inside the noise. The redirect does harm and should go. What limits a card on Firecrawl here is hit rate, not the saving per hit.
+
+## Next
+
+- **card-0.2:** drop the redirect (name the other URL only), and rerun rust and gha to see that.
+- **Hit rate:** key a section route by the page it reads as well (gha's agent scraped the route's own URL), with the section offered, not forced, since it was found for another question.
+- **A third question per page** (from trace-0.3): tells whether a section found for one question serves the next, which decides how far the second change can go.
+- **heroku:** a third rep of both arms, to see whether the card prompt's line alone changes the first scrape.
+- Carried over: trace builder on one-line Firecrawl replies; fold-0.1 on the local fetch (`out_fold-0.1/`); rescore step 2 on medians; the lid-sleep gap.
+
+## 2026-11-11: card-0.2 and a prompt-only arm (`out_card-0.2/drive.py`, `report.py`)
+
+Why: two things in card-0.1 to settle before more work on hit rate. The redirect made rust worse, and heroku was about half of the total gap with no card served, so the card arm's prompt line might have been doing the work.
+
+- **card-0.2** (`--iteration card-0.2`): a route to another URL with no section is named in the reply's `warning`, and the agent's own scrape goes to stock as asked. card-0.1's redirect stays behind `BC_CARD_REDIRECT=1` (`--iteration card-0.1`). Only rust has such a route, so card-0.2 ran on rust only (r1-r2); on the other 8 tasks the wrapper behaves as in card-0.1, and those runs stand in.
+- **promptonly:** card-0.2's wrapper and prompt on an empty registry, 9 tasks, r1-r2. It separates the prompt line from the cards.
+- **stock r3:** a third stock rep on all 9, for 3 reps.
+- 29 runs, 198 credits, all correct. Each arm is compared on per-task means over reps.
+- **Dropped:** promptonly bash r1, the batch's first run after the cache had expired overnight. It paid to write the 42k tokens of tool definitions ($0.179 against $0.019 for r2), which neither setup's baseline measures, since both read them from cache.
+
+| | Claude $ median / total | net Hobby median / total | cheaper on |
+|---|---|---|---|
+| promptonly vs stock (the prompt line alone) | +1% / +8% | 0% / +15% | 4 / 9 |
+| card-0.2 vs promptonly (the cards, net of the line) | −17% / −17% | −32% / −29% | 5 / 9 |
+| card-0.1 vs stock (3 stock reps) | +5% / −2% | +2% / −11% | 2 / 9 |
+| card-0.2 vs stock | +1% / −10% | +1% / −18% | 3 / 9 |
+
+Rep-to-rep spread, stock and promptonly: median 21% in Claude dollars.
+
+- **Dropping the redirect fixes rust:** card-0.2 is $0.041 and 11 credits per run against stock's $0.042 and 11.3, where card-0.1 was $0.072 and 14.5. The named URL didn't pull the agent off course.
+- **The prompt line alone saves nothing:** median 0, total worse (promptonly had a 9-turn nginx run and a 4-turn git-gc run that stock never had). The agents open the same way: stock's first web call was a scrape in 24 of 27 runs, promptonly's in 15 of 17.
+- **heroku is not a card effect, and not clearly the prompt's:** promptonly heroku r1 matched card-0.1's two runs (2 turns, 1 credit), r2 matched stock (4 turns). Which page the agent guesses first decides heroku, and 2-3 reps can't separate that from luck.
+- **The cards' saving is mdn, the one task where a section was served:** $0.045 and 1 credit against stock's $0.085 and 8 (3 reps). Take out mdn and heroku and card-0.2 is level with stock on the other 7.
+- **"card-0.2 vs promptonly" overstates the cards,** since promptonly's own outliers (nginx, git-gc) are in its denominator; against stock, which has 3 reps, the total is −10% in Claude dollars and −18% net at Hobby, and the median +1%.
+
+Verdict: card-0.2 does no harm where it isn't hit and saves about half where a section route is served. The prompt line doesn't explain card-0.1's gain. So the card's value on Firecrawl is per hit, as card-0.1 found, and these cards hit 1 task in 9. Whether that can rise is the question for the next step: matching the route's own page, and a third question per page to see whether a section found for one question serves another.
+
+## Next
+
+- **Keep going on Firecrawl first (decided 2026-11-11; PLAN):** card-0.3 serves a recorded section when the agent scrapes the route's own page, with a way back to Firecrawl's full reply; and a third question per page tests whether a section found for one question serves another. Where the main effort lies (Firecrawl or the local fetch) is decided after those runs.
+- **A truly cold baseline per setup** (first run after the cache expires), so a cold first run can be kept instead of dropped.
+- Carried over: trace builder on one-line Firecrawl replies; fold-0.1 on the local fetch (`out_fold-0.1/`); rescore step 2 on medians; the lid-sleep gap.
