@@ -1,0 +1,611 @@
+- id: tbb9d6f6c
+  set: curve
+  use_case: docs
+  question: How to run a github-actions step, even if the previous step fails, while
+    still failing the job
+  expect:
+  - .
+- id: taade827d
+  set: curve
+  use_case: docs
+  question: Running actions in another directory
+  expect:
+  - .
+- id: t1c903c58
+  set: curve
+  use_case: docs
+  question: Only run job on specific branch with GitHub Actions
+  expect:
+  - .
+- id: t6d9cbaa8
+  set: curve
+  use_case: docs
+  question: How to cancel previous runs in the PR when you push new commits(update
+    the current) in github-actions
+  expect:
+  - .
+- id: tc5b37d14
+  set: curve
+  use_case: docs
+  question: Trigger Github Action only on new tags?
+  expect:
+  - .
+- id: t64436a07
+  set: curve
+  use_case: docs
+  question: How to version build artifacts using GitHub Actions?
+  expect:
+  - .
+- id: t943ae03c
+  set: curve
+  use_case: docs
+  question: Error "Waiting for a runner to pick up this job" using GitHub Actions
+  expect:
+  - .
+- id: t7e2e8302
+  set: curve
+  use_case: docs
+  question: 'github actions: how to check if current push has new tag (is new release)?'
+  expect:
+  - .
+- id: tabd34b44
+  set: curve
+  use_case: docs
+  question: 'GitHub Actions: Required property is missing: shell'
+  expect:
+  - .
+- id: te2675406
+  set: curve
+  use_case: docs
+  question: Running a GitHub Actions step only if previous step has run
+  expect:
+  - .
+- id: t935bf71f
+  set: curve
+  use_case: docs
+  question: How to pass the output of a bash command to Github Action parameter
+  expect:
+  - .
+- id: t66f9cf5e
+  set: curve
+  use_case: docs
+  question: How to get the current branch within GitHub Actions?
+  expect:
+  - .
+- id: t40ab8d35
+  set: curve
+  use_case: docs
+  question: Get the current pushed tag in Github Actions
+  expect:
+  - .
+- id: t4222e2cb
+  set: curve
+  use_case: docs
+  question: Read JSON file in GitHub Actions
+  expect:
+  - .
+- id: t367ddfe7
+  set: curve
+  use_case: docs
+  question: How to concatenate secrets into workflow action on GitHub?
+  expect:
+  - .
+- id: tdb00cc54
+  set: curve
+  use_case: docs
+  question: github actions not receiving secrets
+  expect:
+  - .
+- id: t1a1dd707
+  set: curve
+  use_case: docs
+  question: Complete list of github actions contexts
+  expect:
+  - .
+- id: t556f69e7
+  set: curve
+  use_case: docs
+  question: GitHub Actions - empty env secrets
+  expect:
+  - .
+- id: t5c5ba1ab
+  set: curve
+  use_case: docs
+  question: Only run job on specific branch with GitHub Actions
+  expect:
+  - .
+- id: t4c9ce05f
+  set: curve
+  use_case: docs
+  question: Get run id after triggering a github workflow dispatch event
+  expect:
+  - .
+- id: tb4cf3727
+  set: curve
+  use_case: docs
+  question: How to get the title of a Pull Request with Github Actions
+  expect:
+  - .
+- id: t5c5fecaa
+  set: curve
+  use_case: docs
+  question: In GitHub Actions, how to get the type of a trigger event as a variable?
+  expect:
+  - .
+- id: t90df3474
+  set: curve
+  use_case: docs
+  question: GitHub Actions Ignore Certain Files Inside a Directory
+  expect:
+  - .
+- id: tc693d869
+  set: curve
+  use_case: docs
+  question: Conditional to check if a string is included in a list?
+  expect:
+  - .
+- id: t659ee941
+  set: curve
+  use_case: docs
+  question: Run GitHub Action on multiple environments (operating systems)
+  expect:
+  - .
+- id: t359db76d
+  set: curve
+  use_case: docs
+  question: Can we directly write Python code under "run | " section in action.yml
+    file
+  expect:
+  - .
+- id: tc6cf760a
+  set: curve
+  use_case: docs
+  question: How to get the current branch within GitHub Actions?
+  expect:
+  - .
+- id: tf6bc94a2
+  set: curve
+  use_case: docs
+  question: How to run a github actions job on workflow failure?
+  expect:
+  - .
+- id: tc6b29116
+  set: curve
+  use_case: docs
+  question: Github Actions - trigger another action after one action is completed
+  expect:
+  - .
+- id: tbb5b3940
+  set: curve
+  use_case: docs
+  question: Add a tag to a Docker image if there's a git tag using GitHub Action
+  expect:
+  - .
+- id: t3f09bd4c
+  set: curve
+  use_case: docs
+  question: Reuse Github Actions self hosted runner on multiple repositories
+  expect:
+  - .
+- id: t16fde935
+  set: curve
+  use_case: docs
+  question: GitHub actions to copy files to GitHub Workspace
+  expect:
+  - .
+- id: t732e5968
+  set: curve
+  use_case: docs
+  question: How to trigger a step manually with GitHub Actions
+  expect:
+  - .
+- id: t61de8f0a
+  set: curve
+  use_case: docs
+  question: github actions not receiving secrets
+  expect:
+  - .
+- id: t879950fe
+  set: curve
+  use_case: docs
+  question: How to access github package registry from one repo to other under same
+    organization?
+  expect:
+  - .
+- id: t606a3a20
+  set: curve
+  use_case: docs
+  question: GitHub Actions Multiple action in a single repo
+  expect:
+  - .
+- id: tbd7bb8bb
+  set: curve
+  use_case: docs
+  question: GITHUB_TOKEN 403 forbidden when publishing a nuget package to GitHub packages
+  expect:
+  - .
+- id: t6342f74d
+  set: curve
+  use_case: docs
+  question: Get current job name in Github Actions workflow
+  expect:
+  - .
+- id: t7f2b7c07
+  set: curve
+  use_case: docs
+  question: How do I trigger a scheduled action on a specific branch?
+  expect:
+  - .
+- id: t07639b2a
+  set: curve
+  use_case: docs
+  question: Github action No event triggers defined in `on`
+  expect:
+  - .
+- id: t242c378e
+  set: curve
+  use_case: docs
+  question: HTML reports on GitHub Actions / GitHub pull requests
+  expect:
+  - .
+- id: t6c54669d
+  set: curve
+  use_case: docs
+  question: Stop already running workflow/job in GitHub Actions
+  expect:
+  - .
+- id: t5059c9dc
+  set: curve
+  use_case: docs
+  question: 'GitHub Action error: "Top level ''runs:'' section is required"'
+  expect:
+  - .
+- id: ta4657dc4
+  set: curve
+  use_case: docs
+  question: Difference between github.token vs secrets.github_token?
+  expect:
+  - .
+- id: ta93e856c
+  set: curve
+  use_case: docs
+  question: Is that possible to deploy Laravel web application to shared hosting using
+    GitHub Action & GitHub FTP Deploy?
+  expect:
+  - .
+- id: t8095e176
+  set: curve
+  use_case: docs
+  question: Github action not triggering in case of automated tag creation
+  expect:
+  - .
+- id: t60199446
+  set: curve
+  use_case: docs
+  question: Secrets doesnt pass from github action secrets to reusable workflow in
+    github actions
+  expect:
+  - .
+- id: t9b327ced
+  set: curve
+  use_case: docs
+  question: 'GitHub Actions checkout@v3: where is repo downloaded?'
+  expect:
+  - .
+- id: tb3abd12e
+  set: curve
+  use_case: docs
+  question: Clear cache in GitHub Actions
+  expect:
+  - .
+- id: tdce58692
+  set: curve
+  use_case: docs
+  question: 'GIthub action : Trigger a job only when there is a change in particular
+    directory'
+  expect:
+  - .
+- id: t66d0b9ae
+  set: curve
+  use_case: docs
+  question: Auto commit from GitHub actions on push using "[skip ci]" in comment also
+    skips workflow trigger on tag release
+  expect:
+  - .
+- id: t32a1e6a1
+  set: curve
+  use_case: docs
+  question: How having schedule AND push/pull_request events in a GitHub workflow?
+  expect:
+  - .
+- id: ta33691d1
+  set: curve
+  use_case: docs
+  question: How to allow manual workflow_dispatch only on specific branches?
+  expect:
+  - .
+- id: t01c7bb94
+  set: curve
+  use_case: docs
+  question: Trigger Github Actions only when PR is merged
+  expect:
+  - .
+- id: tb3c15717
+  set: curve
+  use_case: docs
+  question: How to run multiple GitHub Actions workflows from sub directories
+  expect:
+  - .
+- id: t5db423e7
+  set: curve
+  use_case: docs
+  question: Reusing GitHub Action workflow steps inside another job
+  expect:
+  - .
+- id: t097f0a1c
+  set: curve
+  use_case: docs
+  question: Is it possible to share or reuse some job steps inside Github actions?
+  expect:
+  - .
+- id: t3408fe3f
+  set: curve
+  use_case: docs
+  question: GitHub Action workflow for running steps in parallel
+  expect:
+  - .
+- id: t321dcca4
+  set: curve
+  use_case: docs
+  question: Github Actions Job being skipped
+  expect:
+  - .
+- id: t2a4f1061
+  set: curve
+  use_case: docs
+  question: 'How to fix or avoid Error: Unable to process file command ''output''
+    successfully?'
+  expect:
+  - .
+- id: ta7257f41
+  set: curve
+  use_case: docs
+  question: How to set workflow env variables depending on branch
+  expect:
+  - .
+- id: tc596c9ec
+  set: curve
+  use_case: docs
+  question: Github action increment version on push to main
+  expect:
+  - .
+- id: tafbddcf7
+  set: curve
+  use_case: docs
+  question: Run command with timeout in github workflow
+  expect:
+  - .
+- id: te0fdafc3
+  set: curve
+  use_case: docs
+  question: 'Composite Run Steps GitHub Actions error: ''An action could not be found
+    at the URI'''
+  expect:
+  - .
+- id: t1378a767
+  set: curve
+  use_case: docs
+  question: Simple echo of github.event fails in Github Actions
+  expect:
+  - .
+- id: t7fccc13f
+  set: curve
+  use_case: docs
+  question: composite github action, automatically cd into actions directory?
+  expect:
+  - .
+- id: tfdd73c48
+  set: curve
+  use_case: docs
+  question: Require (only) one specific job in matrix to finish for other dependent
+    job
+  expect:
+  - .
+- id: t1f8a27bf
+  set: curve
+  use_case: docs
+  question: GitHub Actions - run step only if job was triggered by specific "on" trigger
+  expect:
+  - .
+- id: t3b7ba66a
+  set: curve
+  use_case: docs
+  question: Key Vault secrets in GitHub Actions workflow
+  expect:
+  - .
+- id: t570da5ee
+  set: curve
+  use_case: docs
+  question: Is it possible to check a git push --force in a GitHub action?
+  expect:
+  - .
+- id: td683e37d
+  set: curve
+  use_case: docs
+  question: How to run a github-actions step, even if the previous step fails, while
+    still failing the job
+  expect:
+  - .
+- id: tceaf900c
+  set: curve
+  use_case: docs
+  question: Rails & Github Actions - Credentials
+  expect:
+  - .
+- id: td0edad55
+  set: curve
+  use_case: docs
+  question: How to perform string manipulation while declaring env vars in GitHub
+    Actions
+  expect:
+  - .
+- id: td138fc49
+  set: curve
+  use_case: docs
+  question: Github action works on push but not scheduled
+  expect:
+  - .
+- id: t25c45e35
+  set: curve
+  use_case: docs
+  question: How many cores are used by Github Actions Runners?
+  expect:
+  - .
+- id: t1970396a
+  set: curve
+  use_case: docs
+  question: Run step / job in a workflow if changes happen in specific folder
+  expect:
+  - .
+- id: t967983cc
+  set: curve
+  use_case: docs
+  question: How to convert a String to an Array for GitHub Actions matrix?
+  expect:
+  - .
+- id: t1d471615
+  set: curve
+  use_case: docs
+  question: Why my github action's cron is not working?
+  expect:
+  - .
+- id: t4912a4d9
+  set: curve
+  use_case: docs
+  question: How to SFTP with Github Actions?
+  expect:
+  - .
+- id: tf53b9fed
+  set: curve
+  use_case: docs
+  question: Failing to deploy GitHub pages because of write permission
+  expect:
+  - .
+- id: tdb935d17
+  set: curve
+  use_case: docs
+  question: Output from GitHub action is empty
+  expect:
+  - .
+- id: t3407ecbb
+  set: curve
+  use_case: docs
+  question: Github Action Workflow Push to private repo with access token
+  expect:
+  - .
+- id: ta2b250a6
+  set: curve
+  use_case: docs
+  question: Github actions run only on feature branches
+  expect:
+  - .
+- id: te67a3e64
+  set: curve
+  use_case: docs
+  question: How can I cache Android NDK in my Github Actions workflow?
+  expect:
+  - .
+- id: t512f2792
+  set: curve
+  use_case: docs
+  question: .github/workflows files are branch specific?
+  expect:
+  - .
+- id: tac77b102
+  set: curve
+  use_case: docs
+  question: Adding an asset to a release through GitHub action triggered on release
+    creation
+  expect:
+  - .
+- id: t415c3bea
+  set: curve
+  use_case: docs
+  question: How to avoid code duplication in Github Actions; are there some kind of
+    loops in yaml?
+  expect:
+  - .
+- id: ta3152061
+  set: curve
+  use_case: docs
+  question: Playwright E2E Tests Passing Locally but Failing in GitHub Actions with
+    Next.js 14 App Router, TypeScript
+  expect:
+  - .
+- id: t5c753208
+  set: curve
+  use_case: docs
+  question: How to reference a directory in my repo during a GitHub action build?
+  expect:
+  - .
+- id: t524818ef
+  set: curve
+  use_case: docs
+  question: Unable to login to GitHub Container Registry with GITHUB_TOKEN
+  expect:
+  - .
+- id: t6ff27a2d
+  set: curve
+  use_case: docs
+  question: Github pull request - Waiting for status to be reported
+  expect:
+  - .
+- id: t0edfecd2
+  set: curve
+  use_case: docs
+  question: 'github actions: notifications on workflow failure'
+  expect:
+  - .
+- id: tc849a5be
+  set: curve
+  use_case: docs
+  question: How to set workflow env variables depending on branch
+  expect:
+  - .
+- id: t3a1021c1
+  set: curve
+  use_case: docs
+  question: Terraform module in github private repo
+  expect:
+  - .
+- id: t20be9001
+  set: curve
+  use_case: docs
+  question: Is there any way to trigger a specific Github action workflow by commit
+    message value?
+  expect:
+  - .
+- id: te6b472d2
+  set: curve
+  use_case: docs
+  question: Dependencies Between Workflows on Github Actions
+  expect:
+  - .
+- id: tdb025335
+  set: curve
+  use_case: docs
+  question: GitHub action to add a condition
+  expect:
+  - .
+- id: t90462ccb
+  set: curve
+  use_case: docs
+  question: How can I uniquely identify the workflow under execution?
+  expect:
+  - .
+- id: t82488803
+  set: curve
+  use_case: docs
+  question: How to get PR title on a push event in github actions?
+  expect:
+  - .

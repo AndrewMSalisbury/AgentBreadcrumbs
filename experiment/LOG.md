@@ -1385,5 +1385,32 @@ Verdict: without the leak, agents on real questions mostly go to the docs, so do
 
 - **A hit-rate curve from real traces:** stock runs on one site's questions (gha has 99), trace cards built from each run's actual first scrape and the page that held its answer, scored on the later runs. On the local fetch this costs Claude dollars only (about $0.07 a run), against about 3 credits a run on Firecrawl.
 - **Opaque task ids** in new task files.
+
+## 2026-11-11: curve-0.1, hit rate from real traces on gha (`hitrate/traces.py`, `hitrate/score.py`, `out_curve-0.1/`)
+
+Why: hitrate-0.1's curve rested on guessed start pages. This one uses what agents actually did.
+
+- **Runs:** all 99 gha questions once, `noregistry` on the local fetch (fetch, render, WebSearch; no registry), the Stack Overflow title as the question, ungraded, opaque ids (`t` + 8 hex). $3.60 in all, $0.036 a run, no credits.
+- **Cards:** each run's trace card (`out_trace-0.1/build.py`, lean, as trace-0.2): 84 runs leave one, 38 with a section; 13 answered from search without fetching. The agent found its answer on the first page it fetched in 73 of 84. Most common first pages: contexts 8, events-that-trigger-workflows 6 (and 4 more under an alias URL), workflow-syntax 4, variables 4.
+- **Scoring:** 300 random orders; the first k runs leave cards, each later run is met at its first fetch. **Right** means the served section holds that run's answer: its own route's section lies inside the served one, or, where it read the page whole, the card-0.4 matcher ranks the served section the page's best for its question (a proxy, 9/10 offline). **Pooled** keeps every seed's route per page; **first** keeps one, as the registry does now.
+
+| k earlier runs | miss | right | wrong | pass (card, no section) |
+|---|---|---|---|---|
+| 25, pooled | 76% | 6% | 13% | 5% |
+| 75, pooled | 59% | **12%** | 18% | 10% |
+| 25, first card | 76% | 5% | 14% | 5% |
+| 75, first card | 59% | **6%** | 23% | 12% |
+
+- **Pooling doubles the right hits at 75** (12% against 6%) and still rises with k, as hitrate-0.1's model said (10%); the model's start pages were half wrong, but its count came out close.
+- **Routing adds nothing on gha:** agents land on the answer's page first in 73 of 84 runs, so a card's value here is the section, not the route. (MDN, where it was routing, is a long tail of pages.)
+- **Wrong sections outnumber right ones** even pooled (18% against 12% at 75). On Firecrawl card-0.4 skips them when the agent asks a `query`; on the local fetch there is no question to check against, so a wrong section is served.
+- **Alias URLs split pages:** events-that-trigger-workflows comes up under two URLs (6 and 4); following redirects would merge them.
+
+Verdict: on real gha questions, after 75 earlier ones, a pooled card serves the right section to about 1 question in 8, twice the registry as it stands; 4 in 10 meet a card at all. Whether that pays depends on what a right hit saves and a wrong one costs on the local fetch, which this doesn't measure.
+
+## Next
+
+- **What a hit is worth on the local fetch:** a live run of a pooled registry (built from these 99 traces, one order) against stock on held-out gha questions, with the served section picked per question (the matcher on the fetch tool's own question-free call can't be used; the fold fetch would need the question, or serve the outline).
+- **Merge alias URLs** (redirects) in card keys.
 - **A truly cold baseline per setup:** this batch's card baseline was cold and had to be replaced; run a throwaway warm-up first.
 - Carried over: trace builder on one-line Firecrawl replies; fold-0.1 on the local fetch (`out_fold-0.1/`); rescore step 2 on medians; the lid-sleep gap.
