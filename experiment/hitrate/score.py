@@ -13,6 +13,9 @@ section). In PERMS random orders, the first k runs leave cards; each later run i
                lies inside the served one; or, when its run read the page whole, the card-0.4
                matcher (bc/section_match.py) ranks the served section the page's best for its
                question
+  redundant    a served section holds its answer, but the run asked for a section on every fetch of that
+               page, so it already read no more than a section (worth-0.1: the agent goes straight to the
+               anchor and the card is never served; counted as right before 2026-11-11)
   wrong        a section is served and none holds its answer
   route-right  no section, but a card routes from its first page to the page that held its answer
   route-wrong  no section, and the card routes to another page
@@ -34,7 +37,7 @@ from bc.section_match import section_span, serves
 
 OUT = EXP / (sys.argv[sys.argv.index("--out") + 1] if "--out" in sys.argv else "out_curve-0.1")
 PERMS, KS = 300, (5, 10, 25, 50, 75)
-OUTCOMES = ("miss", "right", "wrong", "route-right", "route-wrong", "pass")
+OUTCOMES = ("miss", "right", "redundant", "wrong", "route-right", "route-wrong", "pass")
 TEXT = OUT / "pages_text.json"
 _text = json.loads(TEXT.read_text(encoding="utf-8")) if TEXT.exists() else {}
 
@@ -64,7 +67,9 @@ def runs() -> list[dict]:
         if rec:
             route = rec["route"]
             r.update(key=page_id(rec["url"]), route_page=page_id(route["url"]), route_url=route["url"],
-                     section=route.get("section"))
+                     section=route.get("section"),
+                     whole=any(page_id(c["url"]) == page_id(route["url"]) and not c.get("section") and "#" not in c["url"]
+                               for c in order))
         out.append(r)
     return out
 
@@ -91,7 +96,7 @@ def outcome(q: dict, cards: dict) -> str:
             if q.get("section"):
                 qs_span = span_of(q["route_url"], q["section"])
                 if qs_span and cs_span[0] <= qs_span[0] < cs_span[1]:
-                    return "right"
+                    return "right" if q.get("whole") else "redundant"
             elif serves(page_text(c["route_url"]), c["section"], q["question"])[0]:
                 return "right"
         return "wrong"

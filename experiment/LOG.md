@@ -1441,3 +1441,25 @@ Verdict: on gha with the local fetch, a pooled section card is worth about half 
 - **Fix curve-0.1's scorer:** a hit counts only where the run read more than the served section; rescore the other sites (MDN, git, nginx) from real traces before deciding whether section cards stay a track.
 - **PLAN:** curve-0.1 and worth-0.1 go into the plan doc (the mirror `docs/PLAN.md` is behind the doc).
 - Carried over: merge alias URLs; trace builder on one-line Firecrawl replies; fold-0.1 on the local fetch (`out_fold-0.1/`); rescore step 2 on medians; the lid-sleep gap.
+
+## 2026-11-11: curve-0.2, MDN from real traces, with the scorer fixed (`hitrate/score.py`, `out_curve-0.2/`)
+
+Why: worth-0.1 found curve-0.1's right hits were mostly runs that asked for the section themselves. MDN is the one site where routing to another page mattered (card-0.2, third-0.1), so it is the check before dropping section cards.
+
+- **Scorer fix:** a new outcome, **redundant**: the served section holds the run's answer, but the run asked for a section on every fetch of that page, so the card adds nothing. Rescored, gha at k=75 pooled is right **1%**, redundant 12% (was right 12%), wrong 18%, miss 59%: it agrees with worth-0.1 live.
+- **Runs:** all 100 MDN questions once, `noregistry` on the local fetch, opaque ids, $3.27, no credits, no errors (`hitrate/traces.py --site mdn --out out_curve-0.2`; `--out` and absolute paths added, and the launch needs `PYTHONIOENCODING=utf-8`, or a printed answer can crash it).
+- **Cost shape:** median $0.030, max $0.076, 4 runs at twice the median, the top 10 runs 19% of spend. As on gha, no expensive tail to cut.
+- **Cards:** 79 runs leave one (14 with a section), 19 answer from search alone. The answer is on the first page fetched in 62 of 79. First pages hardly repeat: the most common is scrollIntoView, 3 times.
+
+| k=75 | miss | right | redundant | wrong | route-right | route-wrong | pass |
+|---|---|---|---|---|---|---|---|
+| pooled | 91% | 1% | 2% | 4% | 0% | 1% | 2% |
+| first card | 91% | 0% | 2% | 3% | 0% | 1% | 3% |
+
+Verdict: on MDN 9 questions in 10 meet no card after 75 earlier ones, because the questions spread over a long tail of pages; routing, the value MDN had on the hand-made tasks, comes to 0%. With gha (right 1%), section and route cards on popular docs save about nothing on real questions: the agent lands on the right page, usually the right anchor, and no run is expensive enough to leave much to save. Section cards on popular docs stop here; git and nginx are not run.
+
+## Next
+
+- **Where agents waste spend:** stock runs on real questions from long-tail, JavaScript-heavy, API and recently changed sites; measure the expensive tail and whether its waste repeats across questions on a site. That decides whether breadcrumbs have a product (PLAN).
+- **PLAN:** curve-0.1, worth-0.1 and curve-0.2 go into the plan doc.
+- Carried over: merge alias URLs; trace builder on one-line Firecrawl replies; fold-0.1 on the local fetch (`out_fold-0.1/`); rescore step 2 on medians; the lid-sleep gap.

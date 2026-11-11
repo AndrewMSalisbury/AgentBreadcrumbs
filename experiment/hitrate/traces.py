@@ -1,7 +1,7 @@
 """curve-0.1, step 1: one stock run per real question on the local fetch, for trace cards (LOG 2026-11-11).
 
   python hitrate/traces.py --dry          # the tasks and runs
-  python hitrate/traces.py [--site gha]   # runs what is missing, WORKERS at a time
+  python hitrate/traces.py [--site gha] [--out out_curve-0.1]   # runs what is missing, WORKERS at a time
 
 Each of the site's Stack Overflow questions (hitrate/questions.jsonl; the title is the question,
 ungraded) runs once under `noregistry`: web tools (fetch, render, WebSearch), no registry, no
@@ -11,10 +11,10 @@ trace cards (out_trace-0.1/build.py) in hitrate/score.py.
 """
 import concurrent.futures as cf, hashlib, json, pathlib, subprocess, sys
 
-HERE = pathlib.Path(__file__).parent
+HERE = pathlib.Path(__file__).resolve().parent
 EXP = HERE.parent
 PY = str(EXP.parent / ".venv" / "Scripts" / "python.exe")
-OUT = EXP / "out_curve-0.1"
+OUT = EXP / (sys.argv[sys.argv.index("--out") + 1] if "--out" in sys.argv else "out_curve-0.1")  # curve-0.2 (mdn): out_curve-0.2
 WORKERS = 4
 
 

@@ -1,0 +1,603 @@
+- id: t6f033aea
+  set: curve
+  use_case: docs
+  question: How do I check if a variable is an array in JavaScript?
+  expect:
+  - .
+- id: t9165d6a8
+  set: curve
+  use_case: docs
+  question: When are you supposed to use escape instead of encodeURI / encodeURIComponent?
+  expect:
+  - .
+- id: t9581865e
+  set: curve
+  use_case: docs
+  question: Font scaling based on size of container
+  expect:
+  - .
+- id: t4213f0c6
+  set: curve
+  use_case: docs
+  question: endsWith in JavaScript
+  expect:
+  - .
+- id: t53d62aea
+  set: curve
+  use_case: docs
+  question: Make a div fill the height of the remaining screen space
+  expect:
+  - .
+- id: t8c1cea94
+  set: curve
+  use_case: docs
+  question: 'CSS text-overflow: ellipsis; not working?'
+  expect:
+  - .
+- id: t5fc5f732
+  set: curve
+  use_case: docs
+  question: What is the equivalent of ngShow and ngHide in Angular 2+?
+  expect:
+  - .
+- id: t47f0947e
+  set: curve
+  use_case: docs
+  question: 'CSS media queries: max-width OR max-height'
+  expect:
+  - .
+- id: t9a8a3038
+  set: curve
+  use_case: docs
+  question: What is the difference between substr and substring?
+  expect:
+  - .
+- id: ta97f7e28
+  set: curve
+  use_case: docs
+  question: How do you find out the caller function in JavaScript?
+  expect:
+  - .
+- id: t691840e8
+  set: curve
+  use_case: docs
+  question: JavaScript math, round to two decimal places
+  expect:
+  - .
+- id: t15af89bb
+  set: curve
+  use_case: docs
+  question: Maintaining the final state at end of a CSS animation
+  expect:
+  - .
+- id: te6e585c7
+  set: curve
+  use_case: docs
+  question: How can I style even and odd elements?
+  expect:
+  - .
+- id: tedfcfc1d
+  set: curve
+  use_case: docs
+  question: Find an element in DOM based on an attribute value
+  expect:
+  - .
+- id: tf0c3a2c1
+  set: curve
+  use_case: docs
+  question: 'Trying to use fetch and pass in mode: no-cors'
+  expect:
+  - .
+- id: t7dfa005f
+  set: curve
+  use_case: docs
+  question: How to add conditional attribute in Angular 2?
+  expect:
+  - .
+- id: tc49fbbf2
+  set: curve
+  use_case: docs
+  question: Adding a parameter to the URL with JavaScript
+  expect:
+  - .
+- id: t43c42f99
+  set: curve
+  use_case: docs
+  question: Is there a way to get element by XPath using JavaScript in Selenium WebDriver?
+  expect:
+  - .
+- id: tf3dde2af
+  set: curve
+  use_case: docs
+  question: How to force image resize and keep aspect ratio?
+  expect:
+  - .
+- id: tb7d5bcd9
+  set: curve
+  use_case: docs
+  question: (change) vs (ngModelChange) in angular
+  expect:
+  - .
+- id: te4e5f021
+  set: curve
+  use_case: docs
+  question: Pass mouse events through absolutely-positioned element
+  expect:
+  - .
+- id: t71de6bf3
+  set: curve
+  use_case: docs
+  question: Find the closest ancestor element that has a specific class
+  expect:
+  - .
+- id: t8c1e6932
+  set: curve
+  use_case: docs
+  question: How to detect DIV's dimension changed?
+  expect:
+  - .
+- id: tb7aaec15
+  set: curve
+  use_case: docs
+  question: Sort a JavaScript array based on another array
+  expect:
+  - .
+- id: t51487112
+  set: curve
+  use_case: docs
+  question: How do I scroll to an element using JavaScript?
+  expect:
+  - .
+- id: t9e52f68a
+  set: curve
+  use_case: docs
+  question: Finding the max value of a property in an array of objects
+  expect:
+  - .
+- id: t7d26cd4a
+  set: curve
+  use_case: docs
+  question: How do I POST a x-www-form-urlencoded request using Fetch?
+  expect:
+  - .
+- id: t504badae
+  set: curve
+  use_case: docs
+  question: How to copy a Map into another Map?
+  expect:
+  - .
+- id: t8604498e
+  set: curve
+  use_case: docs
+  question: JavaScript open in a new window, not tab
+  expect:
+  - .
+- id: t59b3f144
+  set: curve
+  use_case: docs
+  question: How to get the <html> tag HTML with JavaScript / jQuery?
+  expect:
+  - .
+- id: t83d5339a
+  set: curve
+  use_case: docs
+  question: How to make JavaScript execute after page load?
+  expect:
+  - .
+- id: t24608ad1
+  set: curve
+  use_case: docs
+  question: Scroll to an element with jQuery
+  expect:
+  - .
+- id: t0ce76918
+  set: curve
+  use_case: docs
+  question: How can I round down a number in Javascript?
+  expect:
+  - .
+- id: tea0c8335
+  set: curve
+  use_case: docs
+  question: How to check in Javascript if one element is contained within another
+  expect:
+  - .
+- id: t329a6cd7
+  set: curve
+  use_case: docs
+  question: CSS media query to target only iOS devices
+  expect:
+  - .
+- id: t73709644
+  set: curve
+  use_case: docs
+  question: Scroll to the top of the page using JavaScript?
+  expect:
+  - .
+- id: t4f48ad41
+  set: curve
+  use_case: docs
+  question: 'jQuery: Return data after ajax call success'
+  expect:
+  - .
+- id: t58c2def3
+  set: curve
+  use_case: docs
+  question: Why is jQuery's .ajax() method not sending my session cookie?
+  expect:
+  - .
+- id: t7147ce14
+  set: curve
+  use_case: docs
+  question: Most efficient method to groupby on an array of objects
+  expect:
+  - .
+- id: t3ece9f32
+  set: curve
+  use_case: docs
+  question: how to bypass Access-Control-Allow-Origin?
+  expect:
+  - .
+- id: tea9a7078
+  set: curve
+  use_case: docs
+  question: Select second last element with css
+  expect:
+  - .
+- id: td04e5f7c
+  set: curve
+  use_case: docs
+  question: Angular 2 - innerHTML styling
+  expect:
+  - .
+- id: t65cf7c8f
+  set: curve
+  use_case: docs
+  question: Use CSS to automatically add 'required field' asterisk to form inputs
+  expect:
+  - .
+- id: t894b0a18
+  set: curve
+  use_case: docs
+  question: ScrollIntoView() causing the whole page to move
+  expect:
+  - .
+- id: taf78eaab
+  set: curve
+  use_case: docs
+  question: How to get function parameter names/values dynamically?
+  expect:
+  - .
+- id: tc216872a
+  set: curve
+  use_case: docs
+  question: JavaScript variable number of arguments to function
+  expect:
+  - .
+- id: tc08b2a2a
+  set: curve
+  use_case: docs
+  question: CSS 3 slide-in from left transition
+  expect:
+  - .
+- id: tc32903d8
+  set: curve
+  use_case: docs
+  question: Remove textarea inner shadow on Mobile Safari (iPhone)
+  expect:
+  - .
+- id: t86756053
+  set: curve
+  use_case: docs
+  question: How can I reorder my divs using only CSS?
+  expect:
+  - .
+- id: t6f2d60ac
+  set: curve
+  use_case: docs
+  question: How to use jQuery to wait for the end of CSS3 transitions?
+  expect:
+  - .
+- id: tac15ebc7
+  set: curve
+  use_case: docs
+  question: 'JavaScript: How do I print a message to the error console?'
+  expect:
+  - .
+- id: t19c8b6b3
+  set: curve
+  use_case: docs
+  question: 'Angular 2: How to style host element of the component?'
+  expect:
+  - .
+- id: ta4445520
+  set: curve
+  use_case: docs
+  question: Disable browser 'Save Password' functionality
+  expect:
+  - .
+- id: t6ca52668
+  set: curve
+  use_case: docs
+  question: img src SVG changing the styles with CSS
+  expect:
+  - .
+- id: t0a4e92c2
+  set: curve
+  use_case: docs
+  question: 'YouTube iframe API: how do I control an iframe player that''s already
+    in the HTML?'
+  expect:
+  - .
+- id: t00474c43
+  set: curve
+  use_case: docs
+  question: Inserting string at position x of another string
+  expect:
+  - .
+- id: t88982393
+  set: curve
+  use_case: docs
+  question: Fetch API with Cookie
+  expect:
+  - .
+- id: t23973113
+  set: curve
+  use_case: docs
+  question: Each for object?
+  expect:
+  - .
+- id: t9f87aa2d
+  set: curve
+  use_case: docs
+  question: 'JavaScript function order: why does it matter?'
+  expect:
+  - .
+- id: t6983e70a
+  set: curve
+  use_case: docs
+  question: JavaScript equivalent to printf/String.Format
+  expect:
+  - .
+- id: t30ba4e39
+  set: curve
+  use_case: docs
+  question: Modifying a query string without reloading the page
+  expect:
+  - .
+- id: te92be8a9
+  set: curve
+  use_case: docs
+  question: 'Failed to execute ''createObjectURL'' on ''URL'':'
+  expect:
+  - .
+- id: t27009b86
+  set: curve
+  use_case: docs
+  question: How to get JS variable to retain value after page refresh?
+  expect:
+  - .
+- id: td3b922ea
+  set: curve
+  use_case: docs
+  question: Format a number as 2.5K if a thousand or more, otherwise 900
+  expect:
+  - .
+- id: teecd5aba
+  set: curve
+  use_case: docs
+  question: Preserve line breaks in angularjs
+  expect:
+  - .
+- id: t18daf34b
+  set: curve
+  use_case: docs
+  question: How can I access a JavaScript object which has spaces in the object's
+    key?
+  expect:
+  - .
+- id: t0f6f53fd
+  set: curve
+  use_case: docs
+  question: Web workers without a separate Javascript file?
+  expect:
+  - .
+- id: t0ec8e7cc
+  set: curve
+  use_case: docs
+  question: 'CSS media queries: max-width OR max-height'
+  expect:
+  - .
+- id: t4dcbdc7f
+  set: curve
+  use_case: docs
+  question: How to create a simple map using JavaScript/JQuery
+  expect:
+  - .
+- id: t1be01d98
+  set: curve
+  use_case: docs
+  question: Split the sentences by ',' and remove surrounding spaces
+  expect:
+  - .
+- id: t2a6f2246
+  set: curve
+  use_case: docs
+  question: Object destructuring without var, let or const
+  expect:
+  - .
+- id: t8c17cfb8
+  set: curve
+  use_case: docs
+  question: Do we have router.reload in vue-router?
+  expect:
+  - .
+- id: t230d63aa
+  set: curve
+  use_case: docs
+  question: When do items in HTML5 local storage expire?
+  expect:
+  - .
+- id: ta67caaf4
+  set: curve
+  use_case: docs
+  question: Encode HTML entities in JavaScript
+  expect:
+  - .
+- id: t97ab6549
+  set: curve
+  use_case: docs
+  question: CSS-only masonry layout
+  expect:
+  - .
+- id: t85f036ba
+  set: curve
+  use_case: docs
+  question: Get element at specified position - JavaScript
+  expect:
+  - .
+- id: t25918ca0
+  set: curve
+  use_case: docs
+  question: CSS :first-letter not working
+  expect:
+  - .
+- id: tae5b0a17
+  set: curve
+  use_case: docs
+  question: How to create helper file full of functions in react native?
+  expect:
+  - .
+- id: t5fddc600
+  set: curve
+  use_case: docs
+  question: Accessing JSON object keys having spaces
+  expect:
+  - .
+- id: te1154802
+  set: curve
+  use_case: docs
+  question: Image convert to Base64
+  expect:
+  - .
+- id: teac29954
+  set: curve
+  use_case: docs
+  question: How can I read a JSON in the script-tag from JavaScript?
+  expect:
+  - .
+- id: tc4614d61
+  set: curve
+  use_case: docs
+  question: Handling errors in Promise.all
+  expect:
+  - .
+- id: t80c0c1d7
+  set: curve
+  use_case: docs
+  question: 'Uncaught TypeError: Object.values is not a function JavaScript'
+  expect:
+  - .
+- id: tfd3b0dda
+  set: curve
+  use_case: docs
+  question: How to get the first element of an array?
+  expect:
+  - .
+- id: tb2f84917
+  set: curve
+  use_case: docs
+  question: Proper way to wait for one function to finish before continuing?
+  expect:
+  - .
+- id: t2a1f914a
+  set: curve
+  use_case: docs
+  question: Cartesian product of multiple arrays in JavaScript
+  expect:
+  - .
+- id: tfc96d3de
+  set: curve
+  use_case: docs
+  question: scrollIntoView with margin
+  expect:
+  - .
+- id: t9ea3ee24
+  set: curve
+  use_case: docs
+  question: Javascript scrollIntoView() middle alignment?
+  expect:
+  - .
+- id: t5f905214
+  set: curve
+  use_case: docs
+  question: Check/Uncheck checkbox with JavaScript
+  expect:
+  - .
+- id: t5cac09c7
+  set: curve
+  use_case: docs
+  question: When is localStorage cleared?
+  expect:
+  - .
+- id: t76b3bc61
+  set: curve
+  use_case: docs
+  question: How do I create an abstract base class in JavaScript?
+  expect:
+  - .
+- id: t93edee76
+  set: curve
+  use_case: docs
+  question: window.location.href vs window.location.replace vs window.location.assign
+    in JavaScript
+  expect:
+  - .
+- id: t15300bec
+  set: curve
+  use_case: docs
+  question: Add SVG element to existing SVG using DOM
+  expect:
+  - .
+- id: t37614cc6
+  set: curve
+  use_case: docs
+  question: How to center-justify the last line of text in CSS?
+  expect:
+  - .
+- id: t004125c0
+  set: curve
+  use_case: docs
+  question: dynamic keys for object literals in Javascript
+  expect:
+  - .
+- id: t09f410a5
+  set: curve
+  use_case: docs
+  question: How can I nullify css property?
+  expect:
+  - .
+- id: t257bacdd
+  set: curve
+  use_case: docs
+  question: z-index not working with fixed positioning
+  expect:
+  - .
+- id: te00a951a
+  set: curve
+  use_case: docs
+  question: How to change the style of the title attribute
+  expect:
+  - .
+- id: t9846ccba
+  set: curve
+  use_case: docs
+  question: Styling an <input type="file"> button
+  expect:
+  - .
+- id: t64f2069f
+  set: curve
+  use_case: docs
+  question: Get protocol, domain, and port from URL
+  expect:
+  - .
