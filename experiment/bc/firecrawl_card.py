@@ -14,6 +14,17 @@ route card in BC_REGISTRY, whatever formats it asks for, when the route narrows 
     URL (card-0.2). With BC_CARD_REDIRECT=1 (card-0.1) the call is sent to that URL instead,
     which on rust sent a pop_if question to the extract_if question's page
 
+card-0.3 (BC_CARD_ROUTE_MATCH=1) also serves a section route when the agent scrapes the page the
+route reads rather than the page it was found from (gha's related question ends on workflow-syntax,
+the matrix question's route page). The section was found for another question, so the note says
+so and names that question's topics; a second scrape gets stock's reply.
+
+card-0.4 (BC_CARD_PROMPT_CHECK=1, with route matching on) uses the agent's question when it has one:
+a scrape with a `query` prompt is served the stored section only if bc/section_match.py ranks it
+(nearly) the page's best match for that prompt; otherwise the call goes to stock as asked, the
+1-credit section scrape logged as "card-skip". On gha third-0.1's agent asked a `query` about job
+outputs and was served the matrix section.
+
 A route that is the page itself with no section (or only a `start` offset) adds nothing over the
 agent's call, so that call goes to stock as is. A second scrape of the same page always goes to
 stock, which is how an agent gets Firecrawl's own reply (a `query` answer, say). The first scrape
@@ -37,10 +48,22 @@ from mcp.server.stdio import stdio_server
 
 from bc.common import page_id, host_of, tokens, fetch_clean, firecrawl_scrape, log_call
 from bc.web_server import _section
+from bc.section_match import serves
 
 HERE = pathlib.Path(__file__).parent
 RAW = re.compile(r"\.(json|txt|md|markdown|ya?ml|xml|toml|csv|rst)(\?|$)", re.I)
 REDIRECT = os.environ.get("BC_CARD_REDIRECT") == "1"
+ROUTE_MATCH = os.environ.get("BC_CARD_ROUTE_MATCH") == "1"
+PROMPT_CHECK = os.environ.get("BC_CARD_PROMPT_CHECK") == "1"
+
+
+def _prompt(args: dict) -> str | None:
+    """The question in a scrape's `query` format, if it asks one."""
+    for f in args.get("formats") or []:
+        if f == "query" or (isinstance(f, dict) and f.get("type") == "query"):
+            q = (args.get("queryOptions") or {}).get("prompt") or (f.get("prompt") if isinstance(f, dict) else None)
+            return q or None
+    return None
 _served: set[str] = set()  # page ids whose card was used once
 _seen_sites: set[str] = set()
 
@@ -53,8 +76,15 @@ def _cards(site: str) -> list[dict]:
         return []
 
 
-def _card(url: str) -> dict | None:
-    return next((c for c in _cards(host_of(url)) if c.get("id") == page_id(url) and c.get("route")), None)
+def _card(url: str) -> tuple[dict | None, bool]:
+    """The card for this page, and whether it matched by the page its route reads (card-0.3)."""
+    cards, pid = [c for c in _cards(host_of(url)) if c.get("route")], page_id(url)
+    if c := next((c for c in cards if c.get("id") == pid), None):
+        return c, False
+    if ROUTE_MATCH:
+        if c := next((c for c in cards if c["route"].get("section") and page_id(c["route"]["url"]) == pid), None):
+            return c, True
+    return None, False
 
 
 def _raw(r: dict) -> bool:
@@ -94,8 +124,9 @@ def _route_line(url: str, r: dict) -> str:
     return f"[breadcrumbs: an earlier agent's route for {url}: {how}."
 
 
-def _serve(url: str, r: dict) -> dict | None:
-    """The route's content as stock-shaped scrape data, or None to fall back to stock."""
+def _serve(url: str, r: dict, other: dict | None = None, prompt: str | None = None) -> dict | None:
+    """The route's content as stock-shaped scrape data, or None to fall back to stock. With
+    `prompt` (card-0.4), a section is served only if it matches that question."""
     if _raw(r):
         try:
             text, m = fetch_clean(r["url"], r.get("select"))
@@ -104,20 +135,33 @@ def _serve(url: str, r: dict) -> dict | None:
         if m["status"] != 200 or not text.strip():
             return None
         part, credits = text, 0
-        if r.get("section") and (s := _section(text, r["section"])[0]):
-            part = s
+        if r.get("section"):
+            s = _section(text, r["section"])[0]
+            part = s or part
     else:
         try:
             text, m = firecrawl_scrape(r["url"])
         except Exception:
             return None
-        part, credits = _section(text, r["section"])[0], m.get("credits") or 1
+        part = _section(text, r["section"])[0]
+        credits = m.get("credits") or 1
         if not part:
             log_call("card-miss", f"{url}\t{r['url']}\t{r['section']}")
             return None
-    log_call("card", f"{url}\t{r['url']}\t{credits}\t{tokens(part)}")
-    note = (f"{_route_line(url, r)} This is the route's content, served in place of the formats asked for; "
-            f"scrape {url} again for Firecrawl's own reply.]")
+        if prompt:
+            ok, why = serves(text, r["section"], prompt)
+            if not ok:
+                log_call("card-skip", f"{url}\t{r['url']}\t{credits}\t{why}")
+                return None
+    log_call("card-route" if other else "card", f"{url}\t{r['url']}\t{credits}\t{tokens(part)}")
+    if other:
+        topics = (other.get("answers") or "")[:120]
+        note = (f"[breadcrumbs: an earlier agent found section {r['section']!r} of this page for another question"
+                f" (via {other['url']}{'; ' + topics if topics else ''}). It may not hold your answer. Served in"
+                f" place of the formats asked for; scrape {url} again for Firecrawl's own reply.]")
+    else:
+        note = (f"{_route_line(url, r)} This is the route's content, served in place of the formats asked for; "
+                f"scrape {url} again for Firecrawl's own reply.]")
     return {"warning": note, "markdown": part, "metadata": {"sourceURL": r["url"], "statusCode": 200}}
 
 
@@ -148,12 +192,14 @@ async def main():
         async def call_tool(ctx, params: types.CallToolRequestParams):
             name, args = params.name, dict(params.arguments or {})
             url = args.get("url") if name == "firecrawl_scrape" else None
-            if url and page_id(url) not in _served and (card := _card(url)):
+            card, by_route = _card(url) if url and page_id(url) not in _served else (None, False)
+            if card:
                 r, pid = card["route"], page_id(url)
                 _served.add(pid)
                 _seen_sites.add(host_of(url))
                 if r.get("section") or _raw(r):
-                    if (hit := await asyncio.to_thread(_serve, url, r)) is not None:
+                    prompt = _prompt(args) if PROMPT_CHECK else None
+                    if (hit := await asyncio.to_thread(_serve, url, r, card if by_route else None, prompt)) is not None:
                         return _result(hit)
                 elif page_id(r["url"]) != pid and REDIRECT:
                     args["url"] = r["url"]

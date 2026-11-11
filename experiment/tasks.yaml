@@ -5,6 +5,9 @@
 # question/expect:  expect is a list of regexes that must all match the agent's
 #                   ANSWER line (case-insensitive).
 # related:          a different question on the same site, for warm-related runs.
+# third:            on the 9 hard tasks the Firecrawl runs use (card-0.3, LOG 2026-11-11): a
+#                   question on the page the cold run's card routes to. Where the route is a
+#                   section, it needs another section (gha, git-gc) or the same one (mdn).
 # check:            where the answer lives and a regex that proves it there, so
 #                   `python run.py verify` can re-check answers before a run.
 #                   `select` reduces a JSON response to dotted paths, as in fetch.
@@ -338,6 +341,10 @@
     question: On Maven Central (central.sonatype.com), what is the latest version of org.apache.commons:commons-lang3?
     expect: ['3\.21\.0']
     check: {url: 'https://repo1.maven.org/maven2/org/apache/commons/commons-lang3/maven-metadata.xml', pattern: '<release>3\.21\.0</release>'}
+  third:
+    question: On Maven Central (central.sonatype.com), what is the latest version of junit:junit?
+    expect: ['4\.13\.2']
+    check: {url: 'https://repo1.maven.org/maven2/junit/junit/maven-metadata.xml', pattern: '<release>4\.13\.2</release>'}
 
 - id: jetbrains-rainbow-brackets
   set: hard
@@ -362,6 +369,10 @@
     question: How many days after creation does a Free Render Postgres database expire?
     expect: ['\b30\b']
     check: {url: 'https://render.com/docs/free', pattern: 'expire 30 days after creation'}
+  third:
+    question: How many Free instance hours does Render grant each workspace per calendar month?
+    expect: ['\b750\b']
+    check: {url: 'https://render.com/docs/free', pattern: 'Render grants \*\*750 Free instance hours\*\*'}
 
 - id: pypi-file-size-limit
   set: hard
@@ -395,6 +406,10 @@
     question: When Heroku stops a dyno with SIGTERM, how long do its processes have to shut down before they are killed?
     expect: ['\b30\b']
     check: {url: 'https://devcenter.heroku.com/articles/dyno-shutdown-behavior', pattern: 'processes have 30 seconds to shut down cleanly'}
+  third:
+    question: "Under Heroku's Common Runtime restart policy, how long is the first cool-off period for a crashing dyno, at most?"
+    expect: ['\b20\b']
+    check: {url: 'https://devcenter.heroku.com/articles/dyno-restarts', pattern: 'The first cool-off period is up to 20 minutes'}
 
 - id: gha-matrix-max-jobs
   set: hard
@@ -406,6 +421,10 @@
     question: In GitHub Actions, how many background steps can run concurrently in a single job?
     expect: ['\b10\b|\bten\b']
     check: {url: 'https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax', pattern: 'A maximum of 10 background steps can run concurrently in a single job'}
+  third:
+    question: According to the GitHub Actions workflow syntax docs, what is the maximum total size of all job outputs in a single workflow run?
+    expect: ['\b50 ?MB\b']
+    check: {url: 'https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax', pattern: 'The total of all outputs in a workflow run can be a maximum of 50 MB'}
 
 - id: r2-single-part-upload
   set: hard
@@ -430,6 +449,10 @@
     question: In the git-config documentation, what is the default value of gc.aggressiveWindow?
     expect: ['\b250\b']
     check: {url: 'https://git-scm.com/docs/git-config', pattern: 'git gc --aggressive\*\. This defaults to 250'}
+  third:
+    question: According to the git-gc documentation, which hook does git gc --auto run?
+    expect: ['pre-auto-gc']
+    check: {url: 'https://git-scm.com/docs/git-gc', pattern: 'The \*git gc --auto\* command will run the \*pre-auto-gc\* hook'}
 
 - id: nginx-keepalive-requests
   set: hard
@@ -441,6 +464,10 @@
     question: In the nginx ngx_http_core_module docs, what is the default value of client_body_buffer_size?
     expect: ['8k', '16k']
     check: {url: 'https://nginx.org/en/docs/http/ngx_http_core_module.html', pattern: 'Default: \| client\\_body\\_buffer\\_size 8k\\\|16k;'}
+  third:
+    question: In the nginx ngx_http_core_module docs, what is the default value of client_max_body_size?
+    expect: ['\b1 ?m\b']
+    check: {url: 'https://nginx.org/en/docs/http/ngx_http_core_module.html', pattern: 'Default: \| client\\_max\\_body\\_size 1m;'}
 
 - id: rust-vec-extract-if
   set: hard
@@ -452,6 +479,10 @@
     question: In the Rust standard library docs, since which Rust version has Vec::pop_if been stable?
     expect: ['1\.86']
     check: {url: 'https://doc.rust-lang.org/std/vec/struct.Vec.html', pattern: '1\.86\.0 · \[Source\]\([^)]*\) #### pub fn \[pop\\_if\]'}
+  third:
+    question: In the Rust standard library docs, since which Rust version has Vec::retain_mut been stable?
+    expect: ['1\.61']
+    check: {url: 'https://doc.rust-lang.org/std/vec/struct.Vec.html', pattern: '1\.61\.0 · \[Source\]\([^)]*\) #### pub fn \[retain\\_mut\]'}
 
 - id: mdn-fetch-credentials
   set: hard
@@ -463,6 +494,10 @@
     question: According to MDN, what is the default value of the redirect option passed to fetch()?
     expect: ['follow']
     check: {url: 'https://developer.mozilla.org/en-US/docs/Web/API/RequestInit', pattern: 'replay it\. Defaults to `follow`'}
+  third:
+    question: According to MDN, what is the maximum body size of a fetch() request with keepalive set to true?
+    expect: ['\b64\b']
+    check: {url: 'https://developer.mozilla.org/en-US/docs/Web/API/RequestInit', pattern: 'The body size for `keepalive` requests is limited to 64 kibibytes'}
 
 - id: compose-stop-grace-period
   set: hard
@@ -485,3 +520,7 @@
     question: According to the GNU Bash manual, what is the default value of HISTFILE?
     expect: ['\.bash_history']
     check: {url: 'https://www.gnu.org/software/bash/manual/bash.html', pattern: 'HISTFILE` The name of the file to which the command history is saved\. Bash assigns a default value of `~/\.bash_history`'}
+  third:
+    question: According to the GNU Bash manual, what is the default value of PS2?
+    expect: ['>']
+    check: {url: 'https://www.gnu.org/software/bash/manual/bash.html', pattern: 'The secondary prompt string\. The default value is .{0,3}`>`'}

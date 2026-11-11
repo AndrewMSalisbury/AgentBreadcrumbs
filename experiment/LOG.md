@@ -1279,3 +1279,61 @@ Verdict: card-0.2 does no harm where it isn't hit and saves about half where a s
 - **Keep going on Firecrawl first (decided 2026-11-11; PLAN):** card-0.3 serves a recorded section when the agent scrapes the route's own page, with a way back to Firecrawl's full reply; and a third question per page tests whether a section found for one question serves another. Where the main effort lies (Firecrawl or the local fetch) is decided after those runs.
 - **A truly cold baseline per setup** (first run after the cache expires), so a cold first run can be kept instead of dropped.
 - Carried over: trace builder on one-line Firecrawl replies; fold-0.1 on the local fetch (`out_fold-0.1/`); rescore step 2 on medians; the lid-sleep gap.
+
+## 2026-11-11: card-0.3, matching the route's own page (`out_card-0.3/drive.py`)
+
+Why: cards are keyed by the page an earlier question started from, and related questions often scrape a different one. card-0.3 (`--iteration card-0.3`, `BC_CARD_ROUTE_MATCH=1`) also serves a section route when the agent scrapes the page the route reads, noting that the section was found for another question (and which), and that a second scrape gets Firecrawl's own reply.
+
+- **Reach, checked offline before any run:** across the 27 stock runs and card-0.1/0.2's runs on the 9 hard tasks, only gha's related question scrapes a page a section route reads without the card's own page (workflow-syntax, the matrix question's route). git-gc's agents go to git-config (route: git-gc), heroku's to dyno-shutdown-behavior (route: dyno-restarts, no section), rust's route has no section, mdn already hits, sonatype has no card. So card-0.3 ran gha only, r1-r2; on the other 8 it behaves as card-0.2.
+- **gha r1:** answered from the smartscope blog after the GitHub changelog and never scraped workflow-syntax; no card served. $0.086, 4 turns.
+- **gha r2:** scraped workflow-syntax last and was served the matrix section (877 tokens, 1 credit), which doesn't hold the background-steps answer; it answered from the blog it had already read, without a second scrape. $0.079, 5 turns.
+- Against stock's 3 reps on gha ($0.080 mean) card-0.3 is $0.082, level, inside the spread; card-0.1/0.2 on gha was $0.090.
+
+Verdict: matching by the route's page does no harm (the one wrong section cost 1 credit and was ignored) but adds no hits that matter on these tasks: the only new match served a section for another question. The 9 related questions can't measure hit rate further, because each points at a different section or page than its card. That is what the third question per page is for; card-0.3 stays on as the wrapper for it.
+
+## 2026-11-11: third-0.1, a third question per page (`out_card-0.3/drive_third.py`, `report_third.py`)
+
+Why: the related questions can't measure whether a stored section serves another question, since each points at a different section or page than its card (card-0.3 above). Each of the 9 hard tasks now has a `third` question (tasks.yaml) on the page firecrawl-0.1's card routes to, answer checked at the source (`run.py verify`: all OK). New conditions `warm-third-nowrite` and `noregistry-third`.
+
+- Of the 9 cards only 3 have a section route, so only those can be served: **mdn** (the third answer, the keepalive body limit, is in the stored section, Instance properties), **git-gc** (the gc --auto hook is in HOOKS, not the stored CONFIGURATION) and **gha** (the 50 MB job-output total is in jobs.<job_id>.outputs, not the stored matrix section). 3 reps of each arm. The other 6 routes are a whole page or an offset, which the wrapper passes to stock: 1 rep each, as a no-harm check.
+- Arms: card-0.3 with firecrawl-0.1's cards, against stock firecrawl-mcp. 32 runs including 2 baselines, 168 credits, 15/15 correct per arm.
+- **Baselines:** the card baseline ran first on a cold cache ($0.168, nothing read from cache), so the card arm is netted of card-0.1's two warm card baselines ($0.011); stock's own here was warm ($0.012). No task run was cold.
+
+| task (reps) | what card-0.3 did | card $ net / cr | stock $ net / cr |
+|---|---|---|---|
+| mdn (3) | served the right section, 3/3 | $0.043 / 1 | $0.095 / 15.7 |
+| git-gc (3) | served the wrong section, then a 5-credit `query`, 3/3 | $0.031 / 6 | $0.068 / 1 |
+| gha (3) | wrong section by route match in r2-r3, then a full `markdown` scrape and a `query`; r1 used the alias URL, no match | $0.032 / 6.3 | $0.010 / 5 |
+| other 6 (1 each) | passed to stock; rust got a named-URL note | $0.037 median | $0.023 median |
+
+Card-0.3 vs stock: section-route tasks −54% median and −38% total in Claude dollars (−25% median, −38% total net at Hobby); the other 6 +30% median, +72% total (rust $0.085 and 21 credits against $0.019 and 6, 8 turns, after the named-URL note); all 9 +19% median, +8% total.
+
+- **A right section saves as before:** mdn is about half of stock's Claude dollars and 1 credit against 16, like card-0.1/0.2's mdn hit. Stock's agents wandered (fetch, Request/keepalive, RequestInit, a search) in all 3 runs.
+- **A wrong section didn't mislead:** no wrong answers. What it costs depends on the agent's next step. On git-gc the agent sent a `query`, which came to $0.03 below stock (stock read the whole page's Markdown for 1 credit) but 5 credits more. On gha it re-scraped the 180k-character page as `markdown` with `maxAge: 0` and then queried, about 3x stock, whose agents went straight to a `query` on the alias URL (`writing-workflows/workflow-syntax-for-github-actions`), which no card matches.
+- **The other 6 should be level by construction** (the wrapper forwards as is). At 1 rep they are noise apart from rust, where the note naming ExtractIf.html came before an 8-turn run. card-0.2's 2 rust runs with the same note were level with stock, so this is one run, not yet a finding.
+- **Hit rate is still open:** these third questions were written to land on carded pages, so they measure a hit's value, not how often hits happen. On the 9 tasks, 3 cards hold a section, and one of their 3 third questions fell inside the stored section.
+
+Reading the runs more closely:
+
+- **gha's wrong section came from a question the wrapper ignored.** In r2-r3 the agent's first call was a `query` whose prompt was the third question itself ("What is the maximum total size of all job outputs…"). card-0.3 matches by page alone, so it served the matrix section anyway. The agent then re-scraped as `markdown` (212k characters, past the tool-output limit, saved to a file it couldn't read without Bash) and sent a second `query`.
+- **git-gc's credits:** stock read the whole page's Markdown (35k characters, 1 credit), which holds HOOKS. The card arm got CONFIGURATION (9k characters, 1 credit), then a 5-credit `query`: fewer tokens, more credits. Its first call had no prompt, so the wrapper had nothing to check against.
+- **mdn's saving is routing, not slicing:** every agent starts on the fetch() page, which doesn't hold the answer (stock's first `query` there returned "the page does not contain this"). The card, built from an earlier fetch() question, points at RequestInit's Instance properties, so the first call gets the answer.
+- **The other 6 tasks:** on bash, nginx, render and sonatype the wrapper did nothing, so their gaps are run-to-run variation (bash: both arms' first `query` returned junk, and the card-arm agent then pulled the 50 KB page while the stock agent went to the right page). Totals across all 9 are $0.325 for card against $0.300 for stock; without rust, $0.240 against $0.281 (−15%).
+
+Verdict: on Firecrawl a served section is worth about half a task when it holds the answer, and most of that is the route to another page. When it doesn't hold the answer, the answer stays right and the cost depends on the recovery. And when the agent asks a `query`, the wrapper already has the question and can check the section against it before serving (card-0.4).
+
+## 2026-11-11: card-0.4, the stored section only when it matches the agent's `query` (`out_card-0.4/drive.py`)
+
+- **`bc/section_match.py`:** ranks 15-line windows of the page against the `query` prompt with BM25 (no model call). The stored section is served only if its best window scores at least 0.8 of the page's best; otherwise the call goes to stock as asked, and the 1-credit section scrape is logged as `card-skip`. Heading-sized chunks failed: BM25's length penalty let short intros outscore the long stored sections (7/10). Scrapes without a prompt behave as in card-0.3. `--iteration card-0.4` (`BC_CARD_PROMPT_CHECK=1`, route matching on).
+- **Offline, 10 prompts on the three section-route pages** (scratchpad, not kept): 9/10 right. All 4 gha prompts outside the matrix section are skipped (ratios 0.14-0.45) and the matrix question served; the gc --auto hook is skipped (0.65); gc.aggressiveWindow and all 3 mdn questions are served. The miss is gc.auto (0.77): the OPTIONS paragraph that refers to `gc.auto` outscores its CONFIGURATION entry. A miss of that kind sends the call to stock, so it costs the 1-credit scrape, not a wrong answer. The bar stays at 0.8 rather than being tuned to these 10.
+- **`_serve` on the first calls from third-0.1:** the gha `query` on workflow-syntax goes to stock (0.14); mdn's on fetch() is still served RequestInit's section.
+- **Live, third question, 3 reps each, cache warm, all correct:** mdn $0.043 and 1 credit (served 3/3), as card-0.3. On gha all 3 agents scraped the alias URL (`writing-workflows/workflow-syntax-for-github-actions`), as stock's did, so no card matched and the check never fired: $0.011 and 5 credits, level with stock ($0.010, 5). 18 credits.
+
+Verdict: card-0.4 keeps mdn's saving and does no harm on gha, but these runs didn't exercise the skip itself. Only the offline and `_serve` tests show it. Matching gha's alias URL would exercise it, and would add nothing there: the skip forwards the agent's `query`, the same call stock makes, plus 1 credit.
+
+## Next
+
+- **The rust named-URL note:** 2 more reps of rust third, to see whether the note causes long runs.
+- **Hit rate:** decide how to estimate it (questions sampled per site, not written per card) before the Firecrawl-or-local decision (PLAN).
+- **A truly cold baseline per setup:** this batch's card baseline was cold and had to be replaced; run a throwaway warm-up first.
+- Carried over: trace builder on one-line Firecrawl replies; fold-0.1 on the local fetch (`out_fold-0.1/`); rescore step 2 on medians; the lid-sleep gap.

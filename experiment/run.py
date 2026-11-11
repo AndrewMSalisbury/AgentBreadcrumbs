@@ -12,11 +12,14 @@ and logs tokens, tool calls, time and the final answer to out/results.jsonl.
   python run.py cold-nowrite-related [--task ID]  # related question, no registry, no writing
   python run.py warm-related-nowrite [--task ID]  # related question, cold run's registry, no writing
   python run.py warm-same-nowrite [--task ID]     # same question, cold run's registry, no writing
+  python run.py warm-third-nowrite [--task ID]    # third question, cold run's registry, no writing
   python run.py memory --tasks ../research/probe/questions.yaml  # no tools: answer from memory
   python run.py open --tasks ../research/probe/questions.yaml    # web tools, no registry; the agent decides whether to look up
 
 --tasks reads another task file (default tasks.yaml); `related` is optional there,
-for files like the knowledge-gap probe's that only use memory and cold-nowrite.
+for files like the knowledge-gap probe's that only use memory and cold-nowrite. `third`
+(the 9 hard tasks the Firecrawl runs use) is a question on the page the cold run's card
+routes to, for warm-third-nowrite and noregistry-third.
 
 --iteration picks the card style and write policy, named <approach>-0.<n> in the
 order they were tried (LOG.md); use each with its own --out. narrow-0.1 (cards
@@ -95,8 +98,9 @@ PY = sys.executable
 TOOLS = ["WebSearch", "mcp__web__fetch", "mcp__web__render", "mcp__registry__lookup",
          "mcp__registry__write"]
 CONDITIONS = ("baseline", "cold", "cold-nowrite", "warm-same", "warm-related", "cold-nowrite-related",
-              "warm-related-nowrite", "warm-same-nowrite", "memory", "open", "noregistry", "noregistry-related")
-NOREGISTRY = ("noregistry", "noregistry-related")
+              "warm-related-nowrite", "warm-same-nowrite", "memory", "open", "noregistry", "noregistry-related",
+              "warm-third-nowrite", "noregistry-third")
+NOREGISTRY = ("noregistry", "noregistry-related", "noregistry-third")
 # Claude Code's own MCP output limit counts more strictly than the web server's
 # 20k-token cap; raise it so long pages reach the agent instead of a file it can't read.
 AGENT_ENV = {**os.environ, "MAX_MCP_OUTPUT_TOKENS": "60000"}
@@ -242,7 +246,11 @@ ITERATIONS.update({i: ("route", NOWRITE_RULE) for i in FOLDS})
 # card-*: --backend firecrawl-card only. card-0.1 sends a scrape of a page whose route is another URL
 # (no section) to that URL; card-0.2 only names it. card-0.1's runs (out_card-0.1) predate the name
 # and are labelled map-0.1, the default, which also redirected.
-CARD_ITERS = ("card-0.1", "card-0.2")
+# card-0.3: card-0.2, also matched by the route's page; card-0.4: card-0.3, and a scrape with a `query`
+# prompt gets the stored section only if it matches that prompt (bc/section_match.py).
+CARD_ENV = {"card-0.1": {"BC_CARD_REDIRECT": "1"}, "card-0.2": {}, "card-0.3": {"BC_CARD_ROUTE_MATCH": "1"},
+            "card-0.4": {"BC_CARD_ROUTE_MATCH": "1", "BC_CARD_PROMPT_CHECK": "1"}}
+CARD_ITERS = tuple(CARD_ENV)
 ITERATIONS.update({i: ("route", NOWRITE_RULE) for i in CARD_ITERS})
 ITERATION = "map-0.1"  # set from --iteration
 CARDS = "map"
@@ -267,7 +275,7 @@ def verify(tasks: list[dict]) -> bool:
     """Re-check every answer at its source, so stale answers are caught before a run."""
     pages, ok_all = {}, True
     for t in tasks:
-        qs = [(t["id"], t)] + ([(t["id"] + " (related)", t["related"])] if "related" in t else [])
+        qs = [(t["id"], t)] + [(f"{t['id']} ({k})", t[k]) for k in ("related", "third") if k in t]
         for label, q in qs:
             c = q["check"]
             key = (c["url"], tuple(c.get("select") or ()))
@@ -385,6 +393,10 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
         question, expect = "Reply with the word OK.", ["OK"]
     elif cond in ("warm-related", "cold-nowrite-related", "warm-related-nowrite", "noregistry-related"):
         question, expect = task["related"]["question"], task["related"]["expect"]
+    elif cond in ("warm-third-nowrite", "noregistry-third"):
+        if "third" not in task:
+            sys.exit(f"{cond}: task {tid} has no third question")
+        question, expect = task["third"]["question"], task["third"]["expect"]
     else:
         question, expect = task["question"], task["expect"]
 
@@ -413,17 +425,17 @@ def run_one(cond: str, task: dict | None, rep: int, model: str) -> dict:
                                                "BC_CALL_LOG": str(run_dir / "calls.log")}
     if BACKEND == "firecrawl-mcp":
         if cond not in NOREGISTRY + ("baseline",):
-            sys.exit("--backend firecrawl-mcp runs baseline, noregistry and noregistry-related only")
+            sys.exit("--backend firecrawl-mcp runs baseline and noregistry-* only")
         servers["mcpServers"] = {"firecrawl": {"command": PY, "args": [str(ROOT / "bc" / "firecrawl_mcp.py")],
                                                "env": {"BC_FIRECRAWL_KEY_FILE": str(FIRECRAWL_KEY_FILE)}}}
     if BACKEND == "firecrawl-card":
-        if cond not in ("baseline", "warm-related-nowrite", "warm-same-nowrite"):
+        if cond not in ("baseline", "warm-related-nowrite", "warm-same-nowrite", "warm-third-nowrite"):
             sys.exit("--backend firecrawl-card runs baseline and warm-*-nowrite only")
         servers["mcpServers"] = {"firecrawl": {"command": PY, "args": [str(ROOT / "bc" / "firecrawl_card.py")],
                                                "env": {"BC_FIRECRAWL_KEY_FILE": str(FIRECRAWL_KEY_FILE),
                                                        "BC_REGISTRY": str(registry),
                                                        "BC_CALL_LOG": str(run_dir / "calls.log"),
-                                                       **({} if it == "card-0.2" else {"BC_CARD_REDIRECT": "1"})}}}
+                                                       **CARD_ENV.get(it, CARD_ENV["card-0.1"])}}}
     if BACKEND == "firecrawl" and cond == "baseline":  # the servers arm 2 loads: web only
         servers["mcpServers"].pop("registry", None)
     if BACKEND == "firecrawl" and "web" in servers["mcpServers"]:
