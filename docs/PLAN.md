@@ -1,8 +1,10 @@
 # Agent Breadcrumbs Plan
 
-*Mirror of the shareable plan doc: [Agent Breadcrumbs Plan](https://claude.ai/artifact/4NE5HAUh1WMnhhWoNZzNrP). The doc is the source of truth; this copy was exported on 2026-10-26.*
+*Mirror of the shareable plan doc: [Agent Breadcrumbs Plan](https://claude.ai/artifact/4NE5HAUh1WMnhhWoNZzNrP). The doc is the source of truth; this copy was last synced on 2026-11-17. The experiment log, [experiment/LOG.md](../experiment/LOG.md), has every result in full.*
 
-Agents that read a web page leave a short, structured breadcrumb in a central registry, so the next agent can skip the searching, wrong turns and failed fetches. This plan covers the standard, how it is tested, and the path to a working registry. The immediate next step is a small experiment proving breadcrumbs make getting site data measurably cheaper.
+Agents that read a web page leave a short, structured breadcrumb in a central registry, so the next agent can skip the searching, wrong turns and failed fetches. This plan covers the standard, how it is tested, and the path to a working registry.
+
+**Where it stands (2026-11-17).** The fair test (phase 2) has run about 40 iterations. Breadcrumbs pay on hard-access sites and multi-fetch tasks (−21% to −41% on a related question, in dollars) and lose a little on one-fetch pages and library docs. Route cards built from a run's trace save as much as agent-written ones with no write cost, and the lookup is folded into the fetch tool. On Firecrawl a hit saves about half a task, but hits are rare. On real Stack Overflow questions about popular docs (GitHub Actions, MDN), a card gives a useful hit about 1 question in 100: agents already reach the right page and anchor for about $0.03. The next step is to find where agents waste spend on real questions, and whether that waste repeats across questions on a site; a shared registry only makes sense where it does.
 
 ## Problem and idea
 
@@ -76,16 +78,18 @@ The shape of the standard is settled; scoring numbers wait for test data.
 | Depth growth and L3 outline | Demand-driven depth; L3 for long or hard pages | Proposed |
 | Core of the L1 card | A route (the cheapest way to get the page's content), not a section map | Decided: section maps failed the bar in map-0.1; route cards cleared it from route-0.1 |
 | Card source | L1 route cards are built by the registry from one run's fetch trace, not written by agents; agents write site records only (not yet shown to pay) | Decided (2026-11-10): trace cards match agent cards with no write cost; pooling traces didn't change them (trace-0.3) |
-| Fetch tools | Any: cards are built from and served to whatever tool the agent fetches with; Firecrawl is the first adapter after the local fetch tool | Proposed (2026-11-10); on Firecrawl, cards save what they save locally but only tie a stock Firecrawl agent (firecrawl-0.1); in front of stock's scrape, a served section saves about half but only 1 task in 9 hits one (card-0.1/0.2). Firecrawl work continues (card-0.3) before the main effort is placed |
+| Fetch tools | Any: cards are built from and served to whatever tool the agent fetches with; Firecrawl is the first adapter after the local fetch tool | Proposed (2026-11-10); on Firecrawl, cards save what they save locally but only tie a stock Firecrawl agent (firecrawl-0.1); in front of stock's scrape, a served section saves about half but only 1 task in 9 hits one (card-0.1/0.2) |
+| Section cards on popular docs | Stopped: on real questions a useful hit is about 1 in 100 on GitHub Actions and MDN | Decided (2026-11-11, curve-0.2) |
+| Where to test next | Real questions on long-tail, JavaScript-heavy, API-only and recently changed sites, measuring the expensive tail and whether its waste repeats per site | Proposed (2026-11-11) |
 | Scoring weights and decay | — | After testing |
 | Business model | Tiered subscription: each tier grants token credits spent on breadcrumb reads; agents earn credits by contributing and confirming breadcrumbs | Decided (2026-11-05); prices and earn rates later |
 | Site-owner role | Minimal, if any: no owner-verified records and no owner-written content | Decided (2026-11-05) |
 
 ## How it works
 
-![Agent B skips the search Agent A paid for](img/how-it-works.png)
+![Agent B's fetch already knows the route Agent A found](img/how-it-works.png)
 
-The first agent pays the full cost and leaves a breadcrumb; the registry validates, fingerprints and scores it; later agents read it and go straight to the right page.
+The first agent pays the full cost. The registry builds a route card from the trace of the call that held the answer, so no agent writes one; agents write only site access records, and only when a fetch shows an access route (an API, a raw source). A later agent calls fetch as usual, and the fetch tool, local or Firecrawl, serves the page's route in its reply. The registry still validates, fingerprints and scores records before they are served.
 
 ## The breadcrumb standard
 
@@ -245,7 +249,7 @@ Different kinds of agent work waste effort in different places, so each benefits
 | Monitoring changes | Prices, changelogs, status pages | Re-locating the value each check | L1 card + fingerprint |
 | Logged-in or transactional tasks | Booking, account pages | Personal flows | Out of scope (public pages only) |
 
-The first three rows are where the measurements showed the largest waste, so the experiment starts there.
+The first three rows are where the measurements showed the largest waste, so the experiment started there. Results so far (LOG): hard-to-access sites pay most (−21% to −41% on a related multi-fetch question); coding agents on library docs lose (+8-9%, probe-0.1); docs fact lookup pays on hand-written multi-fetch tasks but not on real questions about popular docs, where agents already find the page (curve-0.1, worth-0.1, curve-0.2).
 
 ## Short-term execution plan
 
@@ -331,7 +335,11 @@ Firecrawl's scrape returns whole pages (the redis SET page is about 14k tokens, 
 
 The decision follows from those runs. If matching lifts hits well above 1 task in 9 and a served section still saves about half, Firecrawl stays a main track: it is where most agents fetch from and where a stock agent already does well. If hits stay rare, or sections found for one question mislead on the next, a card on Firecrawl is a per-hit add-on and the main effort moves back to the local fetch, starting with fold-0.1's write-up (`out_fold-0.1/`).
 
-**Hit rate on real questions (hitrate-0.1, LOG 2026-11-11): low, and not because of the backend.** 398 Stack Overflow questions whose answers link to gha, MDN, git and nginx docs, scored offline as if each earlier question had left a trace card. After 75 earlier questions per site, the stored section holds a later question's answer for 2-3% of gha questions with one card per page, and 10% with every section pooled; elsewhere 0-2%. A live check on 11 gha questions seemed to find agents mostly reading Stack Overflow, but those runs could see the answer's Stack Overflow id (task ids sit in the agent's working directory). **Corrected by reach-0.2 (LOG 2026-11-11):** with opaque ids, on 35 real questions the site's docs are the first scrape in 16 runs and carry 61 of 93 credits; Stack Overflow is first in 1, and 7 runs answer from search alone. So docs-page cards are reached, and keying cards by the pages agents actually reach (option 1) is what trace cards already do. The offline numbers above rest on guessed start pages that match the real first scrape about half the time, so they are a model, not a measurement. Next: a hit-rate curve from real traces on one site.
+**Hit rate on real questions (hitrate-0.1, LOG 2026-11-11): low, and not because of the backend.** 398 Stack Overflow questions whose answers link to gha, MDN, git and nginx docs, scored offline as if each earlier question had left a trace card. After 75 earlier questions per site, the stored section holds a later question's answer for 2-3% of gha questions with one card per page, and 10% with every section pooled; elsewhere 0-2%. A live check on 11 gha questions seemed to find agents mostly reading Stack Overflow, but those runs could see the answer's Stack Overflow id (task ids sit in the agent's working directory). **Corrected by reach-0.2 (LOG 2026-11-11):** with opaque ids, on 35 real questions the site's docs are the first scrape in 16 runs and carry 61 of 93 credits; Stack Overflow is first in 1, and 7 runs answer from search alone. So docs-page cards are reached, and keying cards by the pages agents actually reach (option 1) is what trace cards already do. The offline numbers above rest on guessed start pages that match the real first scrape about half the time, so they are a model, not a measurement.
+
+**Hit rate from real traces (curve-0.1, worth-0.1, curve-0.2; LOG 2026-11-11): about 1 in 100 on popular docs.** All 99 gha questions were run once on the local fetch with no registry ($3.60), trace cards built from each run, and later runs scored against the cards earlier ones left. After 75 earlier runs a pooled card (every seed's section kept) seemed to serve the right section to 12%, twice one card per page. A live run priced those hits (worth-0.1, 168 runs): cards were rarely served, because the agent asks for the section itself on its first fetch, and a card applies only to a plain fetch. With the scorer fixed to count a hit only where the run would have read more than the section, gha comes to **1%** (redundant 12%, wrong 18%, miss 59%). The one real hit saves about half its run. On MDN (100 questions, $3.27), 91% of later questions meet no card at all after 75, because questions spread over a long tail of pages, and routing, MDN's value on the hand-written tasks, comes to 0%. Median runs cost $0.03-0.04 with no expensive tail. So section and route cards on popular docs save about nothing on real questions, and that track stops; git and nginx were not run.
+
+**Next: where agents waste spend (proposed 2026-11-11).** Stock runs on real questions from long-tail, JavaScript-heavy, API-only and recently changed sites: measure the expensive tail, and whether its waste repeats across questions on a site. The hard-set results say breadcrumbs pay where a run is expensive and the route is reusable; this decides whether that case is common enough for a product. Carried over: merge alias URLs in card keys; fold-0.1's write-up on the local fetch (`out_fold-0.1/`); a truly cold baseline per setup.
 
 **Firecrawl `/agent` is out of scope (2026-11-10).** `/agent` runs its own search loop on Firecrawl's side, so the calling agent makes one call with or without breadcrumbs. A probe on two related questions (LOG, 2026-11-10) found a card hit routes around it, one 1-credit scrape against 6-8 credits and 11-37 s per run, but that only restates Firecrawl's own advice to scrape known URLs, and the questions were far easier than the deep tasks `/agent` is built for. Passing a card's URLs as `urls` narrows that search to a route recorded for another question, which on deep tasks risks confident wrong answers. Breadcrumbs could reach `/agent` only if Firecrawl used them itself.
 
@@ -339,7 +347,7 @@ The decision follows from those runs. If matching lifts hits well above 1 task i
 
 ![The registry is built only after the fair test proves savings](img/roadmap.png)
 
-No dates are set yet. The key gate is the second: if warm runs do not meet the savings criteria, the registry is reshaped or dropped before anything is built.
+No dates are set yet. The key gate is the second: if warm runs do not meet the savings criteria, the registry is reshaped or dropped before anything is built. As of 2026-11-17 the gate is met on hard-access sites but not on popular docs, so it now asks for savings on a class of sites where waste repeats across questions.
 
 ## Risks and mitigations
 
@@ -352,15 +360,16 @@ The two risks that could sink the project are poisoned records and a large incum
 | Stale breadcrumbs look current | Wrong answers delivered confidently | Registry fingerprints, staleness signals, fact expiry |
 | Copyright or terms-of-service complaints | Legal exposure, hostile site owners | Pointers and facts only, quote limits, public pages only, pointer-only records on paths that opt out via robots.txt or AI opt-out signals, no other owner role |
 | Providers will not contribute | Registry stays empty | MCP distribution; show token savings; free reads |
-| Savings smaller than measured | Weak value proposition | Fair test before building the registry; stop or reshape if criteria fail |
+| Savings smaller than measured | Weak value proposition; on real questions about popular docs this has happened (about 1 useful hit in 100) | Fair test before building the registry; narrow to site classes where waste repeats, or stop |
 | Writer spam or abuse | Low-quality records | Writer identity, rate limits, reputation per writer |
 
 ## Open questions
 
+- [ ] Is there a class of sites where agents' waste is large and repeats across questions (long-tail, JavaScript-heavy, API-only, recently changed)? This decides whether there is a product
 - [ ] Scoring weights: how fast trust decays, and how many confirmations make a fact reliable (after testing)
 - [ ] Route handling when a step page moves or its fingerprint changes: to test in the staleness trial (default: mark the route suspect; the next agent re-walks it and replaces the step)
 - [ ] Writer identity: how agents and providers authenticate, and how abuse is rate-limited
-- [ ] Tier selection: for now agents write only site records (once a fetch shows an access route) and L1 route cards (past a web-call bar, set by step 2 on 2026-11-07); L0, L2 and L3 are considered after that
+- [ ] Tier selection: for now L1 route cards are built from traces and agents write only site records (once a fetch shows an access route); L0, L2 and L3 are considered after that
 - [x] Confirm registry-computed fingerprints, and how often the registry re-fetches: decided, on demand (see Decisions)
 - [x] Business model: decided, a tiered subscription with token credits (see Decisions)
 - [x] Site-owner role: decided, minimal if any (see Decisions)
